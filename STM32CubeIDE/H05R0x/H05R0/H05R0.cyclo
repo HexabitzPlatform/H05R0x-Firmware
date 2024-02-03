@@ -1,0 +1,9 @@
+H05R0.c:86:6:SystemClock_Config	1
+H05R0.c:148:9:SaveToRO	14
+H05R0.c:252:9:ClearROtopology	1
+H05R0.c:264:6:remoteBootloaderUpdate	7
+H05R0.c:316:6:SetupPortForRemoteBootloaderUpdate	1
+H05R0.c:330:6:Module_Peripheral_Init	8
+H05R0.c:367:15:Module_MessagingTask	1
+H05R0.c:381:9:GetPort	7
+H05R0.c:401:6:RegisterModuleCLICommands	1
