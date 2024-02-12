@@ -24,6 +24,15 @@ extern "C" {
 extern I2C_HandleTypeDef hi2c2;
 extern SMBUS_HandleTypeDef hsmbus2;
 
+/* USER CODE BEGIN Private defines */
+/* I2C Typedef */
+typedef I2C_HandleTypeDef 			I2C_HANDLE;
+typedef SMBUS_HandleTypeDef			SMBUS_HANDLE;
+
+/* I2C port definitions */
+#define I2C_PORT					&hi2c2
+#define SMBUS_PORT					&hsmbus2
+
 
 /* USER CODE BEGIN Private defines */
 
