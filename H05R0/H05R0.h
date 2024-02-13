@@ -25,6 +25,8 @@
 #include "H05R0_dma.h"
 #include "H05R0_inputs.h"
 #include "H05R0_eeprom.h"
+#include "H05R0_i2c.h"
+
 /* Exported definitions -------------------------------------------------------*/
 
 #define	modulePN		_H05R0

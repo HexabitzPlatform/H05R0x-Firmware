@@ -8,7 +8,7 @@
 
  */
 /* Includes ------------------------------------------------------------------*/
-#include "H05R0_i2c.h"
+#include "BOS.h"
 
 /* USER CODE BEGIN 0 */
 I2C_HandleTypeDef hi2c2;
