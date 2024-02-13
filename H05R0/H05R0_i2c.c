@@ -28,7 +28,7 @@ void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing =0x00000708;// 0x20303E5D
+  hi2c2.Init.Timing =0x20303E5D;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -127,7 +127,7 @@ void MX_I2C2_SMBUS_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hsmbus2.Instance = I2C2;
-  hsmbus2.Init.Timing =0x00000708;//0x20303E5D
+  hsmbus2.Init.Timing =0x20303E5D;
   hsmbus2.Init.AnalogFilter = SMBUS_ANALOGFILTER_ENABLE;
   hsmbus2.Init.OwnAddress1 = 2;
   hsmbus2.Init.AddressingMode = SMBUS_ADDRESSINGMODE_7BIT;
