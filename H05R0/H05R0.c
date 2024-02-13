@@ -17,6 +17,11 @@
 #include "BOS.h"
 #include "H05R0_inputs.h"
 
+/* Private macros ------------------------------------------------------------*/
+#define UNSNGD_HALF_WORD_MAX_VAL		0xFFFF
+#define UNSNGD6HALF_WORD_MIN_VAL		0x0000
+#define TWO_COMPL_VAL_MASK				0x7FFF
+
 /* Define UART variables */
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
