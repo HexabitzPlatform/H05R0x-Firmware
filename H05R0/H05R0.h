@@ -110,7 +110,11 @@
 #define NUM_MODULE_PARAMS		1
 
 /* Module GPIO Pinout */
-
+#define BAT_ALRT_Pin GPIO_PIN_0
+#define BAT_ALRT_GPIO_Port GPIOB
+#define BAT_ALRT_EXTI_IRQn EXTI0_1_IRQn
+#define STATUS_LED_Pin GPIO_PIN_4
+#define STATUS_LED_GPIO_Port GPIOB
 /* Module Special Timer */
 
 /* Module Special ADC */
