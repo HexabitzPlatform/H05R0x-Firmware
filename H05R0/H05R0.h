@@ -247,15 +247,62 @@
 #define CMD_STAT_REG_ADD			0x0061			/*  charger/gauge command status register */
 #define REM_UPDT_REG_ADD			0x01FD			/*  charger/gauge remaining updates register */
 
+/* Exported types ------------------------------------------------------------*/
 
 /* Module_Status Type Definition */
 typedef enum {
-	H05R0_OK =0,
+	H05R0_OK =0,				/* Battery charger/gauge OK */
 	H05R0_ERR_UnknownMessage,
-	H05R0_ERROR =255
+	H05R0_INV,
+	H05R0_COM_ERR,
+	H05R0_ERROR =255 			/* Battery charger/gauge error */
 } Module_Status;
 
+/* Battery charger status type definitions */
+typedef enum
+{
+	EXT_THERM_DIS = 0x00,				/* Thermistors channels are disabled */
+	EXT_THERM_EN = 0x01,				/* Thermistor 1 is used as battery temperature, Thermistor 2 is used with DieTemp for calculating FETTemp. */
+	EXT_THERM1_EN,						/* Thermistor 1 is enabled. FETTemp is copied from DieTemp. */
+}ThermConfig;
+
+typedef enum
+{
+	EXT_THERM_10K = 0,					/* External thermistor is 10K NTC */
+	EXT_THERM_100K = 1,					/* External thermistor is 100K NTC */
+}ThermType;
+
+typedef enum
+{
+	AGE_FORCST_DIS = 0,					/* disable age forecasting */
+	AGE_FORCST_EN = 1,					/* enable age forecasting */
+}AgeForcast;
+
+typedef enum
+{
+	VOLT_TEMP_BACK_DIS = 0,				/* disable voltage and temperature backup */
+	VOLT_TEMP_BACK_EN = 1,				/* enable voltage and temperature backup */
+}VoltTempBack;
+
 /* Export Module typedef structure */
+typedef struct {
+	float batVolt;
+	float batCurrent;
+	float batPower;
+	float Temp;
+	float batCapacity;
+	uint8_t batSOC;
+	uint32_t batTTE;
+	uint32_t batTTF;
+	uint8_t batAge;
+	uint16_t batCycles;
+	float batIntResistance;
+}AnalogMeasType;
+
+typedef struct {
+	uint16_t ManId[MANFCTR_NAME_SIZE / 2];
+	uint16_t DevId[DEVICE_NAME_SIZE / 2];
+}IdType;
 
 
 /* Export UART variables */
