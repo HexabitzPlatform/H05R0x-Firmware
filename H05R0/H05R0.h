@@ -115,6 +115,12 @@
 
 /* Module special parameters */
 
+/* Module Special I2C */
+
+#define MCU_SDA_Pin GPIO_PIN_6
+#define MCU_SDA_GPIO_Port GPIOA
+#define MCU_SCL_Pin GPIO_PIN_7
+#define MCU_SCL_GPIO_Port GPIOA
 
 /* Module EEPROM Variables */
 // Module Addressing Space 500 - 599
