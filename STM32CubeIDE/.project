@@ -209,6 +209,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_uart.h</locationURI>
 		</link>
 		<link>
+			<name>H05R0/MAX17330_reg_address.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/H05R0/MAX17330_reg_address.h</locationURI>
+		</link>
+		<link>
 			<name>H05R0/startup_stm32g0b1ceuxn.s</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/H05R0/startup_stm32g0b1ceuxn.s</locationURI>
