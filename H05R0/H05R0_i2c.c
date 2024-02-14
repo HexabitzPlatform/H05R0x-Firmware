@@ -226,6 +226,126 @@ void HAL_SMBUS_MspDeInit(SMBUS_HandleTypeDef* smbusHandle)
   /* USER CODE END I2C2_MspDeInit 1 */
   }
 }
+/*
+ * @brief: write n bytes to an I2C register
+ * @param1: I2C port handle
+ * @param2: Device address to be written
+ * @param3: Data to be sent
+ * @param4: Data size
+ * @retval: Status
+ */
+Module_Status WriteI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size)
+{
+	Module_Status Status=H05R0_ERROR;
+
+  if (NULL!=xPort && NULL!=pData)
+    {
+      if (HAL_OK == HAL_I2C_Master_Transmit(xPort, (uint16_t) sAddress, pData, Size, TIM_OUT_1MS))
+      Status=H05R0_OK;
+
+    }
+  else
+    Status=H05R0_ERROR;
+
+  return Status;
+}
+
+/*
+ * @brief: read n bytes from an I2C device
+ * @param1: I2C port handle
+ * @param2: Device address to be read
+ * @param3: Pointer to buffer to store received data in
+ * @param4: Data size
+ * @retval: Status
+ */
+Module_Status ReadI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size)
+{
+	Module_Status Status;
+
+	if (NULL!=xPort && NULL!=rBuffer)
+	{
+	    if (HAL_OK == HAL_I2C_Master_Receive(xPort,  (uint16_t) sAddress, rBuffer, Size, TIM_OUT_1MS))
+		Status=H05R0_OK;
+	}
+	else
+		Status=H05R0_ERROR;
+
+	return Status;
+}
+
+/*
+ * @brief: check available devices on I2C bus
+ * @param1: I2C port handle
+ * @param2: Pointer to buffer of addresses sequence
+ * @param3: Pointer to buffer to return devices response in correspond to the addresses
+ * @retval: Status
+ */
+Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer)
+{
+	//Module_Status Status;
+	uint8_t addCounter=0;
+	uint8_t sAddress=0;
+
+	for (addCounter=0; addCounter<=127; addCounter++)
+	{
+	    sAddress=(addCounter<<1)|0;
+	    addBuffer[addCounter]=sAddress;
+	    if (HAL_OK==HAL_I2C_Master_Transmit(xPort, sAddress, 0, 1, TIM_OUT_1MS))
+	      rBuffer[addCounter]=TRUE;
+
+	    else
+	      rBuffer[addCounter]=FALSE;
+	}
+
+	return H05R0_OK;
+}
+
+/*
+ * @brief: write n bytes to an SMBUS register
+ * @param1: SMBUS port handle
+ * @param2: Device address to be written
+ * @param3: Data to be sent
+ * @param4: Data size
+ * @retval: Status
+ */
+Module_Status WriteSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size)
+{
+	Module_Status Status=H05R0_ERROR;
+
+  if (NULL!=xPort && NULL!=pData)
+    {
+      if (HAL_OK == HAL_SMBUS_Master_Transmit_IT(xPort, (uint16_t) sAddress, pData, Size, 0))
+      Status=H05R0_OK;
+    }
+  else
+    Status=H05R0_ERROR;
+
+  return Status;
+}
+
+/*
+ * @brief: read n bytes from an SMBUS device
+ * @param1: SMBUS port handle
+ * @param2: Device address to be read
+ * @param3: Pointer to buffer to store received data in
+ * @param4: Data size
+ * @retval: Status
+ */
+Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size)
+{
+	Module_Status Status;
+
+	if (NULL!=xPort && NULL!=rBuffer)
+	{
+	    if (HAL_OK == HAL_SMBUS_Master_Receive_IT(xPort,  (uint16_t) sAddress, rBuffer, Size, 0))
+		Status=H05R0_OK;
+	}
+	else
+		Status=H05R0_ERROR;
+
+	return Status;
+}
+/* USER CODE END 1 */
 
 
 

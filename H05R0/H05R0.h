@@ -167,6 +167,10 @@ typedef enum
 	VOLT_TEMP_BACK_EN = 1,				/* enable voltage and temperature backup */
 }VoltTempBack;
 
+typedef enum {
+	FALSE = 0u,
+	TRUE
+} Bool_State;
 /* Export Module typedef structure */
 typedef struct {
 	float batVolt;
