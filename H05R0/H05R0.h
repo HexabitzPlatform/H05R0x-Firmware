@@ -129,10 +129,14 @@
 /* Exported types ------------------------------------------------------------*/
 
 /* Module_Status Type Definition */
+
 typedef enum {
 	H05R0_OK =0,				/* Battery charger/gauge OK */
 	H05R0_ERR_UnknownMessage,
 	H05R0_INV,
+	H05R0_UNKMSG,
+	H05R0_TMOUT,
+	H05R0_MSG_ACK, // A special case used only inside MessageConstructor() to indicate that command has executed successfully.
 	H05R0_COM_ERR,
 	H05R0_ERROR =255 			/* Battery charger/gauge error */
 } Module_Status;
