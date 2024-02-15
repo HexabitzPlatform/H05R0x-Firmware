@@ -126,6 +126,10 @@
 /* Module EEPROM Variables */
 // Module Addressing Space 500 - 599
 #define _EE_MODULE							500		
+
+/* General purposes functions definitions */
+#define _DELAY_MS(TimeOut)       		HAL_Delay(TimeOut)
+
 /* Exported types ------------------------------------------------------------*/
 
 /* Module_Status Type Definition */
@@ -216,6 +220,26 @@ extern void ExecuteMonitor(void);
  |								  APIs							          |  																 	|
 /* -----------------------------------------------------------------------
  */
+Module_Status ReadID(IdType *BatId);
+Module_Status ReadCellVoltage(float *batVolt);
+Module_Status ReadCellCurrent(float *batCurrent);
+Module_Status ReadCellPower(float *batPower);
+Module_Status ReadTemperature(float *Temp);
+Module_Status ReadCellCapacity(float *batCapacity);
+Module_Status ReadCellStateOfCharge(uint8_t *batSOC);
+Module_Status ReadCellEstimatedTTE(uint32_t *batTTE);
+Module_Status ReadCellEstimatedTTF(uint32_t *batTTF);
+Module_Status ReadCellAge(uint8_t *batAge);
+Module_Status ReadCellCycles(uint16_t *batCycles);
+Module_Status ReadCellCalInterRes(float *batIntResistance);
+Module_Status ReadSetChargVoltage(float *setChargVolt);
+Module_Status ReadSetChargCurrent(float *setChargCurrent);
+Module_Status ReadAllAnalogMeasurements(AnalogMeasType *analMeasurements);
+Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer);
+Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
+Module_Status LockNonVolatileMemory(void);
+
+
 void SetupPortForRemoteBootloaderUpdate(uint8_t port);
 void remoteBootloaderUpdate(uint8_t src,uint8_t dst,uint8_t inport,uint8_t outport);
 

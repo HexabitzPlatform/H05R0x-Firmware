@@ -19,7 +19,7 @@
 
 /* Private macros ------------------------------------------------------------*/
 #define UNSNGD_HALF_WORD_MAX_VAL		0xFFFF
-#define UNSNGD6HALF_WORD_MIN_VAL		0x0000
+#define UNSNGD_HALF_WORD_MIN_VAL		0x0000
 #define TWO_COMPL_VAL_MASK				0x7FFF
 
 /* Define UART variables */
@@ -39,6 +39,11 @@ extern Module_Status ReadI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuf
 extern Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer);
 extern Module_Status WriteSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
 extern Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
+
+Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
+Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t Size);
+Module_Status Init_MAX17330(void);
+
 /* Module exported parameters ------------------------------------------------*/
 module_param_t modParam[NUM_MODULE_PARAMS] ={{.paramPtr = NULL, .paramFormat =FMT_FLOAT, .paramName =""}};
 
@@ -48,7 +53,8 @@ module_param_t modParam[NUM_MODULE_PARAMS] ={{.paramPtr = NULL, .paramFormat =FM
 /* Private function prototypes -----------------------------------------------*/
 void ExecuteMonitor(void);
 void FLASH_Page_Eras(uint32_t Addr );
-
+Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVal);
+Module_Status BAT_ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 /* Create CLI commands --------------------------------------------------------*/
 
 /* CLI command structure : demo */
@@ -443,33 +449,767 @@ void RegisterModuleCLICommands(void){
  |								  APIs							          ||
 /* -----------------------------------------------------------------------
  */
+/*
+ * @brief: write 16-bit data to a Battery charger/gauge register
+ * @param1: register's address to write data at
+ * @param2: data to be written
+ * @retval: status
+ */
+Module_Status WriteReg(uint16_t regAddress, uint16_t Data)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint8_t tempBuffer[4] = {0};
+	uint8_t i2cSize = 0;
+	uint8_t i2cSlaveAddress = 0;
+
+	if (FST_I2C_LMT_ADD >= regAddress)
+	{
+		tempBuffer[0] = (uint8_t) regAddress;
+		tempBuffer[1] = (uint8_t) Data;
+		tempBuffer[2] = (uint8_t) (Data>>8);
+		i2cSize = 3;
+		i2cSlaveAddress = I2C_6Ch_W_ADD;
+	}
+	else
+	{
+		tempBuffer[0] = (uint8_t) regAddress;
+		tempBuffer[1] = (uint8_t) Data;
+		tempBuffer[2] = (uint8_t) (Data>>8);
+		i2cSize = 3;
+		i2cSlaveAddress = I2C_16h_W_ADD;
+	}
+
+	if (H05R0_OK == WriteI2C(I2C_PORT, i2cSlaveAddress, tempBuffer, i2cSize))
+		Status = H05R0_OK;
+
+	else
+		Status = H05R0_ERROR;
 
 
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read 16-bit data from a Battery charger/gauge register
+ * @param1: register's address to read data from
+ * @param2: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint8_t tempBuffer[2] = {0};
+	uint8_t i2cSize = 0;
+	uint8_t i2cSlaveWriteAdd = 0;
+	uint8_t i2cSlaveReadAdd = 0;
 
+	if (Buffer == NULL)
+		return Status;
+
+	if (FST_I2C_LMT_ADD >= regAddress)
+	{
+		tempBuffer[0] = (uint8_t) regAddress;
+		i2cSize = 1;
+		i2cSlaveWriteAdd = I2C_6Ch_W_ADD;
+		i2cSlaveReadAdd = I2C_6Ch_R_ADD;
+	}
+	else
+	{
+		tempBuffer[0] = (uint8_t) regAddress;
+		i2cSize = 1;
+		i2cSlaveWriteAdd = I2C_16h_W_ADD;
+		i2cSlaveReadAdd = I2C_16h_R_ADD;
+	}
+
+		if (H05R0_OK == WriteI2C(I2C_PORT, i2cSlaveWriteAdd, tempBuffer, i2cSize))
+			Status = H05R0_OK;
+
+		else
+			Status = H05R0_ERROR;
+
+		if (H05R0_OK == ReadI2C(I2C_PORT, i2cSlaveReadAdd, (uint8_t*) Buffer, NoBytes))
+			Status = H05R0_OK;
+
+		else
+			Status = H05R0_ERROR;
+
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read 16-bit data from a Battery charger/gauge register
+ * @param1: register's address to read data from
+ * @param2: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes)
+{
+	Module_Status Status = H05R0_OK;
+	uint8_t tempBuffer[2] = {0};
+	uint8_t i2cSize = 0;
+	uint8_t i2cSlaveWriteAdd = 0;
+	uint8_t i2cSlaveReadAdd = 0;
 
+	if (Buffer == NULL)
+		return Status;
+
+	tempBuffer[0] = (uint8_t) regAddress;
+	i2cSize = 1;
+	i2cSlaveWriteAdd = I2C_16h_W_ADD;
+	i2cSlaveReadAdd = I2C_16h_R_ADD;
+
+
+	if (H05R0_OK != WriteSMBUS(SMBUS_PORT, i2cSlaveWriteAdd, tempBuffer, i2cSize))
+		Status = H05R0_ERROR;
+
+
+	if (H05R0_OK != ReadSMBUS(SMBUS_PORT, i2cSlaveReadAdd, (uint8_t*) Buffer, NoBytes))
+		Status = H05R0_ERROR;
+
+
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: initialize Battery charger/gauge
+ * @retval: status
+ */
+Module_Status Init_MAX17330(void)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+	uint16_t tempBuffer[3] ={0};
+
+	/* set default configurations */
+//	if (H05R0_ERROR == WriteReg(BAT_, ))
+//		return H05R0_ERROR;
+
+	/* setting temperature sensing source from external thermistors and their type */
+	tempVar = (EXT_THERM_10K << 11) | (EXT_THERM_EN << 12);
+	if (H05R0_OK == WriteReg(PACK_CONFIG_REG_ADD, tempVar))
+		Status = H05R0_OK;
+
+	/* write sense resistor value to nRSense register */
+	if (H05R0_OK == WriteReg(SENSE_RES_REG_ADD, SENSE_RES_REG_VAL))
+		Status = H05R0_OK;
+
+	/* write sense resistor B_Const to nThermCfg register */
+	if (H05R0_OK == WriteReg(THERM_CONFIG_REG_ADD, THRMRES_CONFIG_REG_VAL))
+		Status = H05R0_OK;
+
+	/* enable battery ALRT, write configs to shadow memory */
+	/* set the alert voltage thresholds */
+	tempVar = MIN_VOLT_ALRT_THRE | (MAX_VOLT_ALRT_THRE << 8);
+	if (H05R0_OK == WriteReg(VOLT_ALRT_THRE_REG_ADD, tempVar))
+		Status = H05R0_OK;
+
+	tempVar = MIN_CUR_ALRT_THRE | (MAX_CUR_ALRT_THRE << 8);
+	if (H05R0_OK == WriteReg(CUR_ALRT_THRE_REG_ADD, tempVar))
+		Status = H05R0_OK;
+
+	tempVar = MIN_TEMP_ALRT_THRE | (MAX_TEMP_ALRT_THRE << 8);
+	if (H05R0_OK == WriteReg(TEMP_ALRT_THRE_REG_ADD, tempVar))
+		Status = H05R0_OK;
+
+	tempVar = MIN_SOC_ALRT_THRE | (MAX_SOC_ALRT_THRE << 8);
+	if (H05R0_OK == WriteReg(SOC_ALRT_THRE_REG_ADD, tempVar))
+		Status = H05R0_OK;
+
+	/* enable alerts by setting Aen bit */
+	tempVar = ALRT_EN;
+	if (H05R0_OK == WriteReg(CONFIG_REG_ADD, tempVar))
+		Status = H05R0_OK;
+
+	if (H05R0_OK == ReadReg(PACK_CONFIG_REG_ADD, &tempBuffer[0], sizeof(tempBuffer[0])))
+			Status = H05R0_OK;
+
+	if (H05R0_OK == ReadReg(SENSE_RES_REG_ADD, &tempBuffer[1], sizeof(tempBuffer[0])))
+		Status = H05R0_OK;
+
+	if (H05R0_OK == ReadReg(THERM_CONFIG_REG_ADD, &tempBuffer[2], sizeof(tempBuffer[0])))
+		Status = H05R0_OK;
+
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read Battery charger/gauge IDs
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadID(IdType *BatId)
+{
+	Module_Status Status = H05R0_OK;
+
+	if (BatId == NULL)
+		return H05R0_INV;
+
+	/* de-initialize I2C and initialize SMBUS protocol. All chip's name and Id registers are reached
+	 * through SMBUS  */
+	HAL_I2C_DeInit(I2C_PORT);
+	MX_I2C2_SMBUS_Init();
+
+	if (H05R0_OK != ReadIdReg(MANFCTR_NAME_REG_ADD, BatId->ManId,MANFCTR_NAME_SIZE))
+			Status = H05R0_ERROR;
+
+	if (H05R0_OK != ReadIdReg(DEVICE_NAME_REG_ADD, BatId->DevId,DEVICE_NAME_SIZE))
+		Status = H05R0_ERROR;
+
+
+	/* de-initialize SMBUS and initialize I2C protocol to let the I2C port run in standard condition
+	 * whenever it is called */
+	HAL_SMBUS_DeInit(SMBUS_PORT);
+	MX_I2C2_Init();
+
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read battery cell voltage
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellVoltage(float *batVolt)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+
+	if (batVolt == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(CELL_VOLT_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*batVolt = (float) (VOLT_RESOL_VAL * tempVar);
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read battery cell current
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellCurrent(float *batCurrent)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+	int16_t tempSingedVar = 0;
+
+	if (batCurrent == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(CURRENT_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	/* convert the received value from two's complementary to signed decimal value */
+	if (H05R0_OK == ConvertTwosComplToDec(tempVar, &tempSingedVar))
+	tempSingedVar = tempVar;
+
+	*batCurrent = (float) (CUR_RESOL_VAL * tempSingedVar);
+
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read battery cell power
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellPower(float *batPower)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+	int16_t tempSingedVar = 0;
+
+	if (batPower == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(POWER_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	/* convert the received value from two's complementary to signed decimal value */
+	if (H05R0_OK == ConvertTwosComplToDec(tempVar, &tempSingedVar))
+		*batPower = (float) (POWER_RESOL_VAL * tempSingedVar);
+
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read battery cell temperature
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadTemperature(float *Temp)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+	int16_t tempSingedVar = 0;
+
+	if (Temp == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(TEMP_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	/* convert the received value from two's complementary to signed decimal value */
+	if (H05R0_OK == ConvertTwosComplToDec(tempVar, &tempSingedVar))
+		*Temp = (float) (tempSingedVar / TEMP_RESOL_VAL);
+
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read battery cell capacity
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellCapacity(float *batCapacity)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
 
+	if (batCapacity == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(FULL_CAP_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*batCapacity = (float) (CAP_RESOL_VAL * tempVar);
+	return Status;
+}
 /*-----------------------------------------------------------*/
 
+/*
+ * @brief: read battery cell state of charge
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellStateOfCharge(uint8_t *batSOC)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
 
+	if (batSOC == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(REP_SOC_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*batSOC = (uint8_t) (tempVar / PERCENT_RESOL_VAL);
+	return Status;
+}
 /*-----------------------------------------------------------*/
+
+/*
+ * @brief: read battery time to empty
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellEstimatedTTE(uint32_t *batTTE)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+
+	if (batTTE == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(TTE_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*batTTE = (uint32_t) (TIME_RESOL_VAL * tempVar);
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read battery cell time to full
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellEstimatedTTF(uint32_t *batTTF)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+
+	if (batTTF == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(TTF_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*batTTF = (uint32_t)  (TIME_RESOL_VAL * tempVar);
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read battery cell age
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellAge(uint8_t *batAge)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+
+	if (batAge == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(AGE_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*batAge = (uint8_t) (tempVar / PERCENT_RESOL_VAL);
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read battery cell charge discharge cycles
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellCycles(uint16_t *batCycles)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+
+	if (batCycles == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(CYCLES_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*batCycles = (tempVar >> 3);
+	//*batCycles = BAT_PERCENT_RESOL_VAL * tempVar;
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read battery cell calculated internal resistance
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadCellCalInterRes(float *batIntResistance)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+
+	if (batIntResistance == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(INTERNAL_RES_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*batIntResistance = (float) tempVar / RES_RESOL_VAL;
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ *
+ */
+Module_Status ReadAllAnalogMeasurements(AnalogMeasType *batMeasurements)
+{
+	Module_Status Status = H05R0_OK;
+	uint8_t cntStatus = 0u;
+
+	Status = ReadCellVoltage(&batMeasurements->batVolt);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellCurrent(&batMeasurements->batCurrent);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellPower(&batMeasurements->batPower);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadTemperature(&batMeasurements->Temp);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellCapacity(&batMeasurements->batCapacity);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellStateOfCharge(&batMeasurements->batSOC);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellEstimatedTTE(&batMeasurements->batTTE);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellEstimatedTTF(&batMeasurements->batTTF);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellAge(&batMeasurements->batAge);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellCycles(&batMeasurements->batCycles);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	Status = ReadCellCalInterRes(&batMeasurements->batIntResistance);
+	if (H05R0_OK != Status)
+		cntStatus++;
+
+	if (FALSE != cntStatus)
+		Status = H05R0_ERROR;
+
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read battery cell calculated internal resistance
+ * @param1: the raw value to be processed
+ * @param2: pointer to a buffer to store converted signed value
+ * @retval: status
+ */
+Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVal)
+{
+
+	if (sgnDecimalVal == NULL && ((UNSNGD_HALF_WORD_MAX_VAL < twosComplVal) || (UNSNGD_HALF_WORD_MIN_VAL > twosComplVal)))
+	return H05R0_INV;
+
+	if (TWO_COMPL_VAL_MASK < twosComplVal)
+		*sgnDecimalVal = -((~twosComplVal) + 1);
+
+	else
+		*sgnDecimalVal = twosComplVal;
+
+	return H05R0_OK;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read battery set charging voltage
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadSetChargVoltage(float *setChargVolt)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+
+	if (setChargVolt == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(CHARGE_VOLTAGE_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+	*setChargVolt = (float) (VOLT_RESOL_VAL * tempVar);
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read battery set charging current
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadSetChargCurrent(float *setChargCurrent)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint16_t tempVar = 0u;
+
+	if (setChargCurrent == NULL)
+		return H05R0_INV;
+
+	if (H05R0_OK == ReadReg(CHARGE_CURRENT_REG_ADD, &tempVar, sizeof(tempVar)))
+			Status = H05R0_OK;
+
+//	/* convert the received value from two's complementary to signed decimal value */
+//	if (STATUS_OK == ConvertTwosComplToDec(tempVar, &tempSingedVar))
+		*setChargCurrent = (float) (CUR_RESOL_VAL * tempVar);
+
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: write configurations to non-volatile memory registers
+ * @param1: pointer to a buffer storing the configurations to be written
+ * @retval: status
+ */
+Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer)
+{
+	Module_Status Status = H05R0_OK;
+	uint16_t tempVar = 0u;
+
+	/* write the desired configs to their addresses at the shadow RAM */
+
+	/* clear CommStat.NVError bit */
+	tempVar = CMD_STAT_ERR_CLEAR;
+	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
+		return H05R0_COM_ERR;
+
+	/* write 0xE904 to the Command register 0x060 to initiate a block copy */
+	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE904))
+		return H05R0_COM_ERR;
+
+	/* wait t_BLOCK for the copy to complete */
+	_DELAY_MS(BLOCK_TIME);
+
+	/* check the CommStat.NVError bit, if set repeat the process */
+
+	/* write 0x000F to the Command register 0x060 to POR the IC */
+	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0x000F))
+		return H05R0_COM_ERR;
+
+	/* wait 10msec */
+	_DELAY_MS(10);
+
+	/* write 0x8000 to Config2 register 0x0AB to reset firmware */
+	if (H05R0_OK != WriteReg(0x0AB, 0x8000))
+		return H05R0_COM_ERR;
+
+	/* Wait for POR_CMD bit (bit 15) of the Config2 register to be cleared to indicate
+	 *  POR sequence is complete. */
+
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read number of remaining non-volatile memory writes
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites)
+{
+	Module_Status Status = H05R0_OK;
+	uint16_t tempVar = 0u;
+	uint8_t retValueLSB = 0u;
+	uint8_t retValueMSB = 0u;
+	uint8_t numOnes = 0u;
+	bool bitState = FALSE;
+
+	/* the following steps are implemented as stated in the data sheet */
+	/* write 0xE29B to the Command register 0x060 to initiate a block copy */
+	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE29B))
+		return H05R0_COM_ERR;
+
+	/* wait t_BLOCK for the copy to complete */
+	_DELAY_MS(RECALL_TIME);
+
+	/* read memory address 1FDh */
+	if (H05R0_OK != ReadReg(REM_UPDT_REG_ADD, &tempVar, 1))
+		return H05R0_COM_ERR;
+
+	/* decode the received data */
+	retValueLSB = (uint8_t) tempVar;
+	retValueMSB = (uint8_t) (tempVar >> 8);
+	tempVar = (retValueLSB | retValueMSB);
+
+	/* calculate the number of ones of tempVar value */
+	for (volatile uint8_t bitIndex = 0u; bitIndex<8; bitIndex++)
+	{
+		bitState = (bool) ((tempVar >> bitIndex) & TRUE);
+		if (TRUE == bitState)
+			numOnes++;
+	}
+
+	/* determine the number of left updates */
+	*remWrites = 8 - numOnes;
+//	if (BAT_NUM_1S_1 == tempVar)
+//		*remWrites = 7;
+//
+//	else if (BAT_NUM_1S_2 == tempVar)
+//		*remWrites = 6;
+//
+//	else if (BAT_NUM_1S_3 == tempVar)
+//		*remWrites = 5;
+//
+//	else if (BAT_NUM_1S_4 == tempVar)
+//		*remWrites = 4;
+//
+//	else if (BAT_NUM_1S_5 == tempVar)
+//		*remWrites = 3;
+//
+//	else if (BAT_NUM_1S_6 == tempVar)
+//		*remWrites = 2;
+//
+//	else if (BAT_NUM_1S_7 == tempVar)
+//		*remWrites = 1;
+//
+//	else if (BAT_NUM_1S_8 == tempVar)
+//		*remWrites = 0;
+//
+//	else
+//		Status = H05R0_ERROR;
+
+	return Status;
+}
+/*-----------------------------------------------------------*/
+
+/*
+ * @brief: read number of remaining non-volatile memory writes
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status LockNonVolatileMemory(void)
+{
+	bool csErrorBit = 0;
+	uint16_t tempVar = 0u;
+
+	/* read command status register */
+	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, 1))
+		return H05R0_COM_ERR;
+
+	//csErrorBit = tempVar & 32;
+
+	/* repeat the process till CommStat.NVError bit is zero */
+	while (TRUE == csErrorBit)
+	{
+		/* write 0x0000 to the CommStat register (0x61) two times in a row to unlock write protection */
+		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+			return H05R0_COM_ERR;
+
+		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+			return H05R0_COM_ERR;
+
+		/* write 0x0000 to the CommStat register (0x61) one more time to clear CommStat.NVError bit */
+		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+			return H05R0_COM_ERR;
+
+		/* write 0x6AXX to the Command register 0x060 to lock desired blocks */
+		if (H05R0_OK != WriteReg(CMD_REG_ADD, 0x6A00))
+			return H05R0_COM_ERR;
+
+		/* wait tUPDATE for the copy to complete */
+		_DELAY_MS(UPDATE_TIME);
+
+		/* check the CommStat.NVError bit. If set, repeat the process */
+		if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, 1))
+			return H05R0_COM_ERR;
+
+		csErrorBit = tempVar & 32;
+	}
+
+	/* write 0x00F9 to the CommStat register (0x61) two times in a row to lock write protection */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
+		return H05R0_COM_ERR;
+
+	return 0;
+}
 
 /*-----------------------------------------------------------*/
 
