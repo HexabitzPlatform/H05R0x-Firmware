@@ -248,7 +248,20 @@ void remoteBootloaderUpdate(uint8_t src,uint8_t dst,uint8_t inport,uint8_t outpo
  |								Commands							      |															 	|
 /* -----------------------------------------------------------------------
  */
-
+extern const CLI_Command_Definition_t CLI_ReadCellVoltageCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellCurrentCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellPowerCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadTemperatureCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellCapacityCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellStateOfChargeCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellEstimatedTTECommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellEstimatedTTFCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellAgeCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellCyclesCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadCellCalInterResCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadSetChargVoltageCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadSetChargCurrentCommandDefinition;
+extern const CLI_Command_Definition_t CLI_ReadAllAnalogMeasurementsCommandDefinition;
 
 #endif /* H05R0_H */
 
