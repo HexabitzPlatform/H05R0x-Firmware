@@ -9,7 +9,20 @@
 #include "BOS.h"
 
 /* Private variables ---------------------------------------------------------*/
-
+float batVolt;
+float batCurrent;
+float batPower;
+float Temp;
+float batCapacity;
+uint8_t batSOC;
+uint32_t batTTE;
+uint32_t batTTF;
+uint8_t batAge;
+uint16_t batCycles;
+float batIntResistance;
+float setChargVolt;
+float setChargCurrent;
+AnalogMeasType analMeasurements;
 /* Private function prototypes -----------------------------------------------*/
 
 /* Main function ------------------------------------------------------------*/
@@ -29,6 +42,20 @@ void UserTask(void *argument){
 
 	// put your code here, to run repeatedly.
 	while(1){
+		ReadCellVoltage(&batVolt);
+		ReadCellCurrent(&batCurrent);
+		 ReadCellPower(&batPower);
+		ReadTemperature(&Temp);
+		ReadCellCapacity(&batCapacity);
+		 ReadCellStateOfCharge(&batSOC);
+		 ReadCellEstimatedTTE(&batTTE);
+		 ReadCellEstimatedTTF(&batTTF);
+		 ReadCellAge(&batAge);
+		 ReadCellCycles(&batCycles);
+		 ReadCellCalInterRes(&batIntResistance);
+		 ReadSetChargVoltage(&setChargVolt);
+		 ReadSetChargCurrent(&setChargCurrent);
+		ReadAllAnalogMeasurements(&analMeasurements);
 
 	}
 }
