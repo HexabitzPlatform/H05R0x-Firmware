@@ -220,7 +220,6 @@ extern void ExecuteMonitor(void);
  |								  APIs							          |  																 	|
 /* -----------------------------------------------------------------------
  */
-Module_Status ReadID(IdType *BatId);
 Module_Status ReadCellVoltage(float *batVolt);
 Module_Status ReadCellCurrent(float *batCurrent);
 Module_Status ReadCellPower(float *batPower);
