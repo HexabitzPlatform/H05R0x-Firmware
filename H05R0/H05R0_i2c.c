@@ -240,7 +240,7 @@ Module_Status WriteI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uin
 
   if (NULL!=xPort && NULL!=pData)
     {
-      if (HAL_OK == HAL_I2C_Master_Transmit(xPort, (uint16_t) sAddress, pData, Size, TIM_OUT_1MS))
+      if (HAL_OK == HAL_I2C_Master_Transmit(xPort, (uint16_t) sAddress, pData, Size, TIM_OUT_10MS))
       Status=H05R0_OK;
 
     }
@@ -264,7 +264,7 @@ Module_Status ReadI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, ui
 
 	if (NULL!=xPort && NULL!=rBuffer)
 	{
-	    if (HAL_OK == HAL_I2C_Master_Receive(xPort,  (uint16_t) sAddress, rBuffer, Size, TIM_OUT_1MS))
+	    if (HAL_OK == HAL_I2C_Master_Receive(xPort,  (uint16_t) sAddress, rBuffer, Size, TIM_OUT_10MS))
 		Status=H05R0_OK;
 	}
 	else
@@ -290,7 +290,7 @@ Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer)
 	{
 	    sAddress=(addCounter<<1)|0;
 	    addBuffer[addCounter]=sAddress;
-	    if (HAL_OK==HAL_I2C_Master_Transmit(xPort, sAddress, 0, 1, TIM_OUT_1MS))
+	    if (HAL_OK==HAL_I2C_Master_Transmit(xPort, sAddress, 0, 1, TIM_OUT_10MS))
 	      rBuffer[addCounter]=TRUE;
 
 	    else

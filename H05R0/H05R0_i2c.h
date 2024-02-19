@@ -32,7 +32,7 @@ typedef SMBUS_HandleTypeDef			SMBUS_HANDLE;
 /* I2C port definitions */
 #define I2C_PORT					&hi2c2
 #define SMBUS_PORT					&hsmbus2
-#define TIM_OUT_1MS         		1u
+#define TIM_OUT_10MS         		10u
 
 
 /* USER CODE BEGIN Private defines */
