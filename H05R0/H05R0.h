@@ -111,27 +111,37 @@
 #define NUM_MODULE_PARAMS		1
 
 /* Module GPIO Pinout */
-#define BAT_ALRT_Pin GPIO_PIN_0
-#define BAT_ALRT_GPIO_Port GPIOB
-#define BAT_ALRT_EXTI_IRQn EXTI0_1_IRQn
-#define STATUS_LED_Pin GPIO_PIN_4
+#define BAT_ALRT_Pin         GPIO_PIN_0
+#define BAT_ALRT_GPIO_Port   GPIOB
+#define BAT_ALRT_EXTI_IRQn   EXTI0_1_IRQn
+#define STATUS_LED_Pin       GPIO_PIN_4
 #define STATUS_LED_GPIO_Port GPIOB
 
 /* Module Special I2C */
-#define MCU_SDA_Pin GPIO_PIN_6
-#define MCU_SDA_GPIO_Port GPIOA
-#define MCU_SCL_Pin GPIO_PIN_7
-#define MCU_SCL_GPIO_Port GPIOA
+#define MCU_SDA_Pin          GPIO_PIN_6
+#define MCU_SDA_GPIO_Port    GPIOA
+#define MCU_SCL_Pin          GPIO_PIN_7
+#define MCU_SCL_GPIO_Port    GPIOA
 
 /* Module EEPROM Variables */
 // Module Addressing Space 500 - 599
-#define _EE_MODULE							500		
+#define _EE_MODULE			500
 
 /* General purposes functions definitions */
 #define _DELAY_MS(TimeOut)       		HAL_Delay(TimeOut)
 
 /* Exported types ------------------------------------------------------------*/
 
+typedef enum {
+	batVolt=0,
+	batCurrent,
+	batPower,
+	Temp,
+	batCapacity,
+	batSOC,
+	batAge,
+	batCycles,
+}All_Data;
 /* Module_Status Type Definition */
 
 typedef enum {
@@ -237,6 +247,7 @@ Module_Status ReadAllAnalogMeasurements(AnalogMeasType *analMeasurements);
 Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer);
 Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status LockNonVolatileMemory(void);
+Module_Status Sampletoport(uint8_t module,uint8_t port,All_Data function);
 
 
 void SetupPortForRemoteBootloaderUpdate(uint8_t port);

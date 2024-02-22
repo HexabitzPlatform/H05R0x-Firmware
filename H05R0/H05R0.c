@@ -1139,7 +1139,7 @@ Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVa
 /*-----------------------------------------------------------*/
 
 /*
- * @brief: read battery set charging voltage
+ * @brief: read battery previously set charging voltage
  * @param1: pointer to a buffer to store received data
  * @retval: status
  */
@@ -1160,7 +1160,7 @@ Module_Status ReadSetChargVoltage(float *setChargVolt)
 /*-----------------------------------------------------------*/
 
 /*
- * @brief: read battery set charging current
+ * @brief: read battery previously set charging current
  * @param1: pointer to a buffer to store received data
  * @retval: status
  */
@@ -1354,7 +1354,168 @@ Module_Status LockNonVolatileMemory(void)
 }
 
 /*-----------------------------------------------------------*/
+/*
+ *  Sending a sample of the required module on the required port
+ *  If the topology file is not activated, therefore The module number is 0
+ */
+Module_Status Sampletoport(uint8_t module,uint8_t port,All_Data function)
+{
+	 float floatData=0.0;
+	 uint8_t uint8Data=0;
+	 uint16_t uint16Data=0;
+	static uint8_t temp[4]={0};
+	Module_Status status =H05R0_OK;
 
+switch (function) {
+	case batVolt:
+		status=ReadCellVoltage(&floatData);
+		if(module == myID)
+		{
+		temp[0] =(uint32_t)floatData;
+		temp[1] =(uint32_t)floatData>>8;
+		temp[2] =(uint32_t)floatData>>16;
+		temp[3] =(uint32_t)floatData>>24;
+		writePxITMutex(port,(char* )&temp[0],4 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint32_t)floatData;
+		messageParams[2] =(uint32_t)floatData>>8;
+		messageParams[3] =(uint32_t)floatData>>16;
+		messageParams[4] =(uint32_t)floatData>>24;
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
+		}
+		break;
+	case batCurrent:
+		status=ReadCellCurrent(&floatData);
+		if(module == myID)
+		{
+		temp[0] =(uint32_t)floatData;
+		temp[1] =(uint32_t)floatData>>8;
+		temp[2] =(uint32_t)floatData>>16;
+		temp[3] =(uint32_t)floatData>>24;
+		writePxITMutex(port,(char* )&temp[0],4 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint32_t)floatData;
+		messageParams[2] =(uint32_t)floatData>>8;
+		messageParams[3] =(uint32_t)floatData>>16;
+		messageParams[4] =(uint32_t)floatData>>24;
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
+		}
+		break;
+	case batPower:
+		status=ReadCellPower(&floatData);
+		if(module == myID)
+		{
+		temp[0] =(uint32_t)floatData;
+		temp[1] =(uint32_t)floatData>>8;
+		temp[2] =(uint32_t)floatData>>16;
+		temp[3] =(uint32_t)floatData>>24;
+		writePxITMutex(port,(char* )&temp[0],4 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint32_t)floatData;
+		messageParams[2] =(uint32_t)floatData>>8;
+		messageParams[3] =(uint32_t)floatData>>16;
+		messageParams[4] =(uint32_t)floatData>>24;
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
+		}
+		break;
+	case Temp:
+		status=ReadTemperature(&floatData);
+		if(module == myID)
+		{
+		temp[0] =(uint32_t)floatData;
+		temp[1] =(uint32_t)floatData>>8;
+		temp[2] =(uint32_t)floatData>>16;
+		temp[3] =(uint32_t)floatData>>24;
+		writePxITMutex(port,(char* )&temp[0],4 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint32_t)floatData;
+		messageParams[2] =(uint32_t)floatData>>8;
+		messageParams[3] =(uint32_t)floatData>>16;
+		messageParams[4] =(uint32_t)floatData>>24;
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
+		}
+		break;
+	case batCapacity:
+		status=ReadCellCapacity(&floatData);
+		if(module == myID)
+		{
+		temp[0] =(uint32_t)floatData;
+		temp[1] =(uint32_t)floatData>>8;
+		temp[2] =(uint32_t)floatData>>16;
+		temp[3] =(uint32_t)floatData>>24;
+		writePxITMutex(port,(char* )&temp[0],4 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint32_t)floatData;
+		messageParams[2] =(uint32_t)floatData>>8;
+		messageParams[3] =(uint32_t)floatData>>16;
+		messageParams[4] =(uint32_t)floatData>>24;
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
+		}
+		break;
+	case batSOC:
+		status=ReadCellStateOfCharge(&uint8Data);
+		if(module == myID)
+		{
+		temp[0] =(uint8_t)uint8Data;
+		writePxITMutex(port,(char* )&temp[0],1 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint8_t)uint8Data;
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint8_t)+1);
+		}
+		break;
+	case batAge:
+		status=ReadCellAge(&uint8Data);
+		if(module == myID)
+		{
+		temp[0] =(uint8_t)uint8Data;
+		writePxITMutex(port,(char* )&temp[0],sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint8_t)uint8Data;
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint8_t)+1);
+		}
+		break;
+	case batCycles:
+		status=ReadCellCycles(&uint16Data);
+		if(module == myID)
+		{
+		temp[0] =(uint16_t)uint8Data;
+		temp[1] =(uint16_t)uint8Data>>8;
+		writePxITMutex(port,(char* )&temp[0],2*sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint16_t)uint8Data;
+		messageParams[2] =(uint16_t)uint8Data>>8;
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint16_t)+1);
+		}
+		break;
+	default:
+		break;
+}
+    return status;
+}
 /* -----------------------------------------------------------------------
  |								Commands							      |
    -----------------------------------------------------------------------
