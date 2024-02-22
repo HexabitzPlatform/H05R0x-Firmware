@@ -34,7 +34,6 @@ extern FLASH_ProcessTypeDef pFlash;
 extern uint8_t numOfRecordedSnippets;
 
 /* Exported functions */
-extern Module_Status ReadID(IdType *BatId);
 extern Module_Status WriteI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
 extern Module_Status ReadI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
 extern Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer);
@@ -43,6 +42,8 @@ extern Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *
 
 Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
 Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t Size);
+Module_Status ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
+Module_Status ReadID(IdType *BatId);
 Module_Status Init_MAX17330(void);
 
 /* Module exported parameters ------------------------------------------------*/
@@ -581,16 +582,9 @@ void RegisterModuleCLICommands(void){
 
 /*-----------------------------------------------------------*/
 
-
-/*-----------------------------------------------------------*/
-
-
-/*-----------------------------------------------------------*/
-
 /* -----------------------------------------------------------------------
- |								  APIs							          ||
+ |								  Local Function
 /* -----------------------------------------------------------------------
- */
 /*
  * @brief: write 16-bit data to a Battery charger/gauge register
  * @param1: register's address to write data at
@@ -811,6 +805,10 @@ Module_Status ReadID(IdType *BatId)
 }
 /*-----------------------------------------------------------*/
 
+/* -----------------------------------------------------------------------
+ |								  User Function
+/* -----------------------------------------------------------------------
+ */
 /*
  * @brief: read battery cell voltage
  * @param1: pointer to a buffer to store received data
@@ -1205,7 +1203,7 @@ Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer)
 		return H05R0_COM_ERR;
 
 	/* wait t_BLOCK for the copy to complete */
-	_DELAY_MS(BLOCK_TIME);
+	Delay_ms(BLOCK_TIME);
 
 	/* check the CommStat.NVError bit, if set repeat the process */
 
@@ -1214,7 +1212,7 @@ Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer)
 		return H05R0_COM_ERR;
 
 	/* wait 10msec */
-	_DELAY_MS(10);
+	Delay_ms(10);
 
 	/* write 0x8000 to Config2 register 0x0AB to reset firmware */
 	if (H05R0_OK != WriteReg(0x0AB, 0x8000))
@@ -1247,7 +1245,7 @@ Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites)
 		return H05R0_COM_ERR;
 
 	/* wait t_BLOCK for the copy to complete */
-	_DELAY_MS(RECALL_TIME);
+	Delay_ms(RECALL_TIME);
 
 	/* read memory address 1FDh */
 	if (H05R0_OK != ReadReg(REM_UPDT_REG_ADD, &tempVar, 1))
@@ -1334,7 +1332,7 @@ Module_Status LockNonVolatileMemory(void)
 			return H05R0_COM_ERR;
 
 		/* wait tUPDATE for the copy to complete */
-		_DELAY_MS(UPDATE_TIME);
+		Delay_ms(UPDATE_TIME);
 
 		/* check the CommStat.NVError bit. If set, repeat the process */
 		if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, 1))

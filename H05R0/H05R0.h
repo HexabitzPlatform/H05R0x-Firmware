@@ -105,10 +105,10 @@
 /* Module-specific Definitions */
 
 /* Indicator LED */
-#define _IND_LED_PORT			GPIOB
-#define _IND_LED_PIN			GPIO_PIN_15
+#define _IND_LED_PORT		 GPIOB
+#define _IND_LED_PIN		 GPIO_PIN_15
 
-#define NUM_MODULE_PARAMS		1
+#define NUM_MODULE_PARAMS	 1
 
 /* Module GPIO Pinout */
 #define BAT_ALRT_Pin         GPIO_PIN_0
@@ -126,9 +126,6 @@
 /* Module EEPROM Variables */
 // Module Addressing Space 500 - 599
 #define _EE_MODULE			500
-
-/* General purposes functions definitions */
-#define _DELAY_MS(TimeOut)       		HAL_Delay(TimeOut)
 
 /* Exported types ------------------------------------------------------------*/
 
