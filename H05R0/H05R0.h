@@ -195,6 +195,8 @@ typedef struct {
 	uint8_t batAge;
 	uint16_t batCycles;
 	float batIntResistance;
+	float setChargVolt;
+	float setChargCurrent;
 }AnalogMeasType;
 
 typedef struct {

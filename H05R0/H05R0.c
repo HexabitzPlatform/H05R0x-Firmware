@@ -1106,6 +1106,12 @@ Module_Status ReadAllAnalogMeasurements(AnalogMeasType *batMeasurements)
 	Status = ReadCellCalInterRes(&batMeasurements->batIntResistance);
 	if (H05R0_OK != Status)
 		cntStatus++;
+	Status = ReadSetChargVoltage(&batMeasurements->setChargVolt);
+	if (H05R0_OK != Status)
+		cntStatus++;
+	Status = ReadSetChargCurrent(&batMeasurements->setChargCurrent);
+	if (H05R0_OK != Status)
+		cntStatus++;
 
 	if (FALSE != cntStatus)
 		Status = H05R0_ERROR;
@@ -1596,7 +1602,7 @@ portBASE_TYPE CLI_ReadCellPowerCommand( int8_t *pcWriteBuffer, size_t xWriteBuff
 portBASE_TYPE CLI_ReadTemperatureCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString ){
 	Module_Status status = H05R0_OK;
 	float Temp=0;
-	static const int8_t *pcOKMessage=(int8_t* )"Temperature is:%0.3fCْ\n\r";
+	static const int8_t *pcOKMessage=(int8_t* )"Temperature is:%0.3fC\n\r";
 	static const int8_t *pcErrorsMessage =(int8_t* )"Error Params!\n\r";
 
 		(void )xWriteBufferLen;
@@ -1671,7 +1677,7 @@ portBASE_TYPE CLI_ReadCellStateOfChargeCommand( int8_t *pcWriteBuffer, size_t xW
 portBASE_TYPE CLI_ReadCellEstimatedTTECommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString ){
 	Module_Status status = H05R0_OK;
 	uint32_t batTTE=0;
-	static const int8_t *pcOKMessage=(int8_t* )"CellEstimatedTTE is:%dmS \n\r";
+	static const int8_t *pcOKMessage=(int8_t* )"CellEstimatedTTE is:%dms \n\r";
 	static const int8_t *pcErrorsMessage =(int8_t* )"Error Params!\n\r";
 
 		(void )xWriteBufferLen;
@@ -1696,7 +1702,7 @@ portBASE_TYPE CLI_ReadCellEstimatedTTECommand( int8_t *pcWriteBuffer, size_t xWr
 portBASE_TYPE CLI_ReadCellEstimatedTTFCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString ){
 	Module_Status status = H05R0_OK;
 	uint32_t batTTF=0;
-	static const int8_t *pcOKMessage=(int8_t* )"CellEstimatedTTF is:%dmS \n\r";
+	static const int8_t *pcOKMessage=(int8_t* )"CellEstimatedTTF is:%dms \n\r";
 	static const int8_t *pcErrorsMessage =(int8_t* )"Error Params!\n\r";
 
 		(void )xWriteBufferLen;
@@ -1851,11 +1857,11 @@ portBASE_TYPE CLI_ReadAllAnalogMeasurementsCommand( int8_t *pcWriteBuffer, size_
 		"CellVoltage is:%0.3fV\n\r"
 		"CellCurrent is:%0.3fA\n\r"
 		"CellPower is:%0.3fW \n\r"
-		"Temperature is:%0.3fCْ\n\r"
+		"Temperature is:%0.3fC\n\r"
 		"CellCapacity is:%0.3fA\n\r"
 		"CellStateOfCharge is:%d%% \n\r"
-		"CellEstimatedTTE is:%dmS \n\r"
-		"CellEstimatedTTF is:%dmS \n\r"
+		"CellEstimatedTTE is:%dms \n\r"
+		"CellEstimatedTTF is:%dms \n\r"
 		"CellAge is:%d%% \n\r"
 		"CellCycles is:%d \n\r"
 		"CellCalInterRes is:%0.3fohm \n\r"
@@ -1873,7 +1879,8 @@ portBASE_TYPE CLI_ReadAllAnalogMeasurementsCommand( int8_t *pcWriteBuffer, size_
 	 {
 	 sprintf((char* )pcWriteBuffer,(char* )pcOKMessage,batMeasurements.batVolt,batMeasurements.batCurrent,batMeasurements.batPower
 	 ,batMeasurements.Temp,batMeasurements.batCapacity,batMeasurements.batSOC,batMeasurements.batTTE,batMeasurements.batTTF
-	 ,batMeasurements.batAge,batMeasurements.batCycles,batMeasurements.batIntResistance);
+	 ,batMeasurements.batAge,batMeasurements.batCycles,batMeasurements.batIntResistance,batMeasurements.setChargVolt
+	 ,batMeasurements.setChargCurrent);
 
 	 }
 
