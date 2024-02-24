@@ -34,29 +34,29 @@ void UserTask(void *argument){
 	// put your code here, to run repeatedly.
 	while(1){
 
-		Sampletoport(1, 1,batVolt);
-		Sampletoport(2, 2,batVolt);
+		SampletoPort(1, 1,batVolt);
+		SampletoPort(2, 2,batVolt);
 		Delay_ms(1000);
-		Sampletoport(1, 1,batCurrent);
-		Sampletoport(2, 2,batCurrent);
+		SampletoPort(1, 1,batCurrent);
+		SampletoPort(2, 2,batCurrent);
 		Delay_ms(1000);
-		Sampletoport(1, 1,batPower);
-		Sampletoport(2, 2,batPower);
+		SampletoPort(1, 1,batPower);
+		SampletoPort(2, 2,batPower);
 		Delay_ms(1000);
-		Sampletoport(1, 1,Temp);
-		Sampletoport(2, 2,Temp);
+		SampletoPort(1, 1,Temp);
+		SampletoPort(2, 2,Temp);
 		Delay_ms(1000);
-		Sampletoport(1, 1,batCapacity);
-		Sampletoport(2, 2,batCapacity);
+		SampletoPort(1, 1,batCapacity);
+		SampletoPort(2, 2,batCapacity);
 		Delay_ms(1000);
-		Sampletoport(1, 1,batSOC);
-		Sampletoport(2, 2,batSOC);
+		SampletoPort(1, 1,batSOC);
+		SampletoPort(2, 2,batSOC);
 		Delay_ms(1000);
-		Sampletoport(1, 1,batAge);
-		Sampletoport(2, 2,batAge);
+		SampletoPort(1, 1,batAge);
+		SampletoPort(2, 2,batAge);
 		Delay_ms(1000);
-		Sampletoport(1, 1,batCycles);
-		Sampletoport(2, 2,batCycles);
+		SampletoPort(1, 1,batCycles);
+		SampletoPort(2, 2,batCycles);
 		Delay_ms(1000);
 
 	}

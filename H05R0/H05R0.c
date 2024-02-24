@@ -48,7 +48,6 @@ Module_Status Init_MAX17330(void);
 
 /* Module exported parameters ------------------------------------------------*/
 module_param_t modParam[NUM_MODULE_PARAMS] ={{.paramPtr = NULL, .paramFormat =FMT_FLOAT, .paramName =""}};
-
 /* Private variables ---------------------------------------------------------*/
 //TaskHandle_t LipoChargerTaskHandle = NULL;
 
@@ -1361,8 +1360,10 @@ Module_Status LockNonVolatileMemory(void)
 /*
  *  Sending a sample of the required module on the required port
  *  If the topology file is not activated, therefore The module number is 0
+ *  Transmission using LSP FIRST.
+ *  function It is one of the elements of All_Data
  */
-Module_Status Sampletoport(uint8_t module,uint8_t port,All_Data function)
+Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function)
 {
 	 float floatData=0;
 	 uint8_t uint8Data=0;
@@ -1370,7 +1371,11 @@ Module_Status Sampletoport(uint8_t module,uint8_t port,All_Data function)
 	static uint8_t temp[4]={0};
 	Module_Status status =H05R0_OK;
 
-switch (function) {
+	if(port == 0)
+	return H05R0_ERR_WrongParams;
+
+	switch (function)
+	{
 	case batVolt:
 		status=ReadCellVoltage(&floatData);
 		if(module == myID)
@@ -1391,6 +1396,7 @@ switch (function) {
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
 		}
 		break;
+
 	case batCurrent:
 		status=ReadCellCurrent(&floatData);
 		if(module == myID)
@@ -1411,6 +1417,7 @@ switch (function) {
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
 		}
 		break;
+
 	case batPower:
 		status=ReadCellPower(&floatData);
 		if(module == myID)
@@ -1431,6 +1438,7 @@ switch (function) {
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
 		}
 		break;
+
 	case Temp:
 		status=ReadTemperature(&floatData);
 		if(module == myID)
@@ -1451,6 +1459,7 @@ switch (function) {
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
 		}
 		break;
+
 	case batCapacity:
 		status=ReadCellCapacity(&floatData);
 		if(module == myID)
@@ -1471,6 +1480,7 @@ switch (function) {
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
 		}
 		break;
+
 	case batSOC:
 		status=ReadCellStateOfCharge(&uint8Data);
 		if(module == myID)
@@ -1485,6 +1495,7 @@ switch (function) {
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint8_t)+1);
 		}
 		break;
+
 	case batAge:
 		status=ReadCellAge(&uint8Data);
 		if(module == myID)
@@ -1499,6 +1510,7 @@ switch (function) {
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint8_t)+1);
 		}
 		break;
+
 	case batCycles:
 		status=ReadCellCycles(&uint16Data);
 		if(module == myID)
@@ -1512,16 +1524,18 @@ switch (function) {
 		messageParams[0] =port;
 		messageParams[1] =(uint8_t)((*(uint16_t *) &uint16Data) >> 0);
 		messageParams[2] =(uint8_t)((*(uint16_t *) &uint16Data) >> 8);
-
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint16_t)+1);
 		}
 		break;
+
 	default:
+		status=H05R0_ERR_WrongParams;
 		break;
-}
-memset(&temp[0],0,sizeof(temp));
+	}
+	memset(&temp[0],0,sizeof(temp));
     return status;
 }
+
 /* -----------------------------------------------------------------------
  |								Commands							      |
    -----------------------------------------------------------------------

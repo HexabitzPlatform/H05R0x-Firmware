@@ -149,6 +149,7 @@ typedef enum {
 	H05R0_TMOUT,
 	H05R0_MSG_ACK, // A special case used only inside MessageConstructor() to indicate that command has executed successfully.
 	H05R0_COM_ERR,
+	H05R0_ERR_WrongParams,
 	H05R0_ERROR =255 			/* Battery charger/gauge error */
 } Module_Status;
 
@@ -246,7 +247,7 @@ Module_Status ReadAllAnalogMeasurements(AnalogMeasType *analMeasurements);
 Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer);
 Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status LockNonVolatileMemory(void);
-Module_Status Sampletoport(uint8_t module,uint8_t port,All_Data function);
+Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function);
 
 
 void SetupPortForRemoteBootloaderUpdate(uint8_t port);
