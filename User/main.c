@@ -9,6 +9,10 @@
 #include "BOS.h"
 
 /* Private variables ---------------------------------------------------------*/
+float picesSize=2.5;
+uint8_t txDataEsp[4]={0};
+uint16_t Z=400;
+uint32_t q=40000000;
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -30,22 +34,30 @@ void UserTask(void *argument){
 	// put your code here, to run repeatedly.
 	while(1){
 
-//		Sampletoport(1, 1,batVolt);
-//		Delay_ms(200);
-//		Sampletoport(1, 1,batCurrent);
-//		Delay_ms(200);
-//		Sampletoport(1, 1,batPower);
-//		Delay_ms(200);
-//		Sampletoport(1, 1,Temp);
-//		Delay_ms(200);
-//		Sampletoport(1, 1,batCapacity);
-//		Delay_ms(200);
-//		Sampletoport(1, 1,batSOC);
-//		Delay_ms(200);
-//		Sampletoport(1, 1,batAge);
-//		Delay_ms(200);
-//		Sampletoport(1, 1,batCycles);
-//		Delay_ms(200);
+		Sampletoport(1, 1,batVolt);
+		Sampletoport(2, 2,batVolt);
+		Delay_ms(1000);
+		Sampletoport(1, 1,batCurrent);
+		Sampletoport(2, 2,batCurrent);
+		Delay_ms(1000);
+		Sampletoport(1, 1,batPower);
+		Sampletoport(2, 2,batPower);
+		Delay_ms(1000);
+		Sampletoport(1, 1,Temp);
+		Sampletoport(2, 2,Temp);
+		Delay_ms(1000);
+		Sampletoport(1, 1,batCapacity);
+		Sampletoport(2, 2,batCapacity);
+		Delay_ms(1000);
+		Sampletoport(1, 1,batSOC);
+		Sampletoport(2, 2,batSOC);
+		Delay_ms(1000);
+		Sampletoport(1, 1,batAge);
+		Sampletoport(2, 2,batAge);
+		Delay_ms(1000);
+		Sampletoport(1, 1,batCycles);
+		Sampletoport(2, 2,batCycles);
+		Delay_ms(1000);
 
 	}
 }
