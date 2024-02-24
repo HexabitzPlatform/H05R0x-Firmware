@@ -48,6 +48,7 @@ Module_Status Init_MAX17330(void);
 
 /* Module exported parameters ------------------------------------------------*/
 module_param_t modParam[NUM_MODULE_PARAMS] ={{.paramPtr = NULL, .paramFormat =FMT_FLOAT, .paramName =""}};
+#define MIN_PERIOD_MS				100
 /* Private variables ---------------------------------------------------------*/
 //TaskHandle_t LipoChargerTaskHandle = NULL;
 
@@ -1534,6 +1535,33 @@ Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function)
 	}
 	memset(&temp[0],0,sizeof(temp));
     return status;
+}
+
+/*
+ * Sending a Stream of the required module on the required port
+ * 	period=timeout/Numofsamples -->minimum=100
+ * 	The minimum time between one sample and another is its value 100ms
+ *
+ */
+Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
+{
+	Module_Status status =H05R0_OK;
+	uint32_t samples=0;
+	uint32_t period=0;
+	period=timeout/Numofsamples;
+
+	if (timeout < MIN_PERIOD_MS || period < MIN_PERIOD_MS)
+		return H05R0_ERR_WrongParams;
+
+	while(samples < Numofsamples)
+	{
+	status=SampletoPort(module,port,function);
+	vTaskDelay(pdMS_TO_TICKS(period));
+	samples++;
+	}
+	samples=0;
+	return status;
+
 }
 
 /* -----------------------------------------------------------------------

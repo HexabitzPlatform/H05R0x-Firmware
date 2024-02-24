@@ -20,6 +20,7 @@ uint32_t q=40000000;
 
 int main(void){
 
+
 	Module_Init();		//Initialize Module &  BitzOS
 
 	//Don't place your code here.
@@ -30,34 +31,16 @@ int main(void){
 
 /* User Task */
 void UserTask(void *argument){
+	StreamtoPort(1, 1,batVolt, 3, 1000);
+	StreamtoPort(2, 2,batVolt, 3, 1000);
 
 	// put your code here, to run repeatedly.
 	while(1){
 
-		SampletoPort(1, 1,batVolt);
-		SampletoPort(2, 2,batVolt);
-		Delay_ms(1000);
-		SampletoPort(1, 1,batCurrent);
-		SampletoPort(2, 2,batCurrent);
-		Delay_ms(1000);
-		SampletoPort(1, 1,batPower);
-		SampletoPort(2, 2,batPower);
-		Delay_ms(1000);
-		SampletoPort(1, 1,Temp);
-		SampletoPort(2, 2,Temp);
-		Delay_ms(1000);
-		SampletoPort(1, 1,batCapacity);
-		SampletoPort(2, 2,batCapacity);
-		Delay_ms(1000);
-		SampletoPort(1, 1,batSOC);
-		SampletoPort(2, 2,batSOC);
-		Delay_ms(1000);
-		SampletoPort(1, 1,batAge);
-		SampletoPort(2, 2,batAge);
-		Delay_ms(1000);
-		SampletoPort(1, 1,batCycles);
-		SampletoPort(2, 2,batCycles);
-		Delay_ms(1000);
+//		SampletoPort(1, 1,batVolt);
+//		SampletoPort(2, 2,batVolt);
+//		Delay_ms(1000);
+
 
 	}
 }

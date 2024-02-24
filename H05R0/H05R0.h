@@ -248,6 +248,7 @@ Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer);
 Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status LockNonVolatileMemory(void);
 Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function);
+Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
 
 
 void SetupPortForRemoteBootloaderUpdate(uint8_t port);
