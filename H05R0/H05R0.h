@@ -136,8 +136,14 @@ typedef enum {
 	Temp,
 	batCapacity,
 	batSOC,
+	batTTE,
+	batTTF,
 	batAge,
 	batCycles,
+	batIntResistance,
+	setChargVolt,
+	setChargCurrent,
+
 }All_Data;
 /* Module_Status Type Definition */
 

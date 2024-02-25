@@ -1417,6 +1417,7 @@ Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function)
 	 float floatData=0;
 	 uint8_t uint8Data=0;
 	 uint16_t uint16Data=0;
+	 uint32_t uint32Data=0;
 	static uint8_t temp[4]={0};
 	Module_Status status =H05R0_OK;
 
@@ -1545,6 +1546,48 @@ Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function)
 		}
 		break;
 
+	case batTTE:
+		status=ReadCellEstimatedTTE(&uint32Data);
+		if(module == myID)
+		{
+		temp[0] = (uint8_t)((*(uint32_t *) &uint32Data) >> 0);
+		temp[1] = (uint8_t)((*(uint32_t *) &uint32Data) >> 8);
+		temp[2] = (uint8_t)((*(uint32_t *) &uint32Data) >> 16);
+		temp[3] = (uint8_t)((*(uint32_t *) &uint32Data) >> 24);
+		writePxITMutex(port,(char* )&temp[0],4*sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint8_t)((*(uint32_t *) &uint32Data) >> 0);
+		messageParams[2] =(uint8_t)((*(uint32_t *) &uint32Data) >> 8);
+		messageParams[1] =(uint8_t)((*(uint32_t *) &uint32Data) >> 16);
+		messageParams[2] =(uint8_t)((*(uint32_t *) &uint32Data) >> 24);
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint32Data)+1);
+		}
+		break;
+
+	case batTTF:
+		status=ReadCellEstimatedTTF(&uint32Data);
+		if(module == myID)
+		{
+		temp[0] = (uint8_t)((*(uint32_t *) &uint32Data) >> 0);
+		temp[1] = (uint8_t)((*(uint32_t *) &uint32Data) >> 8);
+		temp[2] = (uint8_t)((*(uint32_t *) &uint32Data) >> 16);
+		temp[3] = (uint8_t)((*(uint32_t *) &uint32Data) >> 24);
+		writePxITMutex(port,(char* )&temp[0],4*sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint8_t)((*(uint32_t *) &uint32Data) >> 0);
+		messageParams[2] =(uint8_t)((*(uint32_t *) &uint32Data) >> 8);
+		messageParams[1] =(uint8_t)((*(uint32_t *) &uint32Data) >> 16);
+		messageParams[2] =(uint8_t)((*(uint32_t *) &uint32Data) >> 24);
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint32Data)+1);
+		}
+		break;
+
 	case batAge:
 		status=ReadCellAge(&uint8Data);
 		if(module == myID)
@@ -1574,6 +1617,69 @@ Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function)
 		messageParams[1] =(uint8_t)((*(uint16_t *) &uint16Data) >> 0);
 		messageParams[2] =(uint8_t)((*(uint16_t *) &uint16Data) >> 8);
 		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(uint16_t)+1);
+		}
+		break;
+
+	case batIntResistance:
+		status=ReadCellCalInterRes(&floatData);
+		if(module == myID)
+		{
+		temp[0] = (uint8_t)((*(uint32_t *) &floatData) >> 0);
+		temp[1] = (uint8_t)((*(uint32_t *) &floatData) >> 8);
+		temp[2] = (uint8_t)((*(uint32_t *) &floatData) >> 16);
+		temp[3] = (uint8_t)((*(uint32_t *) &floatData) >> 24);
+		writePxITMutex(port,(char* )&temp[0],4 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint8_t)((*(uint32_t *) &floatData) >> 0);
+		messageParams[2] =(uint8_t)((*(uint32_t *) &floatData) >> 8);
+		messageParams[3] =(uint8_t)((*(uint32_t *) &floatData) >> 16);
+		messageParams[4] =(uint8_t)((*(uint32_t *) &floatData) >> 24);
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
+		}
+		break;
+
+	case setChargVolt:
+		status=ReadSetChargVoltage(&floatData);
+		if(module == myID)
+		{
+		temp[0] = (uint8_t)((*(uint32_t *) &floatData) >> 0);
+		temp[1] = (uint8_t)((*(uint32_t *) &floatData) >> 8);
+		temp[2] = (uint8_t)((*(uint32_t *) &floatData) >> 16);
+		temp[3] = (uint8_t)((*(uint32_t *) &floatData) >> 24);
+		writePxITMutex(port,(char* )&temp[0],4 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint8_t)((*(uint32_t *) &floatData) >> 0);
+		messageParams[2] =(uint8_t)((*(uint32_t *) &floatData) >> 8);
+		messageParams[3] =(uint8_t)((*(uint32_t *) &floatData) >> 16);
+		messageParams[4] =(uint8_t)((*(uint32_t *) &floatData) >> 24);
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
+		}
+		break;
+
+	case setChargCurrent:
+		status=ReadSetChargCurrent(&floatData);
+		if(module == myID)
+		{
+		temp[0] = (uint8_t)((*(uint32_t *) &floatData) >> 0);
+		temp[1] = (uint8_t)((*(uint32_t *) &floatData) >> 8);
+		temp[2] = (uint8_t)((*(uint32_t *) &floatData) >> 16);
+		temp[3] = (uint8_t)((*(uint32_t *) &floatData) >> 24);
+		writePxITMutex(port,(char* )&temp[0],4 * sizeof(uint8_t),10);
+		}
+		else
+		{
+		messageParams[0] =port;
+		messageParams[1] =(uint8_t)((*(uint32_t *) &floatData) >> 0);
+		messageParams[2] =(uint8_t)((*(uint32_t *) &floatData) >> 8);
+		messageParams[3] =(uint8_t)((*(uint32_t *) &floatData) >> 16);
+		messageParams[4] =(uint8_t)((*(uint32_t *) &floatData) >> 24);
+		SendMessageToModule(module,CODE_PORT_FORWARD,sizeof(float)+1);
 		}
 		break;
 
