@@ -546,6 +546,18 @@ Module_Status Module_MessagingTask(uint16_t code,uint8_t port,uint8_t src,uint8_
 		break;
 	}
 
+	case CODE_H05R0_CELLESTIMATEDTTE:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batTTE);
+		break;
+	}
+
+	case CODE_H05R0_CELLESTIMATEDTTF:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batTTF);
+		break;
+	}
+
 	case CODE_H05R0_CELLAGE:
 	{
 		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batAge);
@@ -558,9 +570,27 @@ Module_Status Module_MessagingTask(uint16_t code,uint8_t port,uint8_t src,uint8_
 		break;
 	}
 
+	case CODE_H05R0_CELLCALINTERRES:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batIntResistance);
+		break;
+	}
+
+	case CODE_H05R0_SETCHARGVOLTAGE:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],setChargVolt);
+		break;
+	}
+
+		case CODE_H05R0_SETCHARGCURRENT:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],setChargCurrent);
+		break;
+	}
+
 		default:
-			result =H05R0_ERR_UnknownMessage;
-			break;
+		result =H05R0_ERR_UnknownMessage;
+		break;
 	}
 	
 	return result;
