@@ -31,8 +31,8 @@ int main(void){
 
 /* User Task */
 void UserTask(void *argument){
-	StreamtoPort(1, 1,batVolt, 3, 1000);
-	StreamtoPort(2, 2,batVolt, 3, 1000);
+//	StreamtoPort(1, 1,batVolt, 3, 1000);
+//	StreamtoPort(2, 2,batVolt, 3, 1000);
 
 	// put your code here, to run repeatedly.
 	while(1){

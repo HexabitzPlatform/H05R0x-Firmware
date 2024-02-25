@@ -508,7 +508,55 @@ void Module_Peripheral_Init(void){
 Module_Status Module_MessagingTask(uint16_t code,uint8_t port,uint8_t src,uint8_t dst,uint8_t shift){
 	Module_Status result =H05R0_OK;
 
+
 	switch(code){
+	case CODE_H05R0_CELLVOLTAGE:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batVolt);
+		break;
+	}
+
+	case CODE_H05R0_CELLCURRENT:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCurrent);
+		break;
+	}
+
+	case CODE_H05R0_CELLPOWER:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batPower);
+		break;
+	}
+
+	case CODE_H05R0_CELLTEMPERATURE:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],Temp);
+		break;
+	}
+
+	case CODE_H05R0_CELLCAPACITY:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCapacity);
+		break;
+	}
+
+	case CODE_H05R0_CELLSTATEOFCHARGE:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batSOC);
+		break;
+	}
+
+	case CODE_H05R0_CELLAGE:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batAge);
+		break;
+	}
+
+	case CODE_H05R0_CELLCYCLES:
+	{
+		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCycles);
+		break;
+	}
 
 		default:
 			result =H05R0_ERR_UnknownMessage;
