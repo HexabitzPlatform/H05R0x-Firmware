@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.3.0 - Copyright (C) 2017-2024 Hexabitz
+ BitzOS (BOS) V0.3.1 - Copyright (C) 2017-2024 Hexabitz
  All rights reserved
 
  File Name     : H05R0_gpio.h
@@ -21,6 +21,7 @@
 
 extern void GPIO_Init(void);
 extern void IND_LED_Init(void);
+extern void MX_GPIO_Init(void);
 
 #ifdef __cplusplus
 }
