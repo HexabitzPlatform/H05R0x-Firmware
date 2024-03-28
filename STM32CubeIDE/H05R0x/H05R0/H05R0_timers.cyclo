@@ -1,4 +1,4 @@
-H05R0_timers.c:30:6:TIM_USEC_Init	1
-H05R0_timers.c:52:6:TIM_MSEC_Init	1
-H05R0_timers.c:74:6:StartMicroDelay	3
-H05R0_timers.c:92:6:StartMilliDelay	3
+..\..\H05R0\H05R0_timers.c:30:6:TIM_USEC_Init	1
+..\..\H05R0\H05R0_timers.c:52:6:TIM_MSEC_Init	1
+..\..\H05R0\H05R0_timers.c:74:6:StartMicroDelay	3
+..\..\H05R0\H05R0_timers.c:92:6:StartMilliDelay	3
