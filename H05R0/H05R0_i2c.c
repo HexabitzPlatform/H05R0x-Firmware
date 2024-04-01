@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.3.1 - Copyright (C) 2017-2024 Hexabitz
+ BitzOS (BOS) V0.3.2 - Copyright (C) 2017-2024 Hexabitz
  All rights reserved
 
  File Name     : H05R0_i2c.c
@@ -9,12 +9,19 @@
  */
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
+#include "H05R0_i2c.h"
 
 /* USER CODE BEGIN 0 */
 I2C_HandleTypeDef hi2c2;
 
 /* USER CODE BEGIN 1 */
 SMBUS_HandleTypeDef hsmbus2;
+
+Module_Status WriteI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
+Module_Status ReadI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
+Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer);
+Module_Status WriteSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
+Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
 
 /* I2C2 init function */
 void MX_I2C2_Init(void)

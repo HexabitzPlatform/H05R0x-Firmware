@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.3.1 - Copyright (C) 2017-2024 Hexabitz
+ BitzOS (BOS) V0.3.2 - Copyright (C) 2017-2024 Hexabitz
  All rights reserved
 
  File Name     : H05R0.c
@@ -16,11 +16,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
 #include "H05R0_inputs.h"
+#include "H05R0_i2c.h"
 
-/* Private macros ------------------------------------------------------------*/
-#define UNSNGD_HALF_WORD_MAX_VAL		0xFFFF
-#define UNSNGD_HALF_WORD_MIN_VAL		0x0000
-#define TWO_COMPL_VAL_MASK				0x7FFF
 
 /* Define UART variables */
 UART_HandleTypeDef huart1;
@@ -33,13 +30,7 @@ UART_HandleTypeDef huart6;
 extern FLASH_ProcessTypeDef pFlash;
 extern uint8_t numOfRecordedSnippets;
 
-/* Exported functions */
-extern Module_Status WriteI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
-extern Module_Status ReadI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
-extern Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer);
-extern Module_Status WriteSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
-extern Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
-
+/* Local functions */
 Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
 Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t Size);
 Module_Status ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
@@ -48,9 +39,8 @@ Module_Status Init_MAX17330(void);
 
 /* Module exported parameters ------------------------------------------------*/
 module_param_t modParam[NUM_MODULE_PARAMS] ={{.paramPtr = NULL, .paramFormat =FMT_FLOAT, .paramName =""}};
-#define MIN_PERIOD_MS				100
+
 /* Private variables ---------------------------------------------------------*/
-//TaskHandle_t LipoChargerTaskHandle = NULL;
 
 /* Private function prototypes -----------------------------------------------*/
 void ExecuteMonitor(void);
@@ -269,8 +259,6 @@ void SystemClock_Config(void){
 	HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
 	__HAL_RCC_PWR_CLK_ENABLE();
 	HAL_PWR_EnableBkUpAccess();
-//	__HAL_RCC_TIM1_CLK_ENABLE();
-//	__HAL_RCC_TIM2_CLK_ENABLE();
 
 	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
 
@@ -480,6 +468,7 @@ void Module_Peripheral_Init(void){
 	MX_I2C2_Init();
 	MX_GPIO_Init();
 	Init_MAX17330();
+
 	 //Circulating DMA Channels ON All Module
 	for (int i = 1; i <= NumOfPorts; i++) {
 		if (GetUart(i) == &huart1) {
@@ -498,8 +487,7 @@ void Module_Peripheral_Init(void){
 
 
 	/* Create module special task (if needed) */
-	//if(LipoChargerTaskHandle == NULL)
-			//xTaskCreate(LipoChargerTask,(const char* ) "LipoChargerTask",configMINIMAL_STACK_SIZE,NULL,osPriorityNormal - osPriorityIdle,&LipoChargerTaskHandle);
+
 }
 
 /*-----------------------------------------------------------*/
@@ -661,7 +649,7 @@ void RegisterModuleCLICommands(void){
 /*-----------------------------------------------------------*/
 
 /* -----------------------------------------------------------------------
- |								  Local Function
+ |								  Local Function                          |
 /* -----------------------------------------------------------------------
 /*
  * @brief: write 16-bit data to a Battery charger/gauge register
@@ -797,10 +785,6 @@ Module_Status Init_MAX17330(void)
 	uint16_t tempVar = 0u;
 	uint16_t tempBuffer[3] ={0};
 
-	/* set default configurations */
-//	if (H05R0_ERROR == WriteReg(BAT_, ))
-//		return H05R0_ERROR;
-
 	/* setting temperature sensing source from external thermistors and their type */
 	tempVar = (EXT_THERM_10K << 11) | (EXT_THERM_EN << 12);
 	if (H05R0_OK == WriteReg(PACK_CONFIG_REG_ADD, tempVar))
@@ -881,7 +865,6 @@ Module_Status ReadID(IdType *BatId)
 
 	return Status;
 }
-/*-----------------------------------------------------------*/
 
 /* -----------------------------------------------------------------------
  |								  User Function
@@ -1257,8 +1240,7 @@ Module_Status ReadSetChargCurrent(float *setChargCurrent)
 	if (H05R0_OK == ReadReg(CHARGE_CURRENT_REG_ADD, &tempVar, sizeof(tempVar)))
 			Status = H05R0_OK;
 
-//	/* convert the received value from two's complementary to signed decimal value */
-//	if (STATUS_OK == ConvertTwosComplToDec(tempVar, &tempSingedVar))
+	/* convert the received value from two's complementary to signed decimal value */
 		*setChargCurrent = (float) (CUR_RESOL_VAL * tempVar);
 
 	return Status;

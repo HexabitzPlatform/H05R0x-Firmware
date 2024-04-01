@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.3.1 - Copyright (C) 2017-2024 Hexabitz
+ BitzOS (BOS) V0.3.2 - Copyright (C) 2017-2024 Hexabitz
  All rights reserved
 
  File Name     : H05R0_i2c.h
@@ -35,6 +35,7 @@ typedef SMBUS_HandleTypeDef			SMBUS_HANDLE;
 #define TIM_OUT_10MS         		10u
 
 
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -42,6 +43,11 @@ void MX_I2C2_Init(void);
 void MX_I2C2_SMBUS_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+extern Module_Status WriteI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
+extern Module_Status ReadI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
+extern Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer);
+extern Module_Status WriteSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
+extern Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
 
 /* USER CODE END Prototypes */
 

@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.3.1 - Copyright (C) 2017-2024 Hexabitz
+ BitzOS (BOS) V0.3.2 - Copyright (C) 2017-2024 Hexabitz
  All rights reserved
  
  File Name     : H05R0.h
@@ -25,7 +25,6 @@
 #include "H05R0_dma.h"
 #include "H05R0_inputs.h"
 #include "H05R0_eeprom.h"
-#include "H05R0_i2c.h"
 #include "MAX17330_reg_address.h"
 
 /* Exported definitions -------------------------------------------------------*/
@@ -44,16 +43,13 @@
 #define _P3 
 #define _P4 
 #define _P5 
-//#define _P6
 
 /* Define available USARTs */
 #define _Usart1 1
 #define _Usart2 1
 #define _Usart3 1
-//#define _Usart4 1
 #define _Usart5 1
 #define _Usart6	1
-
 
 /* Port-UART mapping */
 
@@ -62,8 +58,6 @@
 #define P3uart &huart6
 #define P4uart &huart3
 #define P5uart &huart1
-//#define P6uart &huart4
-
 
 /* Port Definitions */
 #define	USART1_TX_PIN		GPIO_PIN_9
@@ -122,6 +116,13 @@
 #define MCU_SDA_GPIO_Port    GPIOA
 #define MCU_SCL_Pin          GPIO_PIN_7
 #define MCU_SCL_GPIO_Port    GPIOA
+
+
+/* Module special parameters */
+#define MIN_PERIOD_MS				100
+#define UNSNGD_HALF_WORD_MAX_VAL    0xFFFF
+#define UNSNGD_HALF_WORD_MIN_VAL	0x0000
+#define TWO_COMPL_VAL_MASK			0x7FFF
 
 /* Module EEPROM Variables */
 // Module Addressing Space 500 - 599
