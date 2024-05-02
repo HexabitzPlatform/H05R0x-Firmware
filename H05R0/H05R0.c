@@ -43,13 +43,14 @@ module_param_t modParam[NUM_MODULE_PARAMS] ={{.paramPtr = NULL, .paramFormat =FM
 /* Private variables ---------------------------------------------------------*/
 TaskHandle_t LipoChargerTaskHandle = NULL;
 uint8_t port1, module1;
-uint8_t port2 ,module2,mode2;
-uint32_t Numofsamples2 ,timeout2;
+uint8_t port2 ,module2,mode2,mode1;
+uint32_t Numofsamples1 ,timeout1;
 uint8_t port3 ;
 uint32_t Numofsamples3 ,timeout3;
 uint8_t flag ;
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
+Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
 void LipoChargerTask(void *argument);
 void ExecuteMonitor(void);
 void FLASH_Page_Eras(uint32_t Addr );
@@ -649,7 +650,7 @@ void LipoChargerTask(void *argument){
 
 			break;
 		case STREAM_TO_PORT:
-
+			Exportstreamtoport(module1, port1, mode1, Numofsamples1, timeout1);
 			break;
 		case SAMPLE_TO_PORT:
 
@@ -1459,6 +1460,7 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 	switch (function) {
 	case batVolt:
 		status = ReadCellVoltage(&floatData);
+		floatData='s';
 		if (module == myID || module == 0) {
 			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
 			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
@@ -1705,21 +1707,33 @@ Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function)
 Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
 {
 	Module_Status status = H05R0_OK;
-		uint32_t samples = 0;
-		uint32_t period = 0;
-		period = timeout / Numofsamples;
+	tofMode=STREAM_TO_PORT;
+	port1 = port ;
+	module1 =module;
+	Numofsamples1=Numofsamples;
+	timeout1=timeout;
+	mode1= function;
+	return status;
 
-		if (timeout < MIN_PERIOD_MS || period < MIN_PERIOD_MS)
-			return H05R0_ERR_WrongParams;
+}
+Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
+ {
+	Module_Status status = H05R0_OK;
+	uint32_t samples = 0;
+	uint32_t period = 0;
+	period = timeout / Numofsamples;
 
-		while (samples < Numofsamples) {
-			status = SampletoPort(module, port, function);
-			vTaskDelay(pdMS_TO_TICKS(period));
-			samples++;
-		}
-		samples = 0;
-		return status;
+	if (timeout < MIN_PERIOD_MS || period < MIN_PERIOD_MS)
+		return H05R0_ERR_WrongParams;
 
+	while (samples < Numofsamples) {
+		status = Exporttoport(module, port, function);
+		vTaskDelay(pdMS_TO_TICKS(period));
+		samples++;
+	}
+	module1 = 20;
+	samples = 0;
+	return status;
 }
 
 /* -----------------------------------------------------------------------
