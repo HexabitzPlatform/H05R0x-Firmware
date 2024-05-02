@@ -124,6 +124,9 @@
 #define UNSNGD_HALF_WORD_MIN_VAL	0x0000
 #define TWO_COMPL_VAL_MASK			0x7FFF
 
+#define SAMPLE_TO_PORT          1
+#define STREAM_TO_PORT          2
+#define STREAM_TO_Terminal      3
 /* Module EEPROM Variables */
 // Module Addressing Space 500 - 599
 #define _EE_MODULE			500
