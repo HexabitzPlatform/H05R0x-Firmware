@@ -123,6 +123,8 @@
 #define UNSNGD_HALF_WORD_MAX_VAL    0xFFFF
 #define UNSNGD_HALF_WORD_MIN_VAL	0x0000
 #define TWO_COMPL_VAL_MASK			0x7FFF
+#define MIN_MEMS_PERIOD_MS				100
+#define MAX_MEMS_TIMEOUT_MS				0xFFFFFFFF
 
 #define SAMPLE_TO_PORT          1
 #define STREAM_TO_PORT          2
@@ -159,6 +161,7 @@ typedef enum {
 	H05R0_TMOUT,
 	H05R0_MSG_ACK, // A special case used only inside MessageConstructor() to indicate that command has executed successfully.
 	H05R0_COM_ERR,
+	H05R0_ERR_TERMINATED,
 	H05R0_ERR_WrongParams,
 	H05R0_ERROR =255 			/* Battery charger/gauge error */
 } Module_Status;
@@ -259,8 +262,7 @@ Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status LockNonVolatileMemory(void);
 Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function);
 Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
-
-
+Module_Status StreamToTerminal(uint32_t Numofsamples, uint32_t timeout,uint8_t Port,All_Data function);
 void SetupPortForRemoteBootloaderUpdate(uint8_t port);
 void remoteBootloaderUpdate(uint8_t src,uint8_t dst,uint8_t inport,uint8_t outport);
 

@@ -36,7 +36,7 @@ Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t Size);
 Module_Status ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 Module_Status ReadID(IdType *BatId);
 Module_Status Init_MAX17330(void);
-
+static Module_Status PollingSleepCLISafe(uint32_t period, long Numofsamples);
 /* Module exported parameters ------------------------------------------------*/
 module_param_t modParam[NUM_MODULE_PARAMS] ={{.paramPtr = NULL, .paramFormat =FMT_FLOAT, .paramName =""}};
 
@@ -45,12 +45,14 @@ TaskHandle_t LipoChargerTaskHandle = NULL;
 uint8_t port1, module1;
 uint8_t port2 ,module2,mode2,mode1;
 uint32_t Numofsamples1 ,timeout1;
-uint8_t port3 ;
+uint8_t port3 ,module3,mode3;
 uint32_t Numofsamples3 ,timeout3;
 uint8_t flag ;
+static bool stopStream = false;
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
 Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
+Module_Status Exportstreamtoterminal(uint32_t Numofsamples, uint32_t timeout,uint8_t Port,All_Data function);
 void LipoChargerTask(void *argument);
 void ExecuteMonitor(void);
 void FLASH_Page_Eras(uint32_t Addr );
@@ -646,15 +648,17 @@ void LipoChargerTask(void *argument){
 	for(;;){
 		/*  */
 		switch (tofMode) {
-		case STREAM_TO_Terminal:
 
-			break;
 		case STREAM_TO_PORT:
 			Exportstreamtoport(module1, port1, mode1, Numofsamples1, timeout1);
 			break;
 		case SAMPLE_TO_PORT:
 
 			Exporttoport(module2, port2, mode2);
+			break;
+		case STREAM_TO_Terminal:
+			Exportstreamtoterminal(Numofsamples3, timeout3, port3, mode3);
+
 			break;
 
 		default:
@@ -1383,6 +1387,290 @@ Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites)
 	return Status;
 }
 /*-----------------------------------------------------------*/
+
+Module_Status StreamToTerminal(uint32_t Numofsamples, uint32_t timeout,uint8_t Port,All_Data function)
+{
+	Module_Status status = H05R0_OK;
+	tofMode=STREAM_TO_Terminal;
+	port3 = Port ;
+	Numofsamples3=Numofsamples;
+	timeout3=timeout;
+	mode3= function;
+	return status;
+}
+Module_Status Exportstreamtoterminal(uint32_t Numofsamples, uint32_t timeout,uint8_t Port,All_Data function)
+ {
+	Module_Status status = H05R0_OK;
+	int8_t *pcOutputString = NULL;
+	uint32_t period = timeout / Numofsamples;
+	float floatData;
+	uint8_t uint8Data = 0;
+	uint16_t uint16Data = 0;
+	uint32_t uint32Data = 0;
+	static uint8_t temp[4] = { 0 };
+	char cstring[100];
+	long numTimes = timeout / period;
+	if (period < MIN_MEMS_PERIOD_MS)
+		return H05R0_ERR_WrongParams;
+
+	// TODO: Check if CLI is enable or not
+	switch (function) {
+	case batVolt:
+		if (period > timeout)
+			timeout = period;
+
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellVoltage(&floatData);
+
+			snprintf(cstring, 50, "CellVoltage | Voltage: %.2f\r\n", floatData);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+		break;
+
+	case batCurrent:
+		if (period > timeout)
+			timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellCurrent(&floatData);
+
+			snprintf(cstring, 50, "CellCurrent | Current: %.2f\r\n", floatData);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+		break;
+
+		break;
+
+	case batPower:
+
+		if (period > timeout)
+			timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellPower(&floatData);
+
+			snprintf(cstring, 50, "CellPower | Power: %.2f\r\n", floatData);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+		break;
+		break;
+
+	case Temp:
+
+		if (period > timeout)
+			timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadTemperature(&floatData);
+
+			snprintf(cstring, 50, "Temperature | Temperature: %.2f\r\n",
+					floatData);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+		break;
+
+	case batCapacity:
+
+		if (period > timeout)
+			timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellCapacity(&floatData);
+
+			snprintf(cstring, 50, "CellCapacity | Capacity: %.2f\r\n",
+					floatData);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+		break;
+
+	case batSOC:
+
+		timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellStateOfCharge(&uint8Data);
+
+			snprintf(cstring, 50, "CellStateOfCharge | Charge: %.2f\r\n",
+					uint8Data);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+
+		break;
+
+	case batTTE:
+
+		timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellEstimatedTTE(&uint32Data);
+
+			snprintf(cstring, 50, "CellEstimatedTTE : %.2f\r\n", uint32Data);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+	case batTTF:
+
+		timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellEstimatedTTF(&uint32Data);
+
+			snprintf(cstring, 50, "CellEstimatedTTF : %.2f\r\n", uint32Data);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+	case batAge:
+
+		timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellAge(&uint8Data);
+
+			snprintf(cstring, 50, "CellAge : %.2f\r\n", uint8Data);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+	case batCycles:
+
+		timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadCellCycles(&uint16Data);
+
+			snprintf(cstring, 50, "CellCycles | Cycles: %.2f\r\n", uint16Data);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+	case batIntResistance:
+
+		break;
+
+	case setChargVolt:
+
+		timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadSetChargVoltage(&floatData);
+
+			snprintf(cstring, 50, "SetChargVoltage | Voltage: %.2f\r\n",
+					floatData);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+	case setChargCurrent:
+
+		timeout = period;
+		stopStream = false;
+
+		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+			ReadSetChargCurrent(&floatData);
+
+			snprintf(cstring, 50, "SetChargCurrent | Current: %.2f\r\n",
+					floatData);
+
+			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
+					cmd500ms, HAL_MAX_DELAY);
+			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
+				break;
+		}
+	default:
+		status = H05R0_ERR_WrongParams;
+		break;
+	}
+
+	tofMode = 20;
+	return status;
+}
+
+
+static Module_Status PollingSleepCLISafe(uint32_t period, long Numofsamples)
+{
+	const unsigned DELTA_SLEEP_MS = 100; // milliseconds
+	long numDeltaDelay =  period / DELTA_SLEEP_MS;
+	unsigned lastDelayMS = period % DELTA_SLEEP_MS;
+
+	while (numDeltaDelay-- > 0) {
+		vTaskDelay(pdMS_TO_TICKS(DELTA_SLEEP_MS));
+
+		// Look for ENTER key to stop the stream
+		for (uint8_t chr = 0; chr < MSG_RX_BUF_SIZE; chr++) {
+			if (UARTRxBuf[PcPort - 1][chr] == '\r' && Numofsamples > 0) {
+				UARTRxBuf[PcPort - 1][chr] = 0;
+				flag=1;
+				return H05R0_ERR_TERMINATED;
+			}
+		}
+
+		if (stopStream)
+			return H05R0_ERR_TERMINATED;
+	}
+
+	vTaskDelay(pdMS_TO_TICKS(lastDelayMS));
+	return H05R0_OK;
+}
 
 /*
  * @brief: read number of remaining non-volatile memory writes
