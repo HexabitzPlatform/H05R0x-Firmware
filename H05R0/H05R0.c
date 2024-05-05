@@ -37,6 +37,11 @@ Module_Status ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 Module_Status ReadID(IdType *BatId);
 Module_Status Init_MAX17330(void);
 static Module_Status PollingSleepCLISafe(uint32_t period, long Numofsamples);
+
+typedef void (*SampleMemsToPort)(uint8_t, uint8_t);
+typedef void (*SampleMemsToString)(char *, size_t);
+typedef void (*SampleMemsToBuffer)(float *buffer);
+
 /* Module exported parameters ------------------------------------------------*/
 module_param_t modParam[NUM_MODULE_PARAMS] ={{.paramPtr = NULL, .paramFormat =FMT_FLOAT, .paramName =""}};
 
@@ -48,6 +53,7 @@ uint32_t Numofsamples1 ,timeout1;
 uint8_t port3 ,module3,mode3;
 uint32_t Numofsamples3 ,timeout3;
 uint8_t flag ;
+uint8_t tofMode ;
 static bool stopStream = false;
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
@@ -58,8 +64,10 @@ void ExecuteMonitor(void);
 void FLASH_Page_Eras(uint32_t Addr );
 Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVal);
 Module_Status BAT_ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
-/* Create CLI commands --------------------------------------------------------*/
+static Module_Status StreamMemsToCLI(uint32_t Numofsamples, uint32_t timeout, SampleMemsToString function);
 
+/* Create CLI commands --------------------------------------------------------*/
+portBASE_TYPE CLI_ReadCellVoltageCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE CLI_ReadCellVoltageCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE CLI_ReadCellCurrentCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE CLI_ReadCellPowerCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
@@ -74,6 +82,7 @@ portBASE_TYPE CLI_ReadCellCalInterResCommand( int8_t *pcWriteBuffer, size_t xWri
 portBASE_TYPE CLI_ReadSetChargVoltageCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE CLI_ReadSetChargCurrentCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE CLI_ReadAllAnalogMeasurementsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+portBASE_TYPE CLI_ReadCellcurrentCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 
 /* CLI command structure : demo */
 
@@ -85,6 +94,23 @@ const CLI_Command_Definition_t CLI_ReadCellVoltageCommandDefinition =
 	( const int8_t * ) "cellvoltage:\r\n Parameters required to execute a readcellvoltage \r\n\r\n",
 	CLI_ReadCellVoltageCommand, /* The function to run. */
 	0 /* zero parameters are expected. */
+};
+/* CLI command structure : ReadCellVoltage(stream) */
+const CLI_Command_Definition_t CLI_ReadCellVoltageCommandDefinitionstream =
+{
+	( const int8_t * ) "streamvoltage", /* The command string to type. */
+	( const int8_t * ) "streamvoltage:\r\n Parameters required to execute a streamvoltage \r\n\r\n",
+	CLI_ReadCellVoltageCommandstream, /* The function to run. */
+	2 /* tow parameters are expected. */
+};
+/* CLI command structure : ReadCellcurren(stream) */
+/*-----------------------------------------------------------*/
+const CLI_Command_Definition_t CLI_ReadCellCurrentCommandDefinitionstream =
+{
+	( const int8_t * ) "streamcurrent", /* The command string to type. */
+	( const int8_t * ) "streamcurrent:\r\n Parameters required to execute a streamcurrent \r\n\r\n",
+	CLI_ReadCellcurrentCommandstream, /* The function to run. */
+	2 /* tow parameters are expected. */
 };
 /*-----------------------------------------------------------*/
 /* CLI command structure : ReadCellCurrent */
@@ -620,6 +646,8 @@ uint8_t GetPort(UART_HandleTypeDef *huart){
  */
 void RegisterModuleCLICommands(void){
     FreeRTOS_CLIRegisterCommand(&CLI_ReadCellVoltageCommandDefinition);
+    FreeRTOS_CLIRegisterCommand(&CLI_ReadCellVoltageCommandDefinitionstream);
+    FreeRTOS_CLIRegisterCommand(&CLI_ReadCellCurrentCommandDefinitionstream);
     FreeRTOS_CLIRegisterCommand(&CLI_ReadCellCurrentCommandDefinition);
     FreeRTOS_CLIRegisterCommand(&CLI_ReadCellPowerCommandDefinition);
     FreeRTOS_CLIRegisterCommand(&CLI_ReadTemperatureCommandDefinition);
@@ -639,7 +667,7 @@ void RegisterModuleCLICommands(void){
 
 /*-----------------------------------------------------------*/
 
-uint8_t tofMode ;
+
 /* Module special task function (if needed) */
 void LipoChargerTask(void *argument){
 
@@ -2024,6 +2052,59 @@ Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,
 	return status;
 }
 
+static Module_Status StreamMemsToCLI(uint32_t Numofsamples, uint32_t timeout, SampleMemsToString function)
+{
+	Module_Status status = H05R0_OK;
+	int8_t *pcOutputString = NULL;
+	uint32_t period = timeout / Numofsamples;
+	if (period < MIN_MEMS_PERIOD_MS)
+		return H05R0_ERR_WrongParams;
+
+	// TODO: Check if CLI is enable or not
+	for (uint8_t chr = 0; chr < MSG_RX_BUF_SIZE; chr++) {
+			if (UARTRxBuf[PcPort - 1][chr] == '\r' ) {
+				UARTRxBuf[PcPort - 1][chr] = 0;
+			}
+		}
+	if (1 == flag) {
+		flag = 0;
+		static char *pcOKMessage = (int8_t*) "Stop stream !\n\r";
+		writePxITMutex(PcPort, pcOKMessage, strlen(pcOKMessage), 10);
+		return status;
+	}
+	if (period > timeout)
+		timeout = period;
+
+	long numTimes = timeout / period;
+	stopStream = false;
+
+	while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+		function((char *)pcOutputString, 100);
+
+
+		writePxMutex(PcPort, (char *)pcOutputString, strlen((char *)pcOutputString), cmd500ms, HAL_MAX_DELAY);
+		if (PollingSleepCLISafe(period,Numofsamples) != H05R0_OK)
+			break;
+	}
+
+	memset((char *) pcOutputString, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
+  sprintf((char *)pcOutputString, "\r\n");
+	return status;
+}
+void SampleVoltageToString(char *cstring, size_t maxLen)
+{
+	float Voltage = 0;
+	ReadCellVoltage(&Voltage);
+	snprintf(cstring, maxLen, "Voltage: %.2f\r\n", Voltage);
+}
+void SamplecurrentToString(char *cstring, size_t maxLen)
+{
+	float current = 0;
+	ReadCellCurrent(&current);
+	snprintf(cstring, maxLen, "current: %.2f\r\n", current);
+}
+
 /* -----------------------------------------------------------------------
  |								Commands							      |
    -----------------------------------------------------------------------
@@ -2053,6 +2134,47 @@ portBASE_TYPE CLI_ReadCellVoltageCommand( int8_t *pcWriteBuffer, size_t xWriteBu
 
 }
 /*-----------------------------------------------------------*/
+portBASE_TYPE CLI_ReadCellVoltageCommandstream(int8_t *pcWriteBuffer,
+		size_t xWriteBufferLen, const int8_t *pcCommandString) {
+	Module_Status status = H05R0_OK;
+
+	uint32_t Numofsamples, pTimeout;
+	static int8_t *pcParameterString1, *pcParameterString2;
+	portBASE_TYPE xParameterStringLength1 = 0, xParameterStringLength2 = 0;
+
+	(void) xWriteBufferLen;
+	pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1,
+			&xParameterStringLength1);
+	pcParameterString2 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 2,
+			&xParameterStringLength2);
+
+	Numofsamples = atoi(pcParameterString1);
+	pTimeout = atoi(pcParameterString2);
+
+	StreamMemsToCLI(Numofsamples, pTimeout, SampleVoltageToString);
+}
+/*-----------------------------------------------------------*/
+portBASE_TYPE CLI_ReadCellcurrentCommandstream(int8_t *pcWriteBuffer,
+		size_t xWriteBufferLen, const int8_t *pcCommandString) {
+	Module_Status status = H05R0_OK;
+
+	uint32_t Numofsamples, pTimeout;
+	static int8_t *pcParameterString1, *pcParameterString2;
+	portBASE_TYPE xParameterStringLength1 = 0, xParameterStringLength2 = 0;
+
+	(void) xWriteBufferLen;
+	pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1,
+			&xParameterStringLength1);
+	pcParameterString2 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 2,
+			&xParameterStringLength2);
+
+	Numofsamples = atoi(pcParameterString1);
+	pTimeout = atoi(pcParameterString2);
+
+	StreamMemsToCLI(Numofsamples, pTimeout, SamplecurrentToString);
+}
+/*-----------------------------------------------------------*/
+
 portBASE_TYPE CLI_ReadCellCurrentCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString ){
 	Module_Status status = H05R0_OK;
 	float batCurrent=0;
