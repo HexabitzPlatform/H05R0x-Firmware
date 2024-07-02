@@ -1,5 +1,0 @@
-..\..\H05R0\H05R0_gpio.c:22:6:GPIO_Init	1
-..\..\H05R0\H05R0_gpio.c:33:6:MX_GPIO_Init	1
-..\..\H05R0\H05R0_gpio.c:65:6:IND_LED_Init	1
-..\..\H05R0\H05R0_gpio.c:80:9:IsFactoryReset	3
-..\..\H05R0\H05R0_gpio.c:131:12:GetPortGPIOs	6
