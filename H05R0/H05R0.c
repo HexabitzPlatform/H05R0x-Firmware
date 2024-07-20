@@ -1709,7 +1709,7 @@ Module_Status Exportstreamtoterminal(uint32_t Numofsamples, uint32_t timeout,uin
 		break;
 	}
 
-	module1 = DEFAULT;
+	tofMode = DEFAULT;
 	return status;
 }
 
@@ -1828,11 +1828,12 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 			else
 				messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
 		}
 		break;
 
@@ -1850,11 +1851,12 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 			else
 				messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
 		}
 		break;
 
@@ -1872,11 +1874,12 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 			else
 				messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
 		}
 		break;
 
@@ -1894,11 +1897,12 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 			else
 				messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
 		}
 		break;
 
@@ -1916,11 +1920,12 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 			else
 				messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
 		}
 		break;
 
@@ -1935,8 +1940,9 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 					else
 						messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_UINT8;
-			messageParams[2] = (uint8_t) uint8Data;
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(uint8_t) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) uint8Data;
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(uint8_t) + 3);
 		}
 		break;
 
@@ -1954,12 +1960,13 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 					else
 						messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_UINT32;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 24);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 24);
 			SendMessageToModule(module, CODE_READ_RESPONSE,
-					sizeof(uint32Data) + 2);
+					sizeof(uint32Data) + 3);
 		}
 		break;
 
@@ -1977,12 +1984,13 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 					else
 						messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_UINT32;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 24);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 24);
 			SendMessageToModule(module, CODE_READ_RESPONSE,
-					sizeof(uint32Data) + 2);
+					sizeof(uint32Data) + 3);
 		}
 		break;
 
@@ -1997,8 +2005,9 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 					else
 						messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_UINT8;
-			messageParams[2] = (uint8_t) uint8Data;
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(uint8_t) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) uint8Data;
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(uint8_t) + 3);
 		}
 		break;
 
@@ -2014,10 +2023,11 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 					else
 						messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_UINT16;
-			messageParams[2] = (uint8_t) ((*(uint16_t*) &uint16Data) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint16_t*) &uint16Data) >> 8);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint16_t*) &uint16Data) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint16_t*) &uint16Data) >> 8);
 			SendMessageToModule(module, CODE_READ_RESPONSE,
-					sizeof(uint16_t) + 2);
+					sizeof(uint16_t) + 3);
 		}
 		break;
 
@@ -2030,15 +2040,16 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
 		} else {
 			if (H05R0_OK == status)
-						messageParams[1] = BOS_OK;
-					else
-						messageParams[1] = BOS_ERROR;
+				messageParams[1] = BOS_OK;
+			else
+				messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
 		}
 		break;
 
@@ -2052,15 +2063,16 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
 		} else {
 			if (H05R0_OK == status)
-						messageParams[1] = BOS_OK;
-					else
-						messageParams[1] = BOS_ERROR;
+				messageParams[1] = BOS_OK;
+			else
+				messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
 		}
 		break;
 
@@ -2074,15 +2086,16 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
 		} else {
 			if (H05R0_OK == status)
-						messageParams[1] = BOS_OK;
-					else
-						messageParams[1] = BOS_ERROR;
+				messageParams[1] = BOS_OK;
+			else
+				messageParams[1] = BOS_ERROR;
 			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 2);
+			messageParams[2] = 1;
+			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
+			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
+			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
+			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
+			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
 		}
 		break;
 
@@ -2090,7 +2103,7 @@ Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
 		status = H05R0_ERR_WrongParams;
 		break;
 	}
-	module1 = DEFAULT;
+	tofMode = DEFAULT;
 	memset(&temp[0], 0, sizeof(temp));
 	return status;
 }
@@ -2139,7 +2152,7 @@ Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,
 		vTaskDelay(pdMS_TO_TICKS(period));
 		samples++;
 	}
-	module1 = DEFAULT;
+	tofMode = DEFAULT;
 	samples = 0;
 	return status;
 }
