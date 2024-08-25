@@ -19,8 +19,7 @@ uint8_t* error_restart_message = "Restarting...\r\n";
 extern uint8_t UARTRxBuf[NumOfPorts][MSG_RX_BUF_SIZE];
 extern uint8_t UARTRxBufIndex[NumOfPorts];
 extern uint8_t WakeupFromStopFlag;
-extern bool LedCharg;
-extern uint16_t DelayFlag;
+extern bool LedChargerFlag;
 extern TIM_HandleTypeDef htim14;
 
 /* External function prototypes ----------------------------------------------*/
@@ -275,13 +274,10 @@ void TIM14_IRQHandler(void)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-
+	// Every 30 ms increases by 1
 	if(htim->Instance == TIM14)
-	{
-		LedCharg=1;
-		// Every 30 ms increases by 1
-		DelayFlag++;
-	}
+		LedChargerFlag=1;
+
 }
 
 /*-----------------------------------------------------------*/

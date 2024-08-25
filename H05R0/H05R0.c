@@ -55,8 +55,8 @@ uint32_t Numofsamples3 ,timeout3;
 uint8_t flag ;
 uint8_t tofMode ;
 static bool stopStream = false;
-bool LedCharg=0;
-uint16_t DelayFlag=0;
+bool LedChargerFlag=0;
+float ChargingCurrent = 0.0f;
 
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
@@ -717,9 +717,42 @@ void RegisterModuleCLICommands(void) {
 /* Module special task function (if needed) */
 void LipoChargerTask(void *argument){
 
+	 int static timer=0,flag=0;
+
 	/* Infinite loop */
- // Test variable.
 	for(;;){
+
+		/* 30 mS interrupt */
+		if (LedChargerFlag == 1) {
+
+			/* Read Charging Current */
+			ReadCellCurrent(&ChargingCurrent);
+
+			/* in case the battery is charging */
+			if (ChargingCurrent > MIN_CHARGING_CURRENT_VALUE) {
+				if (timer < MAX_CCR_VALUE && flag == 0) {
+					timer += 500;
+					if (timer >= MAX_CCR_VALUE)
+						flag = 1;
+
+				} else if (flag == 1) {
+					timer -= 500;
+
+					if (timer <= 0)
+						flag = 0;
+				}
+				/* increase CCR */
+				TIM3->CCR1 = timer;
+
+			} else if ((ChargingCurrent < MIN_CHARGING_CURRENT_VALUE) && (ChargingCurrent <= 0) )
+				TIM3->CCR1 = MAX_CCR_VALUE;
+
+			else if (ChargingCurrent <= 0)
+				TIM3->CCR1 = 0;
+
+			LedChargerFlag = 0;
+		}
+
 		/*  */
 		switch (tofMode) {
 
