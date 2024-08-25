@@ -24,7 +24,12 @@ GPIO_InitTypeDef GPIO_InitStruct = {0};
 TIM_HandleTypeDef htim16; /* micro-second delay counter */
 TIM_HandleTypeDef htim17; /* milli-second delay counter */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+TIM_HandleTypeDef htim3;  /* PWM Special Timer - Charging Indicator */
+TIM_HandleTypeDef htim14; /* Special Timer Interrupt every 30 mS */
+
+//void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+void MX_TIM3_Init(void);
+
 /*  Micro-seconds timebase init function - TIM14 (16-bit)
  */
 void TIM_USEC_Init(void){
@@ -67,6 +72,113 @@ void TIM_MSEC_Init(void){
 	  HAL_TIM_Base_Start(&htim17);
 }
 
+/*-----------------------------------------------------------*/
+
+/* TIM3 init function */
+void MX_TIM3_Init(void)
+{
+
+	TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
+	TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+	TIM_OC_InitTypeDef sConfigOC = { 0 };
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	htim3.Instance = TIM3;
+	htim3.Init.Prescaler = 1 - 1;
+	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim3.Init.Period = 24000 - 1;
+	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+	HAL_TIM_Base_Init(&htim3);
+
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig);
+
+	HAL_TIM_PWM_Init(&htim3);
+
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig);
+
+	sConfigOC.OCMode = TIM_OCMODE_PWM1;
+	sConfigOC.Pulse = 0;
+	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1);
+
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	/**TIM3 GPIO Configuration
+	 PB4     ------> TIM3_CH1
+	 */
+	GPIO_InitStruct.Pin = GPIO_PIN_4;
+	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Alternate = GPIO_AF1_TIM3;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+}
+
+/*-----------------------------------------------------------*/
+
+/* TIM14 init function */
+void MX_TIM14_Init(void) {
+
+	htim14.Instance = TIM14;
+	htim14.Init.Prescaler = 1000 - 1;
+	htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim14.Init.Period = 1600 - 1; // 1600-->30ms  960-->20ms  14400-->300ms
+	htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+	HAL_TIM_Base_Init(&htim14);
+
+	HAL_TIM_Base_Start_IT(&htim14);
+
+}
+
+/*-----------------------------------------------------------*/
+
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
+{
+
+  if(tim_baseHandle->Instance==TIM3)
+  {
+    /* TIM3 clock enable */
+    __HAL_RCC_TIM3_CLK_ENABLE();
+  }
+  else if(tim_baseHandle->Instance==TIM14)
+    {
+      /* TIM14 clock enable */
+      __HAL_RCC_TIM14_CLK_ENABLE();
+
+      /* TIM14 interrupt Init */
+      HAL_NVIC_SetPriority(TIM14_IRQn, 3, 0);
+      HAL_NVIC_EnableIRQ(TIM14_IRQn);
+
+    }
+}
+
+/*-----------------------------------------------------------*/
+
+void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
+{
+
+  if(tim_baseHandle->Instance==TIM3)
+  {
+    /* Peripheral clock disable */
+    __HAL_RCC_TIM3_CLK_DISABLE();
+  }
+  else if(tim_baseHandle->Instance==TIM14)
+  {
+    /* Peripheral clock disable */
+    __HAL_RCC_TIM14_CLK_DISABLE();
+
+    /* TIM14 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM14_IRQn);
+  }
+}
 /*-----------------------------------------------------------*/
 
 /* --- Load and start micro-second delay counter --- 

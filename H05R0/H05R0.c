@@ -55,6 +55,9 @@ uint32_t Numofsamples3 ,timeout3;
 uint8_t flag ;
 uint8_t tofMode ;
 static bool stopStream = false;
+bool LedCharg=0;
+uint16_t DelayFlag=0;
+
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
 Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
@@ -65,7 +68,8 @@ void FLASH_Page_Eras(uint32_t Addr );
 Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVal);
 Module_Status BAT_ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 static Module_Status StreamMemsToCLI(uint32_t Numofsamples, uint32_t timeout, SampleMemsToString function);
-
+void MX_TIM3_Init(void);
+void MX_TIM14_Init(void);
 /* Create CLI commands --------------------------------------------------------*/
 portBASE_TYPE CLI_ReadCellVoltageCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE CLI_ReadCellVoltageCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
@@ -541,6 +545,8 @@ void Module_Peripheral_Init(void){
 	MX_I2C2_Init();
 	MX_GPIO_Init();
 	Init_MAX17330();
+	MX_TIM3_Init();
+	MX_TIM14_Init();
 
 	 //Circulating DMA Channels ON All Module
 	for (int i = 1; i <= NumOfPorts; i++) {
