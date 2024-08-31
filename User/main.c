@@ -9,6 +9,12 @@
 #include "BOS.h"
 
 /* Private variables ---------------------------------------------------------*/
+uint16_t buffer , hello;
+uint8_t times , SOC;
+float batVolt11;
+
+Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
+Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -27,8 +33,20 @@ int main(void){
 /* User Task */
 void UserTask(void *argument){
 
+//	WriteReg(0x01D0, 0XC88C);
+//
+//	WriteConfigsToNV();
+//
+//	ReadReg(0x01D0, &buffer, 2);
+
 	// put your code here, to run repeatedly.
 	while(1){
+
+//		WriteReg(0x01D0, 0XC88C);
+
+//		WriteConfigsToNV();
+
+//		ReadReg(0x01D0, &buffer, 2);
 
 	}
 }

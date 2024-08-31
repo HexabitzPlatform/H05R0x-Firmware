@@ -260,7 +260,7 @@ Module_Status ReadCellCalInterRes(float *batIntResistance);
 Module_Status ReadSetChargVoltage(float *setChargVolt);
 Module_Status ReadSetChargCurrent(float *setChargCurrent);
 Module_Status ReadAllAnalogMeasurements(AnalogMeasType *analMeasurements);
-Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer);
+Module_Status WriteConfigsToNV(void);
 Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status LockNonVolatileMemory(void);
 Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function);

@@ -35,7 +35,7 @@
 #define MANFCTR_INFO_SIZE			0x18
 #define SERIAL_NUUM_SIZE			0x08
 #define ID_BUF_SIZE					MANFCTR_NAME_SIZE + DEVICE_NAME_SIZE
-#define BLOCK_TIME 					7500
+#define BLOCK_TIME 					368
 #define UPDATE_TIME 				1300
 #define RECALL_TIME 				5
 #define NUM_1S_1					1

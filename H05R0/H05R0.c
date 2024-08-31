@@ -744,8 +744,9 @@ void LipoChargerTask(void *argument){
 				/* increase CCR */
 				TIM3->CCR1 = timer;
 
-			} else if ((ChargingCurrent < MIN_CHARGING_CURRENT_VALUE) && (ChargingCurrent <= 0) )
-				TIM3->CCR1 = MAX_CCR_VALUE;
+			}
+//			else if ((ChargingCurrent < MIN_CHARGING_CURRENT_VALUE) && (ChargingCurrent <= 0) )
+//				TIM3->CCR1 = MAX_CCR_VALUE;
 
 			else if (ChargingCurrent <= 0)
 				TIM3->CCR1 = 0;
@@ -807,9 +808,10 @@ Module_Status WriteReg(uint16_t regAddress, uint16_t Data)
 	else
 	{
 		tempBuffer[0] = (uint8_t) regAddress;
-		tempBuffer[1] = (uint8_t) Data;
-		tempBuffer[2] = (uint8_t) (Data>>8);
-		i2cSize = 3;
+		tempBuffer[1] = (uint8_t) (regAddress>>8);
+		tempBuffer[2] = (uint8_t) Data;
+		tempBuffer[3] = (uint8_t) (Data>>8);
+		i2cSize = 4;
 		i2cSlaveAddress = I2C_16h_W_ADD;
 	}
 
@@ -851,7 +853,8 @@ Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes)
 	else
 	{
 		tempBuffer[0] = (uint8_t) regAddress;
-		i2cSize = 1;
+		tempBuffer[1] = (uint8_t) (regAddress>>8);
+		i2cSize = 2;
 		i2cSlaveWriteAdd = I2C_16h_W_ADD;
 		i2cSlaveReadAdd = I2C_16h_R_ADD;
 	}
@@ -1384,43 +1387,63 @@ Module_Status ReadSetChargCurrent(float *setChargCurrent)
  * @param1: pointer to a buffer storing the configurations to be written
  * @retval: status
  */
-Module_Status WriteConfigsToNV(uint16_t *pConfigBuffer)
-{
+Module_Status WriteConfigsToNV(void) {
 	Module_Status Status = H05R0_OK;
 	uint16_t tempVar = 0u;
+	uint16_t POR_CMD = 1u;
 
-	/* write the desired configs to their addresses at the shadow RAM */
+	/* 1- write the desired configs to their addresses at the shadow RAM */
 
-	/* clear CommStat.NVError bit */
-	tempVar = CMD_STAT_ERR_CLEAR;
-	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
+	/* 2- Write Protection must be disabled
+	 *  before the NVError bit can be cleared */
+
+	/* Write the value two times in a row to unlock write protection. */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
 		return H05R0_COM_ERR;
 
-	/* write 0xE904 to the Command register 0x060 to initiate a block copy */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	/* 3- clear CommStat.NVError bit */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	/* 4- write 0xE904 to the Command register 0x060 to initiate a block copy */
 	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE904))
 		return H05R0_COM_ERR;
 
-	/* wait t_BLOCK for the copy to complete */
-	Delay_ms(BLOCK_TIME);
+	/* 5- wait t_BLOCK for the copy to complete */
+	Delay_ms(7000);
 
-	/* check the CommStat.NVError bit, if set repeat the process */
+	/* 6- check the CommStat.NVError bit, if set repeat the process */
+	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
+		return H05R0_COM_ERR;
 
-	/* write 0x000F to the Command register 0x060 to POR the IC */
+	/* 7- write 0x000F to the Command register 0x060 to POR the IC */
 	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0x000F))
 		return H05R0_COM_ERR;
 
-	/* wait 10msec */
+	/* 8- wait 10msec */
 	Delay_ms(10);
 
-	/* write 0x8000 to Config2 register 0x0AB to reset firmware */
-	if (H05R0_OK != WriteReg(0x0AB, 0x8000))
+	/* 9- write 0x8000 to Config2 register 0x0AB to reset firmware */
+	if (H05R0_OK != WriteReg(CONFIG2_REG_ADD, 0x8000))
 		return H05R0_COM_ERR;
 
-	/* Wait for POR_CMD bit (bit 15) of the Config2 register to be cleared to indicate
+	/* 10- Wait for POR_CMD bit (bit 15) of the Config2 register to be cleared to indicate
 	 *  POR sequence is complete. */
+	while (POR_CMD != 0) {
+
+		if (H05R0_OK != ReadReg(CONFIG2_REG_ADD, &tempVar, sizeof(tempVar)))
+			return H05R0_COM_ERR;
+
+		POR_CMD = (tempVar | 0X00000) >> 15;
+
+	}
 
 	return Status;
 }
+
 /*-----------------------------------------------------------*/
 
 /*
