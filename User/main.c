@@ -11,7 +11,7 @@
 /* Private variables ---------------------------------------------------------*/
 uint16_t buffer , hello;
 uint8_t times , SOC;
-float batVolt11;
+float batVolt11 , curr, power;
 
 Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
@@ -47,6 +47,10 @@ void UserTask(void *argument){
 //		WriteConfigsToNV();
 
 //		ReadReg(0x01D0, &buffer, 2);
+//
+//		 ReadCellVoltage(&batVolt11);
+//		 ReadCellCurrent(&curr);
+//		 ReadCellPower(&power);
 
 	}
 }

@@ -808,10 +808,9 @@ Module_Status WriteReg(uint16_t regAddress, uint16_t Data)
 	else
 	{
 		tempBuffer[0] = (uint8_t) regAddress;
-		tempBuffer[1] = (uint8_t) (regAddress>>8);
-		tempBuffer[2] = (uint8_t) Data;
-		tempBuffer[3] = (uint8_t) (Data>>8);
-		i2cSize = 4;
+		tempBuffer[1] = (uint8_t) Data;
+		tempBuffer[2] = (uint8_t) (Data>>8);
+		i2cSize = 3;
 		i2cSlaveAddress = I2C_16h_W_ADD;
 	}
 
@@ -1392,46 +1391,66 @@ Module_Status WriteConfigsToNV(void) {
 	uint16_t tempVar = 0u;
 	uint16_t POR_CMD = 1u;
 
-	/* 1- write the desired configs to their addresses at the shadow RAM */
 
-	/* 2- Write Protection must be disabled
-	 *  before the NVError bit can be cleared */
-
-	/* Write the value two times in a row to unlock write protection. */
+	/* 1-  Write 0x0000 to the CommStat register (0x061) 2 times in a row to unlock Write Protection */
 	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
 		return H05R0_COM_ERR;
 
 	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
 		return H05R0_COM_ERR;
 
-	/* 3- clear CommStat.NVError bit */
+	/* 2- write the desired configs to their addresses at the shadow RAM */
+	WriteReg(0x01D0, 0XC88C);
+
+	/* 3- Write 0x0000 to the CommStat register (0x061) to clear CommStat.NVError bit */
 	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
 		return H05R0_COM_ERR;
 
-	/* 4- write 0xE904 to the Command register 0x060 to initiate a block copy */
+	/* 4- Write 0xE904 to the Command register 0x060 to initiate a block copy  */
 	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE904))
 		return H05R0_COM_ERR;
 
-	/* 5- wait t_BLOCK for the copy to complete */
+	/* 5- Wait tBLOCK for the copy to complete.  */
 	Delay_ms(7000);
 
-	/* 6- check the CommStat.NVError bit, if set repeat the process */
+	/* 6- Check the CommStat.NVBusy bit. Continue to wait while CommStat.NVBusy = 1
+	 * If NVBusy is 1, keep waiting; if it becomes 0, proceed */
 	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
 		return H05R0_COM_ERR;
 
-	/* 7- write 0x000F to the Command register 0x060 to POR the IC */
+	/* 7- Check the CommStat.NVError bit. If set, return to Step 2 to repeat the process.
+	 *  If clear, continue */
+	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
+		return H05R0_COM_ERR;
+
+	/* 8- Write 0x000F to the Command register 0x060 to POR the IC */
 	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0x000F))
 		return H05R0_COM_ERR;
 
-	/* 8- wait 10msec */
+	/* 9- wait 10msec */
 	Delay_ms(10);
 
-	/* 9- write 0x8000 to Config2 register 0x0AB to reset firmware */
+	/* 10- Verify all of the nonvolatile memory locations are recalled correctly
+	 * Check that all nonvolatile memory locations contain the expected values. */
+	ReadReg(0x01D0, &tempVar, 2);
+
+	/* 11- Write 0x0000 to the CommStat register (0x061) 3 times in a row to
+	 *  unlock Write Protection and clear NVError bit */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	/* 12- Write 0x8000 to Config2 register 0x0AB to reset firmware */
 	if (H05R0_OK != WriteReg(CONFIG2_REG_ADD, 0x8000))
 		return H05R0_COM_ERR;
 
-	/* 10- Wait for POR_CMD bit (bit 15) of the Config2 register to be cleared to indicate
-	 *  POR sequence is complete. */
+	/* 13- Wait for POR_CMD bit (bit 15) of the Config2 register to
+	 *  be cleared to indicate POR sequence is complete */
 	while (POR_CMD != 0) {
 
 		if (H05R0_OK != ReadReg(CONFIG2_REG_ADD, &tempVar, sizeof(tempVar)))
@@ -1440,6 +1459,13 @@ Module_Status WriteConfigsToNV(void) {
 		POR_CMD = (tempVar | 0X00000) >> 15;
 
 	}
+
+	/* 14- Write 0x00F9 to the CommStat register (0x061) 2 times in a row to lock Write Protection */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
+		return H05R0_COM_ERR;
 
 	return Status;
 }
