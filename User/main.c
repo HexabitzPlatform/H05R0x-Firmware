@@ -9,10 +9,9 @@
 #include "BOS.h"
 
 /* Private variables ---------------------------------------------------------*/
-uint16_t buffer , hello;
-uint8_t times , SOC;
-float batVolt11 , curr, power;
-
+uint16_t  buffer;
+uint8_t times , SOC , Status;
+extern AnalogMeasType AnalogMeasurement;
 Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
 
@@ -42,15 +41,13 @@ void UserTask(void *argument){
 	// put your code here, to run repeatedly.
 	while(1){
 
-//		WriteReg(0x01D0, 0XC88C);
+		CheckChargingStatus();
 
-//		WriteConfigsToNV();
+		if (AnalogMeasurement.ChargingStatus == CHARGING )
+			HAL_Delay(200);
+		else
+			HAL_Delay(200);
 
-//		ReadReg(0x01D0, &buffer, 2);
-//
-//		 ReadCellVoltage(&batVolt11);
-//		 ReadCellCurrent(&curr);
-//		 ReadCellPower(&power);
 
 	}
 }

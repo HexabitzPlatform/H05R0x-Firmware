@@ -121,3 +121,6 @@
 #define CMD_REG_ADD					0x0060			/*  charger/gauge command register */
 #define CMD_STAT_REG_ADD			0x0061			/*  charger/gauge command status register */
 #define REM_UPDT_REG_ADD			0x01FD			/*  charger/gauge remaining updates register */
+
+/*Status Registers */
+#define FPROT_STAT_REG_ADD			0x00DA

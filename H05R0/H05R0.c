@@ -57,7 +57,7 @@ uint8_t tofMode ;
 static bool stopStream = false;
 bool LedChargerFlag=0;
 float ChargingCurrent = 0.0f;
-
+AnalogMeasType AnalogMeasurement;
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
 Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
@@ -1880,6 +1880,27 @@ Module_Status LockNonVolatileMemory(void)
 		return H05R0_COM_ERR;
 
 	return 0;
+}
+
+/*-----------------------------------------------------------*/
+Module_Status CheckChargingStatus(void)
+{
+	uint16_t tempVar = 0u;
+	uint16_t sixthBit = 0u;
+	Module_Status status = H05R0_OK;
+
+	if (H05R0_OK != ReadReg(FPROT_STAT_REG_ADD, &tempVar, 2))
+		return H05R0_COM_ERR;
+
+	// Shift the value right by 5 bits to bring the sixth bit to the least significant position
+	sixthBit = (tempVar >> 5) & 1;
+	if (sixthBit == 0)
+		AnalogMeasurement.ChargingStatus = CHARGING;
+	else
+		AnalogMeasurement.ChargingStatus = DISCHARGING;
+
+
+	return H05R0_OK;
 }
 
 /*-----------------------------------------------------------*/

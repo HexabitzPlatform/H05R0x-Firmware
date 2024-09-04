@@ -199,6 +199,12 @@ typedef enum {
 	FALSE = 0u,
 	TRUE
 } Bool_State;
+
+typedef enum {
+	CHARGING = 0u,
+	DISCHARGING
+} Charging_Status;
+
 /* Export Module typedef structure */
 typedef struct {
 	float batVolt;
@@ -214,6 +220,7 @@ typedef struct {
 	float batIntResistance;
 	float setChargVolt;
 	float setChargCurrent;
+	Charging_Status ChargingStatus;
 }AnalogMeasType;
 
 typedef struct {
@@ -263,6 +270,7 @@ Module_Status ReadAllAnalogMeasurements(AnalogMeasType *analMeasurements);
 Module_Status WriteConfigsToNV(void);
 Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status LockNonVolatileMemory(void);
+Module_Status CheckChargingStatus(void);
 Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function);
 Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
 Module_Status StreamToTerminal(uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
