@@ -1477,68 +1477,43 @@ Module_Status WriteConfigsToNV(void) {
  * @param1: pointer to a buffer to store received data
  * @retval: status
  */
-Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites)
+Module_Status ReadNumOfRemainingWrites(uint8_t *updatesRemaining)
 {
 	Module_Status Status = H05R0_OK;
 	uint16_t tempVar = 0u;
-	uint8_t retValueLSB = 0u;
-	uint8_t retValueMSB = 0u;
-	uint8_t numOnes = 0u;
-	bool bitState = FALSE;
+	uint8_t updatesUsed = 0 , index = 0 , combinedData = 0;
+	uint8_t totalUpdates = 7 ;
 
 	/* the following steps are implemented as stated in the data sheet */
-	/* write 0xE29B to the Command register 0x060 to initiate a block copy */
+	/* 1- write 0xE29B to the Command register 0x060 to initiate a block copy */
 	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE29B))
 		return H05R0_COM_ERR;
 
-	/* wait t_BLOCK for the copy to complete */
+	/* 2- wait t_BLOCK for the copy to complete */
 	Delay_ms(RECALL_TIME);
 
-	/* read memory address 1FDh */
-	if (H05R0_OK != ReadReg(REM_UPDT_REG_ADD, &tempVar, 1))
+	/* 3- read memory address 1FDh */
+	if (H05R0_OK != ReadReg(REM_UPDT_REG_ADD, &tempVar, 2))
 		return H05R0_COM_ERR;
 
-	/* decode the received data */
-	retValueLSB = (uint8_t) tempVar;
-	retValueMSB = (uint8_t) (tempVar >> 8);
-	tempVar = (retValueLSB | retValueMSB);
+	/* 4- decode the received data */
+	/* Logical OR of upper and lower bytes:
+	 * (data >> 8): This effectively discards the lower byte, leaving only the upper byte.
+	 * (data & 0xFF): This operation retains only the lower byte and sets the upper byte to zero.
+	 * The result is an 8-bit value (combinedData) where the upper byte comes from the original data
+	 * (shifted right) and the lower byte comes from the original data (masked with 0xFF).
+	 */
+	     combinedData = (tempVar >> 8) | (tempVar & 0xFF);
 
-	/* calculate the number of ones of tempVar value */
-	for (volatile uint8_t bitIndex = 0u; bitIndex<8; bitIndex++)
-	{
-		bitState = (bool) ((tempVar >> bitIndex) & TRUE);
-		if (TRUE == bitState)
-			numOnes++;
-	}
+	    // Count the number of 1s (updates used)
+	    for (index = 0; index < 7; ++index) {
+	        if (combinedData & (1 << index)) {
+	            updatesUsed++;
+	        }
+	    }
 
-	/* determine the number of left updates */
-	*remWrites = 8 - numOnes;
-//	if (BAT_NUM_1S_1 == tempVar)
-//		*remWrites = 7;
-//
-//	else if (BAT_NUM_1S_2 == tempVar)
-//		*remWrites = 6;
-//
-//	else if (BAT_NUM_1S_3 == tempVar)
-//		*remWrites = 5;
-//
-//	else if (BAT_NUM_1S_4 == tempVar)
-//		*remWrites = 4;
-//
-//	else if (BAT_NUM_1S_5 == tempVar)
-//		*remWrites = 3;
-//
-//	else if (BAT_NUM_1S_6 == tempVar)
-//		*remWrites = 2;
-//
-//	else if (BAT_NUM_1S_7 == tempVar)
-//		*remWrites = 1;
-//
-//	else if (BAT_NUM_1S_8 == tempVar)
-//		*remWrites = 0;
-//
-//	else
-//		Status = H05R0_ERROR;
+	    // Calculate updates remaining
+	     *updatesRemaining = totalUpdates - updatesUsed;
 
 	return Status;
 }
