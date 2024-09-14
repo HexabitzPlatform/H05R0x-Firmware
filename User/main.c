@@ -15,6 +15,8 @@ extern AnalogMeasType AnalogMeasurement;
 Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
 float Data;
+IdType ID;
+Module_Status ReadID(IdType *BatId);
 /* Private function prototypes -----------------------------------------------*/
 
 /* Main function ------------------------------------------------------------*/
@@ -53,8 +55,8 @@ void UserTask(void *argument){
 //		else
 //			HAL_Delay(200);
 
-		ReadNumOfRemainingWrites(&times);
-
+//		ReadNumOfRemainingWrites(&times);
+		ReadID(&ID);
 
 	}
 }

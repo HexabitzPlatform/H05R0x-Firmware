@@ -980,16 +980,20 @@ Module_Status ReadID(IdType *BatId)
 	if (BatId == NULL)
 		return H05R0_INV;
 
+
+
 	/* de-initialize I2C and initialize SMBUS protocol. All chip's name and Id registers are reached
 	 * through SMBUS  */
 	HAL_I2C_DeInit(I2C_PORT);
 	MX_I2C2_SMBUS_Init();
 
+	HAL_SMBUS_IsDeviceReady(&hsmbus2, 0x16, 5, 1000);
+
 	if (H05R0_OK != ReadIdReg(MANFCTR_NAME_REG_ADD, BatId->ManId,MANFCTR_NAME_SIZE))
 			Status = H05R0_ERROR;
 
-	if (H05R0_OK != ReadIdReg(DEVICE_NAME_REG_ADD, BatId->DevId,DEVICE_NAME_SIZE))
-		Status = H05R0_ERROR;
+//	if (H05R0_OK != ReadIdReg(DEVICE_NAME_REG_ADD, BatId->DevId,DEVICE_NAME_SIZE))
+//		Status = H05R0_ERROR;
 
 
 	/* de-initialize SMBUS and initialize I2C protocol to let the I2C port run in standard condition

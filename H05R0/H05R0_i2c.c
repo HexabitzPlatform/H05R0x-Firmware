@@ -144,14 +144,14 @@ void MX_I2C2_SMBUS_Init(void)
   hsmbus2.Init.GeneralCallMode = SMBUS_GENERALCALL_DISABLE;
   hsmbus2.Init.NoStretchMode = SMBUS_NOSTRETCH_DISABLE;
   hsmbus2.Init.PacketErrorCheckMode = SMBUS_PEC_DISABLE;
-  hsmbus2.Init.PeripheralMode = SMBUS_PERIPHERAL_MODE_SMBUS_SLAVE;
+  hsmbus2.Init.PeripheralMode = SMBUS_PERIPHERAL_MODE_SMBUS_HOST;
   hsmbus2.Init.SMBusTimeout =0x00008019;//0x00008249
   HAL_SMBUS_Init(&hsmbus2);
 
 
   /** configuration Alert Mode
   */
-  HAL_SMBUS_EnableAlert_IT(&hsmbus2);
+//  HAL_SMBUS_EnableAlert_IT(&hsmbus2);
 
   /** Configure Digital filter
   */
@@ -193,12 +193,12 @@ void HAL_SMBUS_MspInit(SMBUS_HandleTypeDef* smbusHandle)
     GPIO_InitStruct.Alternate = GPIO_AF8_I2C2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF8_I2C2;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+//    GPIO_InitStruct.Pin = GPIO_PIN_12;
+//    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+//    GPIO_InitStruct.Pull = GPIO_NOPULL;
+//    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+//    GPIO_InitStruct.Alternate = GPIO_AF8_I2C2;
+//    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* I2C2 clock enable */
     __HAL_RCC_I2C2_CLK_ENABLE();
@@ -321,7 +321,7 @@ Module_Status WriteSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *pData,
 
   if (NULL!=xPort && NULL!=pData)
     {
-      if (HAL_OK == HAL_SMBUS_Master_Transmit_IT(xPort, (uint16_t) sAddress, pData, Size, 0))
+      if (HAL_OK == HAL_SMBUS_Master_Transmit_IT(xPort, (uint16_t) sAddress, pData, Size, SMBUS_FIRST_AND_LAST_FRAME_NO_PEC))
       Status=H05R0_OK;
     }
   else
@@ -344,7 +344,7 @@ Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer
 
 	if (NULL!=xPort && NULL!=rBuffer)
 	{
-	    if (HAL_OK == HAL_SMBUS_Master_Receive_IT(xPort,  (uint16_t) sAddress, rBuffer, Size, 0))
+	    if (HAL_OK == HAL_SMBUS_Master_Receive_IT(xPort,  (uint16_t) sAddress, rBuffer, Size, SMBUS_FIRST_AND_LAST_FRAME_NO_PEC))
 		Status=H05R0_OK;
 	}
 	else
