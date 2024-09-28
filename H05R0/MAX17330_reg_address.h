@@ -17,7 +17,7 @@
 #define FST_I2C_LMT_ADD				0xFF
 
 /* Battery Charger/Gauge special macros */
-#define SENSE_RES_VAL				0.01
+#define SENSE_RES_VAL				0.005
 #define SENSE_RES_REG_VAL			0x03E8
 #define CAP_RESOL_VAL				0.000005/SENSE_RES_VAL
 #define PERCENT_RESOL_VAL			256

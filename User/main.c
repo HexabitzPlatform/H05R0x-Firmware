@@ -34,19 +34,27 @@ int main(void){
 /* User Task */
 void UserTask(void *argument){
 
-//	WriteReg(0x01D0, 0XC88C);
-//
 //	WriteConfigsToNV();
-//
-//	ReadReg(0x01D0, &buffer, 2);
 
-//	WriteReg(PROTECT_CONFIGS_REG_ADD, 0x0000);
-//
-//	WriteReg(CONFIG_REG_ADD, 0x0080);
 
-//	ReadCellVoltage(&Data);
+
 	// put your code here, to run repeatedly.
 	while(1){
+
+//		if (times == 3){
+//		ReadReg(PROTECT_CONFIGS_REG_ADD, &buffer, 2);
+//		/* 1-  Write 0x0000 to the CommStat register (0x061) 2 times in a row to unlock Write Protection */
+//		WriteReg(CMD_STAT_REG_ADD, 0x0000);
+//
+//		WriteReg(CMD_STAT_REG_ADD, 0x0000);
+//
+//		/* 2- Write 0x0300 to the CommStat register (0x061) to set DISOff & CHGOff: bits
+//		 * to forcefully turn off DIS FET & CHG FET
+//		 * this only work if if nProtCfg.CmOvrdEn is enabled in (1D7h) register
+//		 *  */
+//		WriteReg(CMD_STAT_REG_ADD, 0x0200);
+//		}
+//		times = 0;
 
 //		CheckChargingStatus();
 //
@@ -55,8 +63,15 @@ void UserTask(void *argument){
 //		else
 //			HAL_Delay(200);
 
-//		ReadNumOfRemainingWrites(&times);
-		ReadID(&ID);
+//		ReadReg(0x1D0, &buffer, 2);
+//
+//		ReadReg(0x1D3, &buffer, 2);
+//
+//		ReadReg(0x1D8, &buffer, 2);
+
+//		ReadReg(0x0000, &buffer, 2);
+//		ReadCellVoltage(&Data);
+
 
 	}
 }
