@@ -1404,16 +1404,16 @@ Module_Status WriteConfigsToNV(void) {
 		return H05R0_COM_ERR;
 
 	/* 2- write the desired configs to their addresses at the shadow RAM */
-	/* Set the under voltage protection to: 3.46 v */
-	WriteReg(0x01D0, 0XFC8C);
+	/* Set the under voltage protection to: 3.3 v */
+	WriteReg(0x01D0, 0XDC8C); // Under voltage Protection Threshold = 3.33 v
 
 	/* Set the maximum discharging current to: 8 A default value = 0x4BB5  */
 //	WriteReg(0x01D3, 0x4B9C); // 0x9c --> 8 A
 	WriteReg(0x01D3, 0x4B83); // 0x83 --> 10 A
-//	WriteReg(0x01D3, 0x4B74); // 0x83 --> 11.2 A
 
 	/* Set the maximum charging current to: 2 A default value = 0x7F4B */
-	WriteReg(0x01D8, 0X64FF);
+//	WriteReg(0x01D8, 0X64FF);  // R = 5 m OM
+	WriteReg(0x01D8, 0X3CFF);  // R = 3.33 m OM
 
 	/* Set CmOvrdEn.bit = 1 to allows the ChgOff and DisOff bits in CommStat to be
 	 * set by I2C communication to turn off the protection FETs
@@ -1457,7 +1457,6 @@ Module_Status WriteConfigsToNV(void) {
 
 	ReadReg(0x01D8, &tempVar, 2);
 
-//	ReadReg(PROTECT_CONFIGS_REG_ADD, &tempVar, 2);
 
 	/* 11- Write 0x0000 to the CommStat register (0x061) 3 times in a row to
 	 *  unlock Write Protection and clear NVError bit */
