@@ -55,8 +55,6 @@ uint32_t Numofsamples3 ,timeout3;
 uint8_t flag ;
 uint8_t tofMode ;
 static bool stopStream = false;
-bool LedChargerFlag=0;
-float ChargingCurrent = 0.0f;
 AnalogMeasType AnalogMeasurement;
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
@@ -69,7 +67,6 @@ Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVa
 Module_Status BAT_ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 static Module_Status StreamMemsToCLI(uint32_t Numofsamples, uint32_t timeout, SampleMemsToString function);
 void MX_TIM3_Init(void);
-void MX_TIM14_Init(void);
 /* Create CLI commands --------------------------------------------------------*/
 portBASE_TYPE CLI_ReadCellVoltageCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE CLI_ReadCellVoltageCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
@@ -546,7 +543,6 @@ void Module_Peripheral_Init(void){
 	MX_GPIO_Init();
 	Init_MAX17330();
 	MX_TIM3_Init();
-	MX_TIM14_Init();
 
 	 //Circulating DMA Channels ON All Module
 	for (int i = 1; i <= NumOfPorts; i++) {
@@ -718,41 +714,56 @@ void RegisterModuleCLICommands(void) {
 void LipoChargerTask(void *argument){
 
 	 int static timer=0,flag=0;
-
+	 float ChargingCurrent,ChargingVolt=0;
+	 uint8_t StateOfCharger=0,FullCharge=0;
 	/* Infinite loop */
 	for(;;){
 
-		/* 30 mS interrupt */
-		if (LedChargerFlag == 1) {
+		/* Read Charging Current */
+		CheckChargingStatus();
 
-			/* Read Charging Current */
+		/* in case the battery is charging */
+		if (AnalogMeasurement.ChargingStatus ==0)
+		{
 			ReadCellCurrent(&ChargingCurrent);
-
-			/* in case the battery is charging */
-			if (ChargingCurrent > MIN_CHARGING_CURRENT_VALUE) {
-				if (timer < MAX_CCR_VALUE && flag == 0) {
-					timer += 500;
+			ReadCellVoltage(&ChargingVolt);
+			ReadCellStateOfCharge(&StateOfCharger);
+			 if (ChargingVolt >= 4.2||StateOfCharger==100)
+			{
+			FullCharge=1;
+			TIM3->CCR1 = MAX_CCR_VALUE;
+			}
+			 if (ChargingVolt < 4.17)
+			 {
+				 FullCharge=0;
+			 }
+			 if ((ChargingVolt*ChargingCurrent)>=0.1&&FullCharge==0)
+			{
+				if (timer < MAX_CCR_VALUE && flag == 0)
+				{
+					timer += 200;
 					if (timer >= MAX_CCR_VALUE)
 						flag = 1;
-
-				} else if (flag == 1) {
-					timer -= 500;
-
+				} else if (flag == 1)
+				{
+					timer -= 200;
 					if (timer <= 0)
 						flag = 0;
 				}
 				/* increase CCR */
 				TIM3->CCR1 = timer;
-
 			}
-//			else if ((ChargingCurrent < MIN_CHARGING_CURRENT_VALUE) && (ChargingCurrent <= 0) )
-//				TIM3->CCR1 = MAX_CCR_VALUE;
-
-			else if (ChargingCurrent <= 0)
-				TIM3->CCR1 = 0;
-
-			LedChargerFlag = 0;
+			 if ((ChargingVolt*ChargingCurrent)<0.1&&FullCharge==0)
+			{
+			TIM3->CCR1 = 0;
+			}
 		}
+		else if (AnalogMeasurement.ChargingStatus == 1&&ChargingCurrent<0)
+			{
+			FullCharge=0;
+			TIM3->CCR1 = 0;
+			}
+
 
 		/*  */
 		switch (tofMode) {

@@ -10,11 +10,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 uint16_t  buffer;
-uint8_t times , SOC , Status;
+uint8_t times , SOC , Status,StateOfCharger=0;
 extern AnalogMeasType AnalogMeasurement;
 Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
-float Data;
+float Data,ChargingCurrent=0,ChargingVolt=0;
 IdType ID;
 Module_Status ReadID(IdType *BatId);
 /* Private function prototypes -----------------------------------------------*/
@@ -40,7 +40,11 @@ void UserTask(void *argument){
 
 	// put your code here, to run repeatedly.
 	while(1){
-
+		ReadCellCurrent(&ChargingCurrent);
+		ReadCellVoltage(&ChargingVolt);
+//		CheckChargingStatus();
+		ReadCellStateOfCharge(&StateOfCharger);
+//        Delay_ms(1000);
 //		if (times == 3){
 //		ReadReg(PROTECT_CONFIGS_REG_ADD, &buffer, 2);
 //		/* 1-  Write 0x0000 to the CommStat register (0x061) 2 times in a row to unlock Write Protection */

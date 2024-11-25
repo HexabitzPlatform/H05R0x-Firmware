@@ -25,7 +25,6 @@ TIM_HandleTypeDef htim16; /* micro-second delay counter */
 TIM_HandleTypeDef htim17; /* milli-second delay counter */
 
 TIM_HandleTypeDef htim3;  /* PWM Special Timer - Charging Indicator */
-TIM_HandleTypeDef htim14; /* Special Timer Interrupt every 30 mS */
 
 IWDG_HandleTypeDef hiwdg;
 
@@ -140,24 +139,6 @@ void MX_TIM3_Init(void)
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 
 }
-
-/*-----------------------------------------------------------*/
-
-/* TIM14 init function */
-void MX_TIM14_Init(void) {
-
-	htim14.Instance = TIM14;
-	htim14.Init.Prescaler = 1000 - 1;
-	htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim14.Init.Period = 1600 - 1; // 1600-->30ms  960-->20ms  14400-->300ms
-	htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-	HAL_TIM_Base_Init(&htim14);
-
-	HAL_TIM_Base_Start_IT(&htim14);
-
-}
-
 /*-----------------------------------------------------------*/
 
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)

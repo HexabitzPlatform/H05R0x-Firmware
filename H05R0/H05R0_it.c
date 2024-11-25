@@ -19,8 +19,6 @@ uint8_t* error_restart_message = "Restarting...\r\n";
 extern uint8_t UARTRxBuf[NumOfPorts][MSG_RX_BUF_SIZE];
 extern uint8_t UARTRxBufIndex[NumOfPorts];
 extern uint8_t WakeupFromStopFlag;
-extern bool LedChargerFlag;
-extern TIM_HandleTypeDef htim14;
 
 /* External function prototypes ----------------------------------------------*/
 
@@ -255,28 +253,6 @@ void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart) {
 
 	if (huart->Instance == USART3)
 		HAL_UARTEx_DisableStopMode(huart);
-
-}
-
-/*-----------------------------------------------------------*/
-
-/**
-  * @brief This function handles TIM14 global interrupt.
-  */
-void TIM14_IRQHandler(void)
-{
-
-  HAL_TIM_IRQHandler(&htim14);
-
-}
-
-/*-----------------------------------------------------------*/
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-	// Every 30 ms increases by 1
-	if(htim->Instance == TIM14)
-		LedChargerFlag=1;
 
 }
 
