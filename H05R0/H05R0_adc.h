@@ -23,8 +23,16 @@ extern "C" {
 /* USER CODE END Includes */
 
 extern ADC_HandleTypeDef hadc1;
+/* Exported types ------------------------------------------------------------*/
+typedef enum {
+	ADC_CHANNEL8=8,
+	ADC_CHANNEL9=9,
+
+}ADC_Channel;
 
 /* USER CODE BEGIN Private defines */
+void SelectADCChannel(uint8_t ADC_Channel);
+void ReadADCValue(ADC_HandleTypeDef *hadc,uint8_t ADC_Channel,uint32_t *ADC_Value, uint32_t Timeout);
 
 /* USER CODE END Private defines */
 

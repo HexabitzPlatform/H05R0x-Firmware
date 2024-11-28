@@ -117,7 +117,43 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
+void SelectADCChannel(uint8_t ADC_Channel) {
+	ADC_ChannelConfTypeDef sConfig = { 0 };
+	/** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	 */
+	if (ADC_Channel == 8) {
+		sConfig.Channel = ADC_CHANNEL_8;
+		sConfig.Rank = ADC_REGULAR_RANK_1;
+		sConfig.SamplingTime = ADC_SAMPLINGTIME_COMMON_1;
+		HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
+	}
+	if (ADC_Channel == 9) {
+
+		sConfig.Channel = ADC_CHANNEL_9;
+		sConfig.Rank = ADC_REGULAR_RANK_1;
+		sConfig.SamplingTime = ADC_SAMPLINGTIME_COMMON_1;
+		HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+	}
+
+}
+
+void ReadADCValue(ADC_HandleTypeDef *hadc,uint8_t ADC_Channel,uint32_t *ADC_Value, uint32_t Timeout)
+{
+	  SelectADCChannel(ADC_Channel);
+	   // Calibrate The ADC On Power-Up For Better Accuracy
+	  HAL_ADCEx_Calibration_Start(hadc);
+	  // Start ADC Conversion
+	  HAL_ADC_Start(hadc);
+	  // Poll ADC1 Perihperal & TimeOut
+	  HAL_ADC_PollForConversion(hadc, Timeout);
+	  // Read The ADC Conversion Result
+	  *ADC_Value = HAL_ADC_GetValue(&hadc1);
+	  // Stop ADC Conversion
+	  HAL_ADC_Stop(hadc);
+
+}
 /* USER CODE END 1 */
 
 
