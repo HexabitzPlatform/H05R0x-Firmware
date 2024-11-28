@@ -134,6 +134,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_MemoryMap.h</locationURI>
 		</link>
 		<link>
+			<name>H05R0/H05R0_adc.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_adc.c</locationURI>
+		</link>
+		<link>
+			<name>H05R0/H05R0_adc.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_adc.h</locationURI>
+		</link>
+		<link>
 			<name>H05R0/H05R0_dma.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_dma.c</locationURI>

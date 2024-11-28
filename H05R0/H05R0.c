@@ -17,6 +17,7 @@
 #include "BOS.h"
 #include "H05R0_inputs.h"
 #include "H05R0_i2c.h"
+#include "H05R0_adc.h"
 
 
 /* Define UART variables */
@@ -543,7 +544,7 @@ void Module_Peripheral_Init(void){
 	MX_GPIO_Init();
 	Init_MAX17330();
 	MX_TIM3_Init();
-
+	MX_ADC1_Init();
 	 //Circulating DMA Channels ON All Module
 	for (int i = 1; i <= NumOfPorts; i++) {
 		if (GetUart(i) == &huart1) {

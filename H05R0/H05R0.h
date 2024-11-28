@@ -111,6 +111,12 @@
 #define STATUS_LED_Pin       GPIO_PIN_4
 #define STATUS_LED_GPIO_Port GPIOB
 
+/* Module Special ADC */
+#define CHARGER_CURRENT_SENSE_Pin GPIO_PIN_0
+#define CHARGER_CURRENT_SENSE_GPIO_Port GPIOB
+#define VBUS_SENSE_Pin GPIO_PIN_1
+#define VBUS_SENSE_GPIO_Port GPIOB
+
 /* Module Special I2C */
 #define MCU_SDA_Pin          GPIO_PIN_6
 #define MCU_SDA_GPIO_Port    GPIOA
