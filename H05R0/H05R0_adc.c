@@ -117,7 +117,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
-void SelectADCChannel(uint8_t ADC_Channel) {
+void SelectADCChannel(ADC_Channel ADC_Channel) {
 	ADC_ChannelConfTypeDef sConfig = { 0 };
 	/** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
 	 */
@@ -139,13 +139,21 @@ void SelectADCChannel(uint8_t ADC_Channel) {
 
 }
 
-void ReadADCValue(ADC_HandleTypeDef *hadc,uint8_t ADC_Channel,uint32_t *ADC_Value, uint32_t Timeout)
+Module_Status ReadADCValue(ADC_HandleTypeDef *hadc,ADC_Channel ADC_Channel,uint32_t *ADC_Value, uint32_t Timeout)
 {
+	Module_Status Status=H05R0_ERROR;
+
 	  SelectADCChannel(ADC_Channel);
 	   // Calibrate The ADC On Power-Up For Better Accuracy
 	  HAL_ADCEx_Calibration_Start(hadc);
 	  // Start ADC Conversion
-	  HAL_ADC_Start(hadc);
+	  if (HAL_OK ==HAL_ADC_Start(hadc))
+	  {
+	      Status=H05R0_OK;
+	  }
+	  {
+	      Status=H05R0_OK;
+	  }
 	  // Poll ADC1 Perihperal & TimeOut
 	  HAL_ADC_PollForConversion(hadc, Timeout);
 	  // Read The ADC Conversion Result
@@ -153,6 +161,7 @@ void ReadADCValue(ADC_HandleTypeDef *hadc,uint8_t ADC_Channel,uint32_t *ADC_Valu
 	  // Stop ADC Conversion
 	  HAL_ADC_Stop(hadc);
 
+	  return Status;
 }
 /* USER CODE END 1 */
 

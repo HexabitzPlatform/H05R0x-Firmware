@@ -1396,6 +1396,77 @@ Module_Status ReadSetChargCurrent(float *setChargCurrent)
 	return Status;
 }
 /*-----------------------------------------------------------*/
+/*
+ * @brief: read  charger Current measurement
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadChargerCurrent(float *ChargerCurrent)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint32_t tempVar = 0u;
+	if (H05R0_OK ==ReadADCValue(&hadc1,ADC_CHANNEL8,&tempVar,100))
+		Status = H05R0_OK;
+
+	   *ChargerCurrent=(tempVar*(3.3/4096))*50;
+
+	   return Status;
+}
+
+/*-----------------------------------------------------------*/
+/*
+ * @brief: read  VBUS Voltage
+ * @param1: pointer to a buffer to store received data
+ * @retval: status
+ */
+Module_Status ReadVBUSVoltage(float *VBUSVolt)
+{
+	Module_Status Status = H05R0_ERROR;
+	uint32_t tempVar = 0u;
+	if (H05R0_OK ==ReadADCValue(&hadc1,ADC_CHANNEL9,&tempVar,100))
+		Status = H05R0_OK;
+
+	   *VBUSVolt=(tempVar*(3.3/4096))*3.35;
+
+	   return Status;
+
+}
+
+/*-----------------------------------------------------------*/
+/*
+ * @brief: MCU LDO Enable To secure feeding for the processor after the charger is separated
+ */
+Module_Status MCULDOEnable( GPIO_PinState PinState)
+{
+	Module_Status Status = H05R0_OK;
+
+	HAL_GPIO_WritePin(MCU_LDO_EN_GPIO_Port, MCU_LDO_EN_Pin,PinState);
+	 return Status;
+}
+
+/*-----------------------------------------------------------*/
+/*
+ * @brief: MCU Out Volt Enable To secure 3.3V for other Modules
+ */
+Module_Status MCUOutVoltEnable( GPIO_PinState PinState)
+{
+	Module_Status Status = H05R0_OK;
+
+	HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_Port, OUT_EN_3V3_Pin,PinState);
+	 return Status;
+}
+/*-----------------------------------------------------------*/
+/*
+ * @brief: VBUS Output Switch Enable To Load Control
+ */
+Module_Status VBUSOutSwitchEnable( GPIO_PinState PinState)
+{
+	Module_Status Status = H05R0_OK;
+
+	HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_Port, VBUS_OUT_EN_Pin,PinState);
+	 return Status;
+}
+/*-----------------------------------------------------------*/
 
 /*
  * @brief: write configurations to non-volatile memory registers

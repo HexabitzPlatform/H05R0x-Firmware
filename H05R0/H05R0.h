@@ -286,6 +286,12 @@ Module_Status ReadSetChargCurrent(float *setChargCurrent);
 Module_Status ReadAllAnalogMeasurements(AnalogMeasType *analMeasurements);
 Module_Status WriteConfigsToNV(void);
 Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
+Module_Status ReadChargerCurrent(float *ChargerCurrent);
+Module_Status ReadVBUSVoltage(float *VBUSVolt);
+Module_Status MCULDOEnable( GPIO_PinState PinState);
+Module_Status MCUOutVoltEnable( GPIO_PinState PinState);
+Module_Status VBUSOutSwitchEnable( GPIO_PinState PinState);
+
 Module_Status LockNonVolatileMemory(void);
 Module_Status CheckChargingStatus(void);
 Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function);

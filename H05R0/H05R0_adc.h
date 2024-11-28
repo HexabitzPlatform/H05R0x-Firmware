@@ -31,8 +31,8 @@ typedef enum {
 }ADC_Channel;
 
 /* USER CODE BEGIN Private defines */
-void SelectADCChannel(uint8_t ADC_Channel);
-void ReadADCValue(ADC_HandleTypeDef *hadc,uint8_t ADC_Channel,uint32_t *ADC_Value, uint32_t Timeout);
+void SelectADCChannel(ADC_Channel ADC_Channel);
+Module_Status ReadADCValue(ADC_HandleTypeDef *hadc,ADC_Channel ADC_Channel,uint32_t *ADC_Value, uint32_t Timeout);
 
 /* USER CODE END Private defines */
 
