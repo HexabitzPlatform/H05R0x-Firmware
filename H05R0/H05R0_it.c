@@ -72,6 +72,35 @@ void EXTI0_1_IRQHandler(void)
 
   /* USER CODE END EXTI0_1_IRQn 1 */
 }
+/**
+  * @brief This function handles EXTI line 4 to 15 interrupts.
+  */
+void EXTI4_15_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_15_IRQn 0 */
+
+  /* USER CODE END EXTI4_15_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(INPUT_3V3OUT_PG_Pin);
+  /* USER CODE BEGIN EXTI4_15_IRQn 1 */
+
+  /* USER CODE END EXTI4_15_IRQn 1 */
+}
+
+/*-----------------------------------------------------------*/
+/**
+  * @brief  EXTI line detection callback.
+ */
+void  HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
+{
+	uint8_t INPUT=0;
+	INPUT=HAL_GPIO_ReadPin(INPUT_3V3OUT_PG_GPIO_Port, INPUT_3V3OUT_PG_Pin);
+	if (GPIO_Pin==INPUT_3V3OUT_PG_Pin&&INPUT==0)
+	{
+		MCUOutVoltEnable(0);
+	}
+}
+
+/*-----------------------------------------------------------*/
 
 /**
  * @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXTI line 25.
