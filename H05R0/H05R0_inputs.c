@@ -639,74 +639,74 @@ BOS_Status SetButtonEvents(uint8_t port, uint8_t clicked, uint8_t dbl_clicked,
  * internal temperature and internal voltage reference which is equal in stm32f0 to around 1.2v.
  *
  */
-void MX_ADC_Init(void) {
-	hadc.Instance = ADC1;
-	hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
-	hadc.Init.Resolution = ADC_RESOLUTION_12B;
-	hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-	hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
-	hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-	hadc.Init.LowPowerAutoWait = DISABLE;
-	hadc.Init.LowPowerAutoPowerOff = DISABLE;
-	hadc.Init.ContinuousConvMode = ENABLE;
-	hadc.Init.DiscontinuousConvMode = DISABLE;
-	hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-	hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-	hadc.Init.DMAContinuousRequests = DISABLE;
-	hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+//void MX_ADC_Init(void) {
+//	hadc.Instance = ADC1;
+//	hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+//	hadc.Init.Resolution = ADC_RESOLUTION_12B;
+//	hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+//	hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
+//	hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+//	hadc.Init.LowPowerAutoWait = DISABLE;
+//	hadc.Init.LowPowerAutoPowerOff = DISABLE;
+//	hadc.Init.ContinuousConvMode = ENABLE;
+//	hadc.Init.DiscontinuousConvMode = DISABLE;
+//	hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+//	hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+//	hadc.Init.DMAContinuousRequests = DISABLE;
+//	hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+//
+//	if (HAL_ADC_Init(&hadc) != HAL_OK) {
+//		Error_Handler();
+//	}
+//	ADC_flag = 1;
+//}
+//void HAL_ADC_MspInit(ADC_HandleTypeDef *adcHandle) {
+//
+//	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+//		/* ADC1 clock enable */
+//		__HAL_RCC_ADC_CLK_ENABLE();
+//		__HAL_RCC_GPIOA_CLK_ENABLE();
+//		__HAL_RCC_GPIOB_CLK_ENABLE();
+//		/**ADC GPIO Configuration
+//		 PA2     ------> ADC_IN2
+//		 PA3     ------> ADC_IN3
+//		 PB10    ------> ADC_IN11
+//		 PB11    ------> ADC_IN15
+//		 */
+//		if(flag_ADC_Select[0]==1){
+//		GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3 ;
+//	    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+//		GPIO_InitStruct.Pull = GPIO_NOPULL;
+//		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);}
+//	    else{
+//        GPIO_InitStruct.Pin = GPIO_PIN_10 | GPIO_PIN_11 ;
+//		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+//	    GPIO_InitStruct.Pull = GPIO_NOPULL;
+//		HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);	}
+//
+//}
 
-	if (HAL_ADC_Init(&hadc) != HAL_OK) {
-		Error_Handler();
-	}
-	ADC_flag = 1;
-}
-void HAL_ADC_MspInit(ADC_HandleTypeDef *adcHandle) {
 
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-		/* ADC1 clock enable */
-		__HAL_RCC_ADC_CLK_ENABLE();
-		__HAL_RCC_GPIOA_CLK_ENABLE();
-		__HAL_RCC_GPIOB_CLK_ENABLE();
-		/**ADC GPIO Configuration
-		 PA2     ------> ADC_IN2
-		 PA3     ------> ADC_IN3
-		 PB10    ------> ADC_IN11
-		 PB11    ------> ADC_IN15
-		 */
-		if(flag_ADC_Select[0]==1){
-		GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3 ;
-	    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-		GPIO_InitStruct.Pull = GPIO_NOPULL;
-		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);}
-	    else{
-        GPIO_InitStruct.Pin = GPIO_PIN_10 | GPIO_PIN_11 ;
-		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-	    GPIO_InitStruct.Pull = GPIO_NOPULL;
-		HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);	}
-
-}
-
-
-void HAL_ADC_MspDeInit(ADC_HandleTypeDef *adcHandle) {
-
-	if (adcHandle->Instance == ADC1) {
-		/* USER CODE BEGIN ADC1_MspDeInit 0 */
-
-		/* USER CODE END ADC1_MspDeInit 0 */
-		/* Peripheral clock disable */
-		__HAL_RCC_ADC_CLK_DISABLE();
-
-		/**ADC GPIO Configuration
-		 PA0     ------> ADC_IN0
-		 PA1     ------> ADC_IN1
-		 */
-		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0 | GPIO_PIN_1);
-
-		/* USER CODE BEGIN ADC1_MspDeInit 1 */
-
-		/* USER CODE END ADC1_MspDeInit 1 */
-	}
-}
+//void HAL_ADC_MspDeInit(ADC_HandleTypeDef *adcHandle) {
+//
+//	if (adcHandle->Instance == ADC1) {
+//		/* USER CODE BEGIN ADC1_MspDeInit 0 */
+//
+//		/* USER CODE END ADC1_MspDeInit 0 */
+//		/* Peripheral clock disable */
+//		__HAL_RCC_ADC_CLK_DISABLE();
+//
+//		/**ADC GPIO Configuration
+//		 PA0     ------> ADC_IN0
+//		 PA1     ------> ADC_IN1
+//		 */
+//		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0 | GPIO_PIN_1);
+//
+//		/* USER CODE BEGIN ADC1_MspDeInit 1 */
+//
+//		/* USER CODE END ADC1_MspDeInit 1 */
+//	}
+//}
 
 /** select port 2 & port 3 for the selected ADC regular channel to be converted. */
 
@@ -722,8 +722,8 @@ void ADCSelectChannel(uint8_t ADC_port, char *side) {
 		portStatus[ADC_port] = CUSTOM;
 		Channel = Get_channel(GetUart(ADC_port), side);
 		Rank_t = Get_Rank(ADC_port, side);
-		if (ADC_flag == 0)
-			MX_ADC_Init();
+//		if (ADC_flag == 0)
+//			MX_ADC_Init();
 	}
 }
 void ReadADCChannel(uint8_t Port, char *side, float *ADC_Value) {
@@ -767,7 +767,7 @@ void ReadADCChannel(uint8_t Port, char *side, float *ADC_Value) {
 void ReadTempAndVref(float *temp, float *Vref) {
 
 	if (0 == ADC_flag)
-		MX_ADC_Init();
+//		MX_ADC_Init();
 
 
 	/* --- Enable internal temperature channel.*/
@@ -837,7 +837,7 @@ float GetReadPrecentage(uint8_t port, float *precentageValue) {
 	if (port == 2 || port == 3) {
 
 		if (0 == ADC_flag) {
-			MX_ADC_Init();
+//			MX_ADC_Init();
 			HAL_UART_DeInit(GetUart(port));
 			if (port == 3) {
 				HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10);
