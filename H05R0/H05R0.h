@@ -110,6 +110,17 @@
 #define BAT_ALRT_EXTI_IRQn   EXTI0_1_IRQn
 #define STATUS_LED_Pin       GPIO_PIN_4
 #define STATUS_LED_GPIO_Port GPIOB
+#define VBUS_OUT_EN_Pin GPIO_PIN_4
+#define VBUS_OUT_EN_GPIO_Port GPIOA
+#define MCU_LDO_EN_Pin GPIO_PIN_2
+#define MCU_LDO_EN_GPIO_Port GPIOB
+#define OUT_EN_3V3_Pin GPIO_PIN_12
+#define OUT_EN_3V3_GPIO_Port GPIOB
+
+/* Module GPIO Pin input */
+#define INPUT_3V3OUT_PG_Pin GPIO_PIN_13
+#define INPUT_3V3OUT_PG_GPIO_Port GPIOB
+#define INPUT_3V3OUT_PG_EXTI_IRQn EXTI4_15_IRQn
 
 /* Module Special ADC */
 #define CHARGER_CURRENT_SENSE_Pin GPIO_PIN_0
