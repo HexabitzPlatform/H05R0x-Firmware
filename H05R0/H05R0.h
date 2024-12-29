@@ -145,6 +145,9 @@
 #define MAX_CCR_VALUE   			20000
 #define MIN_CHARGING_CURRENT_VALUE  +0.010
 
+#define SENSE_CHARGER_VAL	    0.01
+#define GAIN_CHARGER_VAL  		50
+
 #define SAMPLE_TO_PORT          1
 #define STREAM_TO_PORT          2
 #define STREAM_TO_Terminal      3

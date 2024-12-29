@@ -1408,7 +1408,7 @@ Module_Status ReadChargerCurrent(float *ChargerCurrent)
 	if (H05R0_OK ==ReadADCValue(&hadc1,ADC_CHANNEL8,&tempVar,100))
 		Status = H05R0_OK;
 
-	   *ChargerCurrent=(tempVar*(3.3/4096))*50;
+	   *ChargerCurrent=(((tempVar*(3.3/4096))/GAIN_CHARGER_VAL)/SENSE_CHARGER_VAL);
 
 	   return Status;
 }
