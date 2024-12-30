@@ -96,7 +96,7 @@ void  HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
 	INPUT=HAL_GPIO_ReadPin(INPUT_3V3OUT_PG_GPIO_Port, INPUT_3V3OUT_PG_Pin);
 	if (GPIO_Pin==INPUT_3V3OUT_PG_Pin&&INPUT==0)
 	{
-		MCUOutVoltEnable(0);
+		MCUOutVoltEnable(DISABLE_OUT);
 	}
 }
 

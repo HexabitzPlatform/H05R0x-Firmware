@@ -10,13 +10,15 @@
 
 /* Private variables ---------------------------------------------------------*/
 uint16_t  buffer;
-uint8_t times , SOC , Status,StateOfCharger=0;
+uint8_t times , SOC , Status;
 extern AnalogMeasType AnalogMeasurement;
 Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 Module_Status WriteReg(uint16_t regAddress, uint16_t Data);
-float Data,ChargingCurrent=0,ChargingVolt=0;
+float Data,VBUSVolt=0,ChargerCurrent=0;
 IdType ID;
 Module_Status ReadID(IdType *BatId);
+float ChargingCurrentt,ChargingVoltt=0;
+uint8_t StateOfChargerr=0;
 /* Private function prototypes -----------------------------------------------*/
 
 /* Main function ------------------------------------------------------------*/
@@ -33,17 +35,20 @@ int main(void){
 
 /* User Task */
 void UserTask(void *argument){
-
 //	WriteConfigsToNV();
-
-
-
+	MCUOutVoltEnable(ENABLE_OUT);
+	VBUSOutSwitchEnable(ENABLE_OUT);
 	// put your code here, to run repeatedly.
 	while(1){
-		ReadCellCurrent(&ChargingCurrent);
-		ReadCellVoltage(&ChargingVolt);
+//		ReadCellCurrent(&ChargingCurrentt);
+//		ReadCellVoltage(&ChargingVoltt);
+//		ReadCellStateOfCharge(&StateOfChargerr);
+//		ReadChargerCurrent(&ChargerCurrent);
+//		ReadVBUSVoltage(&VBUSVolt);
+//		ReadCellCurrent(&ChargingCurrent);
+//		ReadCellVoltage(&ChargingVolt);
 //		CheckChargingStatus();
-		ReadCellStateOfCharge(&StateOfCharger);
+//		ReadCellStateOfCharge(&StateOfCharger);
 //        Delay_ms(1000);
 //		if (times == 3){
 //		ReadReg(PROTECT_CONFIGS_REG_ADD, &buffer, 2);

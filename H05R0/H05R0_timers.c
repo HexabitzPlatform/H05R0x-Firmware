@@ -24,7 +24,7 @@ GPIO_InitTypeDef GPIO_InitStruct = {0};
 TIM_HandleTypeDef htim16; /* micro-second delay counter */
 TIM_HandleTypeDef htim17; /* milli-second delay counter */
 
-TIM_HandleTypeDef htim3;  /* PWM Special Timer - Charging Indicator */
+TIM_HandleTypeDef htim1;  /* PWM Special Timer - Charging Indicator */
 
 IWDG_HandleTypeDef hiwdg;
 
@@ -93,8 +93,8 @@ void TIM_MSEC_Init(void){
 
 /*-----------------------------------------------------------*/
 
-/* TIM3 init function */
-void MX_TIM3_Init(void)
+/* TIM1 init function */
+void MX_TIM1_Init(void)
 {
 
 	TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
@@ -102,41 +102,40 @@ void MX_TIM3_Init(void)
 	TIM_OC_InitTypeDef sConfigOC = { 0 };
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-	htim3.Instance = TIM3;
-	htim3.Init.Prescaler = 1 - 1;
-	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim3.Init.Period = 24000 - 1;
-	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-	HAL_TIM_Base_Init(&htim3);
+	htim1.Instance = TIM1;
+	htim1.Init.Prescaler = 1 - 1;
+	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim1.Init.Period = 24000 - 1;
+	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+	HAL_TIM_Base_Init(&htim1);
 
 	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-	HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig);
+	HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig);
 
-	HAL_TIM_PWM_Init(&htim3);
+	HAL_TIM_PWM_Init(&htim1);
 
 	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig);
+	HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig);
 
 	sConfigOC.OCMode = TIM_OCMODE_PWM1;
 	sConfigOC.Pulse = 0;
 	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
 	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-	HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1);
+	HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1);
 
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	/**TIM3 GPIO Configuration
-	 PB4     ------> TIM3_CH1
-	 */
-	GPIO_InitStruct.Pin = GPIO_PIN_4;
+		PA8     ------> TIM1_CH1	 */
+	GPIO_InitStruct.Pin = GPIO_PIN_8;
 	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	GPIO_InitStruct.Alternate = GPIO_AF1_TIM3;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
 }
 /*-----------------------------------------------------------*/
@@ -144,10 +143,10 @@ void MX_TIM3_Init(void)
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  if(tim_baseHandle->Instance==TIM3)
+  if(tim_baseHandle->Instance==TIM1)
   {
     /* TIM3 clock enable */
-    __HAL_RCC_TIM3_CLK_ENABLE();
+    __HAL_RCC_TIM1_CLK_ENABLE();
   }
   else if(tim_baseHandle->Instance==TIM14)
     {
@@ -166,10 +165,10 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  if(tim_baseHandle->Instance==TIM3)
+  if(tim_baseHandle->Instance==TIM1)
   {
     /* Peripheral clock disable */
-    __HAL_RCC_TIM3_CLK_DISABLE();
+    __HAL_RCC_TIM1_CLK_DISABLE();
   }
   else if(tim_baseHandle->Instance==TIM14)
   {

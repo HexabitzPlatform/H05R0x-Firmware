@@ -57,6 +57,8 @@ uint8_t flag ;
 uint8_t tofMode ;
 static bool stopStream = false;
 AnalogMeasType AnalogMeasurement;
+float ChargingCurrent,ChargingVolt=0;
+uint8_t StateOfCharger=0,FullCharge=0;
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
 Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
@@ -67,7 +69,7 @@ void FLASH_Page_Eras(uint32_t Addr );
 Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVal);
 Module_Status BAT_ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 static Module_Status StreamMemsToCLI(uint32_t Numofsamples, uint32_t timeout, SampleMemsToString function);
-void MX_TIM3_Init(void);
+void MX_TIM1_Init(void);
 /* Create CLI commands --------------------------------------------------------*/
 portBASE_TYPE CLI_ReadCellVoltageCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE CLI_ReadCellVoltageCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
@@ -543,8 +545,11 @@ void Module_Peripheral_Init(void){
 	MX_I2C2_Init();
 	MX_GPIO_Init();
 	Init_MAX17330();
-	MX_TIM3_Init();
+	MX_TIM1_Init();
 	MX_ADC1_Init();
+
+	MCULDOEnable(ENABLE_OUT);
+
 	 //Circulating DMA Channels ON All Module
 	for (int i = 1; i <= NumOfPorts; i++) {
 		if (GetUart(i) == &huart1) {
@@ -715,13 +720,12 @@ void RegisterModuleCLICommands(void) {
 void LipoChargerTask(void *argument){
 
 	 int static timer=0,flag=0;
-	 float ChargingCurrent,ChargingVolt=0;
-	 uint8_t StateOfCharger=0,FullCharge=0;
+
 	/* Infinite loop */
 	for(;;){
 
 		/* Read Charging Current */
-		CheckChargingStatus();
+//		CheckChargingStatus();
 
 		/* in case the battery is charging */
 		if (AnalogMeasurement.ChargingStatus ==0)
@@ -732,7 +736,7 @@ void LipoChargerTask(void *argument){
 			 if (ChargingVolt >= 4.2||StateOfCharger==100)
 			{
 			FullCharge=1;
-			TIM3->CCR1 = MAX_CCR_VALUE;
+			TIM1->CCR1 = MAX_CCR_VALUE;
 			}
 			 if (ChargingVolt < 4.17)
 			 {
@@ -752,17 +756,17 @@ void LipoChargerTask(void *argument){
 						flag = 0;
 				}
 				/* increase CCR */
-				TIM3->CCR1 = timer;
+				TIM1->CCR1 = timer;
 			}
 			 if ((ChargingVolt*ChargingCurrent)<0.1&&FullCharge==0)
 			{
-			TIM3->CCR1 = 0;
+			TIM1->CCR1 = 0;
 			}
 		}
 		else if (AnalogMeasurement.ChargingStatus == 1&&ChargingCurrent<0)
 			{
 			FullCharge=0;
-			TIM3->CCR1 = 0;
+			TIM1->CCR1 = 0;
 			}
 
 
@@ -1426,7 +1430,7 @@ Module_Status ReadVBUSVoltage(float *VBUSVolt)
 	if (H05R0_OK ==ReadADCValue(&hadc1,ADC_CHANNEL9,&tempVar,100))
 		Status = H05R0_OK;
 
-	   *VBUSVolt=(tempVar*(3.3/4096))*3.35;
+	   *VBUSVolt=(tempVar*(3.3/4096)*3.35);
 
 	   return Status;
 
@@ -1436,35 +1440,46 @@ Module_Status ReadVBUSVoltage(float *VBUSVolt)
 /*
  * @brief: MCU LDO Enable To secure feeding for the processor after the charger is separated
  */
-Module_Status MCULDOEnable( GPIO_PinState PinState)
+Module_Status MCULDOEnable(Out_State PinState)
 {
 	Module_Status Status = H05R0_OK;
-
-	HAL_GPIO_WritePin(MCU_LDO_EN_GPIO_Port, MCU_LDO_EN_Pin,PinState);
-	 return Status;
+	if (PinState == ENABLE_OUT) {
+		HAL_GPIO_WritePin(MCU_LDO_EN_GPIO_Port, MCU_LDO_EN_Pin, GPIO_PIN_SET);
+	}
+	else
+		HAL_GPIO_WritePin(MCU_LDO_EN_GPIO_Port, MCU_LDO_EN_Pin, GPIO_PIN_RESET);
+	return Status;
 }
 
 /*-----------------------------------------------------------*/
 /*
  * @brief: MCU Out Volt Enable To secure 3.3V for other Modules
  */
-Module_Status MCUOutVoltEnable( GPIO_PinState PinState)
+Module_Status MCUOutVoltEnable( Out_State PinState)
 {
 	Module_Status Status = H05R0_OK;
+	if (PinState == ENABLE_OUT) {
+		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_Port, OUT_EN_3V3_Pin, GPIO_PIN_SET);
+	}
+	else
+		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_Port, OUT_EN_3V3_Pin, GPIO_PIN_RESET);
 
-	HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_Port, OUT_EN_3V3_Pin,PinState);
-	 return Status;
+	return Status;
 }
 /*-----------------------------------------------------------*/
 /*
  * @brief: VBUS Output Switch Enable To Load Control
  */
-Module_Status VBUSOutSwitchEnable( GPIO_PinState PinState)
+Module_Status VBUSOutSwitchEnable( Out_State PinState)
 {
 	Module_Status Status = H05R0_OK;
+	if (PinState == ENABLE_OUT) {
+		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_Port, VBUS_OUT_EN_Pin,GPIO_PIN_RESET);
+	}
+	else
+		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_Port, VBUS_OUT_EN_Pin, GPIO_PIN_SET);
 
-	HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_Port, VBUS_OUT_EN_Pin,PinState);
-	 return Status;
+	return Status;
 }
 /*-----------------------------------------------------------*/
 

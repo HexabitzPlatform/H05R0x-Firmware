@@ -225,6 +225,10 @@ typedef enum {
 	DISCHARGING
 } Charging_Status;
 
+typedef enum {
+	DISABLE_OUT = 0u,
+	ENABLE_OUT
+} Out_State;
 /* Export Module typedef structure */
 typedef struct {
 	float batVolt;
@@ -291,9 +295,9 @@ Module_Status WriteConfigsToNV(void);
 Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status ReadChargerCurrent(float *ChargerCurrent);
 Module_Status ReadVBUSVoltage(float *VBUSVolt);
-Module_Status MCULDOEnable( GPIO_PinState PinState);
-Module_Status MCUOutVoltEnable( GPIO_PinState PinState);
-Module_Status VBUSOutSwitchEnable( GPIO_PinState PinState);
+Module_Status MCULDOEnable( Out_State PinState);
+Module_Status MCUOutVoltEnable( Out_State PinState);
+Module_Status VBUSOutSwitchEnable( Out_State PinState);
 
 Module_Status LockNonVolatileMemory(void);
 Module_Status CheckChargingStatus(void);
