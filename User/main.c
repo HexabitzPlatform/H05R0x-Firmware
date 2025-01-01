@@ -40,6 +40,10 @@ void UserTask(void *argument){
 	VBUSOutSwitchEnable(ENABLE_OUT);
 	// put your code here, to run repeatedly.
 	while(1){
+		ReadVBUSVoltage(&VBUSVolt);
+		ReadChargerCurrent(&ChargerCurrent);
+		Delay_ms(500);
+//		ReadChargerCurrent(&ChargerCurrent);
 //		ReadCellCurrent(&ChargingCurrentt);
 //		ReadCellVoltage(&ChargingVoltt);
 //		ReadCellStateOfCharge(&StateOfChargerr);
@@ -80,7 +84,6 @@ void UserTask(void *argument){
 
 //		ReadReg(0x0000, &buffer, 2);
 //		ReadCellVoltage(&Data);
-
 
 	}
 }

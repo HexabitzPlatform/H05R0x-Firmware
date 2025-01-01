@@ -725,7 +725,7 @@ void LipoChargerTask(void *argument){
 	for(;;){
 
 		/* Read Charging Current */
-//		CheckChargingStatus();
+		CheckChargingStatus();
 
 		/* in case the battery is charging */
 		if (AnalogMeasurement.ChargingStatus ==0)
@@ -1412,7 +1412,7 @@ Module_Status ReadChargerCurrent(float *ChargerCurrent)
 	if (H05R0_OK ==ReadADCValue(&hadc1,ADC_CHANNEL8,&tempVar,100))
 		Status = H05R0_OK;
 
-	   *ChargerCurrent=(((tempVar*(3.3/4096))/GAIN_CHARGER_VAL)/SENSE_CHARGER_VAL);
+	   *ChargerCurrent=(((tempVar*2.5)/(4096))/(GAIN_CHARGER_VAL)/SENSE_CHARGER_VAL);
 
 	   return Status;
 }
@@ -1430,7 +1430,7 @@ Module_Status ReadVBUSVoltage(float *VBUSVolt)
 	if (H05R0_OK ==ReadADCValue(&hadc1,ADC_CHANNEL9,&tempVar,100))
 		Status = H05R0_OK;
 
-	   *VBUSVolt=(tempVar*(3.3/4096)*3.35);
+	   *VBUSVolt=(((tempVar*2.5)/(4096))*3.35);
 
 	   return Status;
 
