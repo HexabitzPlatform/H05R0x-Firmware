@@ -229,6 +229,11 @@ typedef enum {
 	DISABLE_OUT = 0u,
 	ENABLE_OUT
 } Out_State;
+
+typedef enum {
+	BATTARY_EMPTY = 0u,
+	BATTARY_FULL
+} Battery_Status;
 /* Export Module typedef structure */
 typedef struct {
 	float batVolt;

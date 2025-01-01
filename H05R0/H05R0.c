@@ -59,6 +59,8 @@ static bool stopStream = false;
 AnalogMeasType AnalogMeasurement;
 float ChargingCurrent,ChargingVolt=0;
 uint8_t StateOfCharger=0,FullCharge=0;
+uint8_t ChargStatus = 1u;
+
 /* Private function prototypes -----------------------------------------------*/
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
 Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
@@ -733,17 +735,21 @@ void LipoChargerTask(void *argument){
 			ReadCellCurrent(&ChargingCurrent);
 			ReadCellVoltage(&ChargingVolt);
 			ReadCellStateOfCharge(&StateOfCharger);
-			 if (ChargingVolt >= 4.2||StateOfCharger==100)
+
+			 if (StateOfCharger==100)
 			{
-			FullCharge=1;
+			FullCharge=BATTARY_FULL;
+			ChargStatus=CHARGING;
 			TIM1->CCR1 = MAX_CCR_VALUE;
 			}
-			 if (ChargingVolt < 4.17)
-			 {
-				 FullCharge=0;
-			 }
-			 if ((ChargingVolt*ChargingCurrent)>=0.1&&FullCharge==0)
+			 if (StateOfCharger<99)
 			{
+				 ChargStatus=CHARGING;
+				 FullCharge=BATTARY_EMPTY;
+			}
+			 if ((ChargingVolt*ChargingCurrent)>=0.1&&FullCharge==BATTARY_EMPTY)
+			{
+				ChargStatus=CHARGING;
 				if (timer < MAX_CCR_VALUE && flag == 0)
 				{
 					timer += 200;
@@ -758,17 +764,19 @@ void LipoChargerTask(void *argument){
 				/* increase CCR */
 				TIM1->CCR1 = timer;
 			}
-			 if ((ChargingVolt*ChargingCurrent)<0.1&&FullCharge==0)
+			 if ((ChargingVolt*ChargingCurrent)<0.1&&FullCharge==BATTARY_EMPTY)
 			{
-			TIM1->CCR1 = 0;
-			}
-		}
-		else if (AnalogMeasurement.ChargingStatus == 1&&ChargingCurrent<0)
-			{
-			FullCharge=0;
+			ChargStatus=DISCHARGING;//Stop the loads and wait for the current to increase
 			TIM1->CCR1 = 0;
 			}
 
+		}
+		else if (AnalogMeasurement.ChargingStatus == 1&&ChargingCurrent<0)
+			{
+			ChargStatus=DISCHARGING;
+			FullCharge=BATTARY_EMPTY;
+			TIM1->CCR1 = 0;
+			}
 
 		/*  */
 		switch (tofMode) {
