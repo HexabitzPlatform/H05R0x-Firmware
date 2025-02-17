@@ -25,24 +25,25 @@ DMA_HandleTypeDef hdma_usart6_rx;
 /* USART1 init function */
 #ifdef _Usart1
 void MX_USART1_UART_Init(void){
-	  huart1.Instance = USART1;
-	  huart1.Init.BaudRate = DEF_ARRAY_BAUDRATE;
-	  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-	  huart1.Init.StopBits = UART_STOPBITS_1;
-	  huart1.Init.Parity = UART_PARITY_NONE;
-	  huart1.Init.Mode = UART_MODE_TX_RX;
-	  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-	  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-	  huart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-	  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-	  HAL_UART_Init(&huart1);
+	huart1.Instance = USART1;
+	huart1.Init.BaudRate = DEF_ARRAY_BAUDRATE;
+	huart1.Init.WordLength = UART_WORDLENGTH_8B;
+	huart1.Init.StopBits = UART_STOPBITS_1;
+	huart1.Init.Parity = UART_PARITY_NONE;
+	huart1.Init.Mode = UART_MODE_TX_RX;
+	huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+	huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+	huart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+	huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
-	  HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8);
+	HAL_UART_Init(&huart1);
 
-	  HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8);
+	HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8);
 
-	  HAL_UARTEx_DisableFifoMode(&huart1);
+	HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8);
+
+	HAL_UARTEx_DisableFifoMode(&huart1);
 
 #if _P4pol_reversed
 	huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT;
@@ -56,23 +57,26 @@ void MX_USART1_UART_Init(void){
 #ifdef _Usart2
 void MX_USART2_UART_Init(void){
 	huart2.Instance = USART2;
-	  huart2.Init.BaudRate = DEF_ARRAY_BAUDRATE;
-	  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-	  huart2.Init.StopBits = UART_STOPBITS_1;
-	  huart2.Init.Parity = UART_PARITY_NONE;
-	  huart2.Init.Mode = UART_MODE_TX_RX;
-	  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-	  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-	  huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-	  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-	   HAL_UART_Init(&huart2);
+	huart2.Init.BaudRate = DEF_ARRAY_BAUDRATE;
+	huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	huart2.Init.StopBits = UART_STOPBITS_1;
+	huart2.Init.Parity = UART_PARITY_NONE;
+	huart2.Init.Mode = UART_MODE_TX_RX;
+	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+	huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+	huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+	huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
-	   HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8);
 
-	  HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8);
 
-	 HAL_UARTEx_DisableFifoMode(&huart2);
+	HAL_UART_Init(&huart2);
+
+	HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8);
+
+	HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8);
+
+	HAL_UARTEx_DisableFifoMode(&huart2);
 
 
 #if _P2pol_reversed
@@ -97,6 +101,9 @@ void MX_USART3_UART_Init(void){
 	huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
 	huart3.Init.ClockPrescaler = UART_PRESCALER_DIV1;
 	huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+
+
+
 	HAL_UART_Init(&huart3);
 
 	HAL_UARTEx_SetTxFifoThreshold(&huart3, UART_TXFIFO_THRESHOLD_1_8);
@@ -126,6 +133,9 @@ void MX_USART4_UART_Init(void){
 	huart4.Init.OverSampling = UART_OVERSAMPLING_16;
 	huart4.Init.OneBitSampling = UART_ONEBIT_SAMPLING_DISABLED;
 	huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+
+
+
 	HAL_UART_Init(&huart4);
 
 #if _P1pol_reversed
@@ -175,6 +185,9 @@ void MX_USART6_UART_Init(void){
 	huart6.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
 	huart6.Init.ClockPrescaler = UART_PRESCALER_DIV1;
 	huart6.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+
+
+
 	HAL_UART_Init(&huart6);
 
 
@@ -226,6 +239,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart){
 		hdma_usart1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 		hdma_usart1_rx.Init.Mode = DMA_CIRCULAR;
 		hdma_usart1_rx.Init.Priority = DMA_PRIORITY_LOW;
+
+		msgRxDMA[3] = &hdma_usart1_rx;
+
 		HAL_DMA_Init(&hdma_usart1_rx);
 
 		__HAL_LINKDMA(huart, hdmarx, hdma_usart1_rx);
@@ -274,6 +290,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart){
 		hdma_usart2_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 		hdma_usart2_rx.Init.Mode = DMA_CIRCULAR;
 		hdma_usart2_rx.Init.Priority = DMA_PRIORITY_LOW;
+
+		msgRxDMA[1] = &hdma_usart2_rx;
+
+
 		HAL_DMA_Init(&hdma_usart2_rx);
 
 		__HAL_LINKDMA(huart, hdmarx, hdma_usart2_rx);
@@ -321,6 +341,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart){
 		hdma_usart3_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 		hdma_usart3_rx.Init.Mode = DMA_CIRCULAR;
 		hdma_usart3_rx.Init.Priority = DMA_PRIORITY_LOW;
+
+		msgRxDMA[2] = &hdma_usart3_rx;
+
 		HAL_DMA_Init(&hdma_usart3_rx);
 
 		__HAL_LINKDMA(huart, hdmarx, hdma_usart3_rx);
@@ -364,6 +387,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart){
 		hdma_usart4_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 		hdma_usart4_rx.Init.Mode = DMA_CIRCULAR;
 		hdma_usart4_rx.Init.Priority = DMA_PRIORITY_LOW;
+
+
+		msgRxDMA[0] = &hdma_usart4_rx;
+
 		HAL_DMA_Init(&hdma_usart4_rx);
 
 		__HAL_LINKDMA(huart, hdmarx, hdma_usart4_rx);
@@ -452,6 +479,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart){
 		hdma_usart6_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 		hdma_usart6_rx.Init.Mode = DMA_CIRCULAR;
 		hdma_usart6_rx.Init.Priority = DMA_PRIORITY_LOW;
+
+
+		msgRxDMA[4] = &hdma_usart6_rx;
+
 		HAL_DMA_Init(&hdma_usart6_rx);
 
 		__HAL_LINKDMA(huart, hdmarx, hdma_usart6_rx);
@@ -535,22 +566,22 @@ HAL_StatusTypeDef writePxITMutex(uint8_t port,char *buffer,uint16_t n,uint32_t m
 
 /* --- Non-blocking (DMA-based) write protected with a semaphore --- 
  */
-HAL_StatusTypeDef writePxDMAMutex(uint8_t port,char *buffer,uint16_t n,uint32_t mutexTimeout){
-	HAL_StatusTypeDef result =HAL_ERROR;
-	UART_HandleTypeDef *hUart =GetUart(port);
-	
-	if(hUart != NULL){
-		/* Wait for the mutex to be available. */
-		if(osSemaphoreWait(PxTxSemaphoreHandle[port],mutexTimeout) == osOK){
-			/* Setup TX DMA on this port */
-			DMA_MSG_TX_Setup(hUart);
-			/* Transmit the message */
-			result =HAL_UART_Transmit_DMA(hUart,(uint8_t* )buffer,n);
-		}
-	}
-	
-	return result;
-}
+//HAL_StatusTypeDef writePxDMAMutex(uint8_t port,char *buffer,uint16_t n,uint32_t mutexTimeout){
+//	HAL_StatusTypeDef result =HAL_ERROR;
+//	UART_HandleTypeDef *hUart =GetUart(port);
+//
+//	if(hUart != NULL){
+//		/* Wait for the mutex to be available. */
+//		if(osSemaphoreWait(PxTxSemaphoreHandle[port],mutexTimeout) == osOK){
+//			/* Setup TX DMA on this port */
+//			DMA_MSG_TX_Setup(hUart);
+//			/* Transmit the message */
+//			result =HAL_UART_Transmit_DMA(hUart,(uint8_t* )buffer,n);
+//		}
+//	}
+//
+//	return result;
+//}
 
 /* --- Update baudrate for this port --- 
  */
