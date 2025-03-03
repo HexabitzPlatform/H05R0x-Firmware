@@ -148,10 +148,9 @@
 #define SENSE_CHARGER_VAL	    0.01
 #define GAIN_CHARGER_VAL  		50
 
-#define SAMPLE_TO_PORT          1
-#define STREAM_TO_PORT          2
-#define STREAM_TO_Terminal      3
-#define DEFAULT                 4
+/* Macros definitions */
+#define STREAM_MODE_TO_PORT      1
+#define STREAM_MODE_TO_TERMINAL  2
 /* Module EEPROM Variables */
 // Module Addressing Space 500 - 599
 #define _EE_MODULE			500
@@ -306,9 +305,9 @@ Module_Status VBUSOutSwitchEnable( Out_State PinState);
 
 Module_Status LockNonVolatileMemory(void);
 Module_Status CheckChargingStatus(void);
-Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function);
-Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
-Module_Status StreamToTerminal(uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
+Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction);
+Module_Status StreamToPort(uint8_t dstModule,uint8_t dstPort,All_Data dataFunction,uint32_t numOfSamples,uint32_t streamTimeout);
+Module_Status StreamToTerminal(uint8_t dstPort,All_Data dataFunction,uint32_t numOfSamples,uint32_t streamTimeout);
 void SetupPortForRemoteBootloaderUpdate(uint8_t port);
 void remoteBootloaderUpdate(uint8_t src,uint8_t dst,uint8_t inport,uint8_t outport);
 

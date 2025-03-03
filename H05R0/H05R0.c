@@ -61,7 +61,31 @@ float ChargingCurrent,ChargingVolt=0;
 uint8_t StateOfCharger=0,FullCharge=0;
 uint8_t ChargStatus = 1u;
 
+
+TimerHandle_t xTimerStream = NULL;
+
+/* Stream to port variables */
+volatile uint32_t PortNumOfSamples = 0u;    /* Number of samples for port streaming */
+volatile uint32_t PortSamples = 0u;         /* Current sample count for port (if needed separately) */
+uint8_t PortModule = 0u;           /* Module ID for port streaming */
+uint8_t PortNumber = 0u;           /* Port number for streaming */
+All_Data PortFunction;                    /* Function pointer or struct for port streaming */
+
+/* Stream to terminal variables */
+volatile uint32_t TerminalNumOfSamples = 0u; /* Number of samples for terminal streaming */
+volatile uint8_t TerminalPort = 0u;          /* Port number for terminal streaming */
+All_Data TerminalFunction;                   /* Function pointer or struct for terminal streaming */
+uint32_t TerminalTimeout = 0u;               /* Timeout value for terminal streaming */
+uint8_t StreamMode = 0u;                     /* Streaming mode selector (port or terminal) */
+uint8_t StopeCliStreamFlag = 0u;             /* Flag to stop CLI streaming */
+/* General streaming variable */
+uint32_t SampleCount = 0u;                   /* Total sample counter */
+
+
 /* Private function prototypes -----------------------------------------------*/
+void StreamTimeCallback(TimerHandle_t xTimerStream);
+Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction,uint32_t numOfSamples, uint32_t streamTimeout);
+
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
 Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
 Module_Status Exportstreamtoterminal(uint32_t Numofsamples, uint32_t timeout,uint8_t Port,All_Data function);
@@ -597,6 +621,9 @@ void Module_Peripheral_Init(void){
 	if(LipoChargerTaskHandle == NULL)
 	xTaskCreate(LipoChargerTask,(const char* ) "LipoChargerTask",configMINIMAL_STACK_SIZE,NULL,osPriorityNormal - osPriorityIdle,&LipoChargerTaskHandle);
 
+	/* Create a timeout software timer StreamSamplsToPort() API */
+			xTimerStream =xTimerCreate("StreamTimer",pdMS_TO_TICKS(1000),pdTRUE,(void* )1,StreamTimeCallback);
+
 }
 
 /*-----------------------------------------------------------*/
@@ -609,79 +636,79 @@ Module_Status Module_MessagingTask(uint16_t code,uint8_t port,uint8_t src,uint8_
 	switch(code){
 	case CODE_H05R0_CELLVOLTAGE:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batVolt);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batVolt);
 		break;
 	}
 
 	case CODE_H05R0_CELLCURRENT:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCurrent);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCurrent);
 		break;
 	}
 
 	case CODE_H05R0_CELLPOWER:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batPower);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batPower);
 		break;
 	}
 
 	case CODE_H05R0_CELLTEMPERATURE:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],Temp);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],Temp);
 		break;
 	}
 
 	case CODE_H05R0_CELLCAPACITY:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCapacity);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCapacity);
 		break;
 	}
 
 	case CODE_H05R0_CELLSTATEOFCHARGE:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batSOC);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batSOC);
 		break;
 	}
 
 	case CODE_H05R0_CELLESTIMATEDTTE:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batTTE);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batTTE);
 		break;
 	}
 
 	case CODE_H05R0_CELLESTIMATEDTTF:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batTTF);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batTTF);
 		break;
 	}
 
 	case CODE_H05R0_CELLAGE:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batAge);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batAge);
 		break;
 	}
 
 	case CODE_H05R0_CELLCYCLES:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCycles);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batCycles);
 		break;
 	}
 
 	case CODE_H05R0_CELLCALINTERRES:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batIntResistance);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],batIntResistance);
 		break;
 	}
 
 	case CODE_H05R0_SETCHARGVOLTAGE:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],setChargVolt);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],setChargVolt);
 		break;
 	}
 
 		case CODE_H05R0_SETCHARGCURRENT:
 	{
-		SampletoPort(cMessage[port-1][shift],cMessage[port-1][1+shift],setChargCurrent);
+		SampleToPort(cMessage[port-1][shift],cMessage[port-1][1+shift],setChargCurrent);
 		break;
 	}
 
@@ -802,29 +829,43 @@ void LipoChargerTask(void *argument){
 			TIM1->CCR1 = 0;
 			}
 
-		/*  */
-		switch (tofMode) {
-
-		case STREAM_TO_PORT:
-			Exportstreamtoport(module1, port1, mode1, Numofsamples1, timeout1);
-			break;
-		case SAMPLE_TO_PORT:
-
-			Exporttoport(module2, port2, mode2);
-			break;
-		case STREAM_TO_Terminal:
-			Exportstreamtoterminal(Numofsamples3, timeout3, port3, mode3);
-
-			break;
-
-		default:
-			osDelay(10);
-			break;
-		}
 
 		taskYIELD();
 	}
 
+}
+
+/***************************************************************************/
+/*
+ * brief: Callback function triggered by a timer to manage data streaming.
+ * param xTimerStream: Handle of the timer that triggered the callback.
+ * retval: None
+ */
+void StreamTimeCallback(TimerHandle_t xTimerStream){
+	/* Increment sample counter */
+	++SampleCount;
+
+	/* Stream mode to port: Send samples to port */
+	if(STREAM_MODE_TO_PORT == StreamMode){
+		if((SampleCount <= PortNumOfSamples) || (0 == PortNumOfSamples)){
+			SampleToPort(PortModule,PortNumber,PortFunction);
+
+		}
+		else{
+			SampleCount =0;
+			xTimerStop(xTimerStream,0);
+		}
+	}
+	/* Stream mode to terminal: Export to terminal */
+	else if(STREAM_MODE_TO_TERMINAL == StreamMode){
+		if((SampleCount <= TerminalNumOfSamples) || (0 == TerminalNumOfSamples)){
+			SampleToTerminal(TerminalPort,TerminalFunction,TerminalNumOfSamples,TerminalTimeout);
+		}
+		else{
+			SampleCount =0;
+			xTimerStop(xTimerStream,0);
+		}
+	}
 }
 
 /*-----------------------------------------------------------*/
@@ -1671,265 +1712,252 @@ Module_Status ReadNumOfRemainingWrites(uint8_t *updatesRemaining)
 
 	return Status;
 }
-/*-----------------------------------------------------------*/
 
-Module_Status StreamToTerminal(uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
-{
-	Module_Status status = H05R0_OK;
-	tofMode=STREAM_TO_Terminal;
-	port3 = port ;
-	Numofsamples3=Numofsamples;
-	timeout3=timeout;
-	mode3= function;
-	return status;
-}
-Module_Status Exportstreamtoterminal(uint32_t Numofsamples, uint32_t timeout,uint8_t Port,All_Data function)
- {
-	Module_Status status = H05R0_OK;
-	int8_t *pcOutputString = NULL;
-	uint32_t period = timeout / Numofsamples;
-	float floatData;
-	uint8_t uint8Data = 0;
-	uint16_t uint16Data = 0;
-	uint32_t uint32Data = 0;
-	static uint8_t temp[4] = { 0 };
-	char cstring[100];
-	long numTimes = timeout / period;
-	if (period < MIN_MEMS_PERIOD_MS)
-		return H05R0_ERR_WrongParams;
+/***************************************************************************/
+/**
+ * @brief  Streams a single sensor data sample to the terminal.
+ * @param  dstPort: Port number to stream data to.
+ * @param  dataFunction: Function to sample data (e.g., batVolt, batCurrent, batPower, Temp, etc.).
+ * @param  numOfSamples: Number of samples (kept for compatibility, not used for repetition).
+ * @param  streamTimeout: Timeout period for the operation (in milliseconds).
+ * @retval Module_Status indicating success or failure of the operation.
+ */
+Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction,
+		uint32_t numOfSamples, uint32_t streamTimeout) {
+	Module_Status status = H05R0_OK; /* Initialize operation status as success */
+	int8_t *pcOutputString = NULL; /* Pointer to CLI output buffer */
+	uint32_t period = 0u; /* Calculated period for the operation */
+	char cstring[100] = { 0 }; /* Buffer for formatted output string */
 
-	// TODO: Check if CLI is enable or not
-	switch (function) {
-	case batVolt:
-		if (period > timeout)
-			timeout = period;
+	/* Check if the number of samples is valid to avoid division by zero */
+	if (numOfSamples == 0) {
+		return H05R0_ERR_WrongParams; /* Return error for invalid sample count */
+	}
 
-		stopStream = false;
+	/* Calculate the period by dividing timeout by number of samples */
+	period = streamTimeout / numOfSamples;
 
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellVoltage(&floatData);
+	/* Validate the calculated period against minimum allowed value */
+	if (period < MIN_MEMS_PERIOD_MS) {
+		return H05R0_ERR_WrongParams; /* Return error if period is too short */
+	}
 
-			snprintf(cstring, 50, "CellVoltage | Voltage: %.2f\r\n", floatData);
+	/* Process data based on the requested sensor function */
+	switch (dataFunction) {
+	case batVolt: {
+		float voltage = 0.0f;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-		break;
+		/* Sample battery voltage data */
+		ReadCellVoltage(&voltage);
 
-	case batCurrent:
-		if (period > timeout)
-			timeout = period;
-		stopStream = false;
+		/* Format battery voltage data into a string */
+		snprintf(cstring, sizeof(cstring), "CellVoltage | Voltage: %.2f\r\n",
+				voltage);
 
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellCurrent(&floatData);
-
-			snprintf(cstring, 50, "CellCurrent | Current: %.2f\r\n", floatData);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-		break;
-
-		break;
-
-	case batPower:
-
-		if (period > timeout)
-			timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellPower(&floatData);
-
-			snprintf(cstring, 50, "CellPower | Power: %.2f\r\n", floatData);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-		break;
-		break;
-
-	case Temp:
-
-		if (period > timeout)
-			timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadTemperature(&floatData);
-
-			snprintf(cstring, 50, "Temperature | Temperature: %.2f\r\n",
-					floatData);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-		break;
-
-	case batCapacity:
-
-		if (period > timeout)
-			timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellCapacity(&floatData);
-
-			snprintf(cstring, 50, "CellCapacity | Capacity: %.2f\r\n",
-					floatData);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-		break;
-
-	case batSOC:
-
-		timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellStateOfCharge(&uint8Data);
-
-			snprintf(cstring, 50, "CellStateOfCharge | Charge: %.2f\r\n",
-					uint8Data);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-
-		break;
-
-	case batTTE:
-
-		timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellEstimatedTTE(&uint32Data);
-
-			snprintf(cstring, 50, "CellEstimatedTTE : %.2f\r\n", uint32Data);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-	case batTTF:
-
-		timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellEstimatedTTF(&uint32Data);
-
-			snprintf(cstring, 50, "CellEstimatedTTF : %.2f\r\n", uint32Data);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-	case batAge:
-
-		timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellAge(&uint8Data);
-
-			snprintf(cstring, 50, "CellAge : %.2f\r\n", uint8Data);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-	case batCycles:
-
-		timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadCellCycles(&uint16Data);
-
-			snprintf(cstring, 50, "CellCycles | Cycles: %.2f\r\n", uint16Data);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-	case batIntResistance:
-
-		break;
-
-	case setChargVolt:
-
-		timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadSetChargVoltage(&floatData);
-
-			snprintf(cstring, 50, "SetChargVoltage | Voltage: %.2f\r\n",
-					floatData);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-	case setChargCurrent:
-
-		timeout = period;
-		stopStream = false;
-
-		while ((numTimes-- > 0) || (timeout >= MAX_MEMS_TIMEOUT_MS)) {
-			pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-			ReadSetChargCurrent(&floatData);
-
-			snprintf(cstring, 50, "SetChargCurrent | Current: %.2f\r\n",
-					floatData);
-
-			writePxMutex(Port, (char*) cstring, strlen((char*) cstring),
-					cmd500ms, HAL_MAX_DELAY);
-			if (PollingSleepCLISafe(period, Numofsamples) != H05R0_OK)
-				break;
-		}
-	default:
-		status = H05R0_ERR_WrongParams;
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
 		break;
 	}
 
-	tofMode = DEFAULT;
+	case batCurrent: {
+		float current = 0.0f;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample battery current data */
+		ReadCellCurrent(&current) ;
+
+		/* Format battery current data into a string */
+		snprintf(cstring, sizeof(cstring), "CellCurrent | Current: %.2f\r\n",
+				current);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case batPower: {
+		float power = 0.0f;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample battery power data */
+		ReadCellPower(&power);
+
+		/* Format battery power data into a string */
+		snprintf(cstring, sizeof(cstring), "CellPower | Power: %.2f\r\n",
+				power);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case Temp: {
+		float temperature = 0.0f;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample temperature data */
+		ReadTemperature(&temperature) ;
+
+		/* Format temperature data into a string */
+		snprintf(cstring, sizeof(cstring),
+				"Temperature | Temperature: %.2f\r\n", temperature);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case batCapacity: {
+		float capacity = 0.0f;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample battery capacity data */
+		ReadCellCapacity(&capacity);
+
+		/* Format battery capacity data into a string */
+		snprintf(cstring, sizeof(cstring), "CellCapacity | Capacity: %.2f\r\n",
+				capacity);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case batSOC: {
+		uint8_t stateOfCharge = 0;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample battery state of charge data */
+		ReadCellStateOfCharge(&stateOfCharge) ;
+		/* Format battery state of charge data into a string */
+		snprintf(cstring, sizeof(cstring), "CellStateOfCharge | Charge: %d\r\n",
+				stateOfCharge);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case batTTE: {
+		uint32_t timeToEmpty = 0;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample battery estimated time to empty data */
+		ReadCellEstimatedTTE(&timeToEmpty) ;
+
+		/* Format battery time to empty data into a string */
+		snprintf(cstring, sizeof(cstring), "CellEstimatedTTE: %u\r\n",
+				timeToEmpty);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case batTTF: {
+		uint32_t timeToFull = 0;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample battery estimated time to full data */
+		ReadCellEstimatedTTF(&timeToFull) ;
+
+		/* Format battery time to full data into a string */
+		snprintf(cstring, sizeof(cstring), "CellEstimatedTTF: %u\r\n",
+				timeToFull);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case batAge: {
+		uint8_t age = 0;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample battery age data */
+		ReadCellAge(&age);
+
+		/* Format battery age data into a string */
+		snprintf(cstring, sizeof(cstring), "CellAge: %d\r\n", age);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case batCycles: {
+		uint16_t cycles = 0;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample battery cycles data */
+		ReadCellCycles(&cycles);
+
+		/* Format battery cycles data into a string */
+		snprintf(cstring, sizeof(cstring), "CellCycles | Cycles: %d\r\n",
+				cycles);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case setChargVolt: {
+		float chargeVoltage = 0.0f;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample set charge voltage data */
+		ReadSetChargVoltage(&chargeVoltage) ;
+
+		/* Format set charge voltage data into a string */
+		snprintf(cstring, sizeof(cstring),
+				"SetChargVoltage | Voltage: %.2f\r\n", chargeVoltage);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case setChargCurrent: {
+		float chargeCurrent = 0.0f;
+		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+		/* Sample set charge current data */
+		ReadSetChargCurrent(&chargeCurrent) ;
+
+		/* Format set charge current data into a string */
+		snprintf(cstring, sizeof(cstring),
+				"SetChargCurrent | Current: %.2f\r\n", chargeCurrent);
+
+		/* Send the formatted string to the specified port */
+		writePxMutex(dstPort, (char*) cstring, strlen((char*) cstring),
+				cmd500ms, HAL_MAX_DELAY);
+		break;
+	}
+
+	case batIntResistance: {
+		/* Note: This case is empty in the original code, leaving it as a placeholder */
+		return H05R0_ERR_WrongParams; /* Return error as no implementation exists */
+	}
+
+	default:
+		return H05R0_ERR_WrongParams; /* Return error for invalid sensor function */
+	}
+
+	/* Return final status indicating success or prior error */
 	return status;
 }
-
 
 static Module_Status PollingSleepCLISafe(uint32_t period, long Numofsamples)
 {
@@ -2032,329 +2060,373 @@ Module_Status CheckChargingStatus(void)
 	return H05R0_OK;
 }
 
-/*-----------------------------------------------------------*/
-/*
- *  Sending a sample of the required module on the required port
- *  If the topology file is not activated, therefore The module number is 0
- *  Transmission using LSP FIRST.
- *  function It is one of the elements of All_Data
+
+/***************************************************************************/
+/**
+ * @brief  Samples data from a sensor and exports it to a specified port or module.
+ * @param  dstModule: The module number to export data to.
+ * @param  dstPort: The port number to export data to.
+ * @param  dataFunction: Function to sample data (e.g., batVolt, batCurrent, batPower, Temp, etc.).
+ * @retval Module_Status indicating success or failure of the operation.
  */
-Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function)
- {
-	float floatData = 0;
-	uint8_t uint8Data = 0;
-	uint16_t uint16Data = 0;
-	uint32_t uint32Data = 0;
-	static uint8_t temp[4] = { 0 };
-	Module_Status status = H05R0_OK;
+Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction)
+{
+    static uint8_t temp[6] = {0};       /* Buffer for data transmission */
+    Module_Status status = H05R0_OK;    /* Initialize operation status as success */
 
-	if (port == 0 && module == myID) {
-		return H05R0_ERR_WrongParams;
-	}
-	switch (function) {
-	case batVolt:
-		status = ReadCellVoltage(&floatData);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-				messageParams[1] = BOS_OK;
-			else
-				messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
-		}
-		break;
+    /* Check if the port and module ID are valid */
+    if (dstPort == 0 && dstModule == myID)
+    {
+        return H05R0_ERR_WrongParams;   /* Return error for invalid parameters */
+    }
 
-	case batCurrent:
-		status = ReadCellCurrent(&floatData);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-				messageParams[1] = BOS_OK;
-			else
-				messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
-		}
-		break;
+    /* Process data based on the requested sensor function */
+    switch (dataFunction)
+    {
+        case batVolt:
+        {
+            float voltage = 0.0f;
+            status = ReadCellVoltage(&voltage);
 
-	case batPower:
-		status = ReadCellPower(&floatData);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-				messageParams[1] = BOS_OK;
-			else
-				messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
-		}
-		break;
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &voltage, sizeof(float));
+                writePxITMutex(dstPort, (char*)temp, sizeof(float), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_FLOAT;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &voltage, sizeof(float));
 
-	case Temp:
-		status = ReadTemperature(&floatData);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-				messageParams[1] = BOS_OK;
-			else
-				messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
-		}
-		break;
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(float) + 3);
+            }
+            break;
+        }
 
-	case batCapacity:
-		status = ReadCellCapacity(&floatData);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-				messageParams[1] = BOS_OK;
-			else
-				messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
-		}
-		break;
+        case batCurrent:
+        {
+            float current = 0.0f;
+            status = ReadCellCurrent(&current);
 
-	case batSOC:
-		status = ReadCellStateOfCharge(&uint8Data);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) uint8Data;
-			writePxITMutex(port, (char*) &temp[0], 1 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-						messageParams[1] = BOS_OK;
-					else
-						messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_UINT8;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) uint8Data;
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(uint8_t) + 3);
-		}
-		break;
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &current, sizeof(float));
+                writePxITMutex(dstPort, (char*)temp, sizeof(float), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_FLOAT;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &current, sizeof(float));
 
-	case batTTE:
-		status = ReadCellEstimatedTTE(&uint32Data);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-						messageParams[1] = BOS_OK;
-					else
-						messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_UINT32;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE,
-					sizeof(uint32Data) + 3);
-		}
-		break;
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(float) + 3);
+            }
+            break;
+        }
 
-	case batTTF:
-		status = ReadCellEstimatedTTF(&uint32Data);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-						messageParams[1] = BOS_OK;
-					else
-						messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_UINT32;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &uint32Data) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE,
-					sizeof(uint32Data) + 3);
-		}
-		break;
+        case batPower:
+        {
+            float power = 0.0f;
+            status = ReadCellPower(&power);
 
-	case batAge:
-		status = ReadCellAge(&uint8Data);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) uint8Data;
-			writePxITMutex(port, (char*) &temp[0], sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-						messageParams[1] = BOS_OK;
-					else
-						messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_UINT8;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) uint8Data;
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(uint8_t) + 3);
-		}
-		break;
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &power, sizeof(float));
+                writePxITMutex(dstPort, (char*)temp, sizeof(float), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_FLOAT;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &power, sizeof(float));
 
-	case batCycles:
-		status = ReadCellCycles(&uint16Data);
-		if (module == myID) {
-			temp[0] = (uint8_t) ((*(uint16_t*) &uint16Data) >> 0);
-			temp[1] = (uint8_t) ((*(uint16_t*) &uint16Data) >> 8);
-			writePxITMutex(port, (char*) &temp[0], 2 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-						messageParams[1] = BOS_OK;
-					else
-						messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_UINT16;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint16_t*) &uint16Data) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint16_t*) &uint16Data) >> 8);
-			SendMessageToModule(module, CODE_READ_RESPONSE,
-					sizeof(uint16_t) + 3);
-		}
-		break;
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(float) + 3);
+            }
+            break;
+        }
 
-	case batIntResistance:
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-				messageParams[1] = BOS_OK;
-			else
-				messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
-		}
-		break;
+        case Temp:
+        {
+            float temperature = 0.0f;
+            status = ReadTemperature(&temperature);
 
-	case setChargVolt:
-		status = ReadSetChargVoltage(&floatData);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-				messageParams[1] = BOS_OK;
-			else
-				messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
-		}
-		break;
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &temperature, sizeof(float));
+                writePxITMutex(dstPort, (char*)temp, sizeof(float), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_FLOAT;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &temperature, sizeof(float));
 
-	case setChargCurrent:
-		status = ReadSetChargCurrent(&floatData);
-		if (module == myID || module == 0) {
-			temp[0] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			temp[1] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			temp[2] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			temp[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			writePxITMutex(port, (char*) &temp[0], 4 * sizeof(uint8_t), 10);
-		} else {
-			if (H05R0_OK == status)
-				messageParams[1] = BOS_OK;
-			else
-				messageParams[1] = BOS_ERROR;
-			messageParams[0] = FMT_FLOAT;
-			messageParams[2] = 1;
-			messageParams[3] = (uint8_t) ((*(uint32_t*) &floatData) >> 0);
-			messageParams[4] = (uint8_t) ((*(uint32_t*) &floatData) >> 8);
-			messageParams[5] = (uint8_t) ((*(uint32_t*) &floatData) >> 16);
-			messageParams[6] = (uint8_t) ((*(uint32_t*) &floatData) >> 24);
-			SendMessageToModule(module, CODE_READ_RESPONSE, sizeof(float) + 3);
-		}
-		break;
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(float) + 3);
+            }
+            break;
+        }
 
-	default:
-		status = H05R0_ERR_WrongParams;
-		break;
-	}
-	tofMode = DEFAULT;
-	memset(&temp[0], 0, sizeof(temp));
-	return status;
+        case batCapacity:
+        {
+            float capacity = 0.0f;
+            status = ReadCellCapacity(&capacity);
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &capacity, sizeof(float));
+                writePxITMutex(dstPort, (char*)temp, sizeof(float), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_FLOAT;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &capacity, sizeof(float));
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(float) + 3);
+            }
+            break;
+        }
+
+        case batSOC:
+        {
+            uint8_t stateOfCharge = 0;
+            status = ReadCellStateOfCharge(&stateOfCharge);
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                temp[0] = stateOfCharge;
+                writePxITMutex(dstPort, (char*)temp, sizeof(uint8_t), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_UINT8;
+                messageParams[2] = 1;
+                messageParams[3] = stateOfCharge;
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(uint8_t) + 3);
+            }
+            break;
+        }
+
+        case batTTE:
+        {
+            uint32_t timeToEmpty = 0;
+            status = ReadCellEstimatedTTE(&timeToEmpty);
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &timeToEmpty, sizeof(uint32_t));
+                writePxITMutex(dstPort, (char*)temp, sizeof(uint32_t), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_UINT32;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &timeToEmpty, sizeof(uint32_t));
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(uint32_t) + 3);
+            }
+            break;
+        }
+
+        case batTTF:
+        {
+            uint32_t timeToFull = 0;
+            status = ReadCellEstimatedTTF(&timeToFull);
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &timeToFull, sizeof(uint32_t));
+                writePxITMutex(dstPort, (char*)temp, sizeof(uint32_t), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_UINT32;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &timeToFull, sizeof(uint32_t));
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(uint32_t) + 3);
+            }
+            break;
+        }
+
+        case batAge:
+        {
+            uint8_t age = 0;
+            status = ReadCellAge(&age);
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                temp[0] = age;
+                writePxITMutex(dstPort, (char*)temp, sizeof(uint8_t), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_UINT8;
+                messageParams[2] = 1;
+                messageParams[3] = age;
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(uint8_t) + 3);
+            }
+            break;
+        }
+
+        case batCycles:
+        {
+            uint16_t cycles = 0;
+            status = ReadCellCycles(&cycles);
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                temp[0] = (uint8_t)(cycles);
+                temp[1] = (uint8_t)(cycles >> 8);
+                writePxITMutex(dstPort, (char*)temp, sizeof(uint16_t), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_UINT16;
+                messageParams[2] = 1;
+                messageParams[3] = (uint8_t)(cycles);
+                messageParams[4] = (uint8_t)(cycles >> 8);
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(uint16_t) + 3);
+            }
+            break;
+        }
+
+        case batIntResistance:
+        {
+            float resistance = 0.0f;
+            /* Note: Original code lacks sampling function, assuming placeholder */
+            status = H05R0_ERR_WrongParams;  /* Return error as no implementation exists */
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                memcpy(temp, &resistance, sizeof(float));
+                writePxITMutex(dstPort, (char*)temp, sizeof(float), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = BOS_ERROR;
+                messageParams[0] = FMT_FLOAT;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &resistance, sizeof(float));
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(float) + 3);
+            }
+            break;
+        }
+
+        case setChargVolt:
+        {
+            float chargeVoltage = 0.0f;
+            status = ReadSetChargVoltage(&chargeVoltage);
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &chargeVoltage, sizeof(float));
+                writePxITMutex(dstPort, (char*)temp, sizeof(float), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_FLOAT;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &chargeVoltage, sizeof(float));
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(float) + 3);
+            }
+            break;
+        }
+
+        case setChargCurrent:
+        {
+            float chargeCurrent = 0.0f;
+            status = ReadSetChargCurrent(&chargeCurrent);
+
+            /* If data is to be sent locally */
+            if (dstModule == myID || dstModule == 0)
+            {
+                /* Pack data into temp buffer */
+                memcpy(temp, &chargeCurrent, sizeof(float));
+                writePxITMutex(dstPort, (char*)temp, sizeof(float), 10);
+            }
+            else
+            {
+                /* Send data to another module */
+                messageParams[1] = (status == H05R0_OK) ? BOS_OK : BOS_ERROR;
+                messageParams[0] = FMT_FLOAT;
+                messageParams[2] = 1;
+                memcpy(&messageParams[3], &chargeCurrent, sizeof(float));
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, sizeof(float) + 3);
+            }
+            break;
+        }
+
+        default:
+            return H05R0_ERR_WrongParams;  /* Return error for invalid sensor function */
+    }
+
+    /* Clear the temp buffer */
+    memset(temp, 0, sizeof(temp));
+
+    /* Return final status indicating success or prior error */
+    return status;
 }
 
-Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function)
- {
-	Module_Status status = H05R0_OK;
-	tofMode = SAMPLE_TO_PORT;
-	port2 = port;
-	module2 = module;
-	mode2 = function;
-	return status;
-}
+//Module_Status SampleToPort(uint8_t module,uint8_t port,All_Data function)
+// {
+//	Module_Status status = H05R0_OK;
+//	tofMode = SAMPLE_TO_PORT;
+//	port2 = port;
+//	module2 = module;
+//	mode2 = function;
+//	return status;
+//}
 
 
 /*
@@ -2363,37 +2435,39 @@ Module_Status SampletoPort(uint8_t module,uint8_t port,All_Data function)
  * 	The minimum time between one sample and another is its value 100ms
  *
  */
-Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
-{
-	Module_Status status = H05R0_OK;
-	tofMode=STREAM_TO_PORT;
-	port1 = port ;
-	module1 =module;
-	Numofsamples1=Numofsamples;
-	timeout1=timeout;
-	mode1= function;
-	return status;
+//Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
+//{
+//	Module_Status status = H05R0_OK;
+//	tofMode=STREAM_TO_PORT;
+//	port1 = port ;
+//	module1 =module;
+//	Numofsamples1=Numofsamples;
+//	timeout1=timeout;
+//	mode1= function;
+//	return status;
+//
+//}
 
-}
-Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
- {
-	Module_Status status = H05R0_OK;
-	uint32_t samples = 0;
-	uint32_t period = 0;
-	period = timeout / Numofsamples;
 
-	if (timeout < MIN_PERIOD_MS || period < MIN_PERIOD_MS)
-		return H05R0_ERR_WrongParams;
-
-	while (samples < Numofsamples) {
-		status = Exporttoport(module, port, function);
-		vTaskDelay(pdMS_TO_TICKS(period));
-		samples++;
-	}
-	tofMode = DEFAULT;
-	samples = 0;
-	return status;
-}
+//Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
+// {
+//	Module_Status status = H05R0_OK;
+//	uint32_t samples = 0;
+//	uint32_t period = 0;
+//	period = timeout / Numofsamples;
+//
+//	if (timeout < MIN_PERIOD_MS || period < MIN_PERIOD_MS)
+//		return H05R0_ERR_WrongParams;
+//
+//	while (samples < Numofsamples) {
+//		status = Exporttoport(module, port, function);
+//		vTaskDelay(pdMS_TO_TICKS(period));
+//		samples++;
+//	}
+//	tofMode = DEFAULT;
+//	samples = 0;
+//	return status;
+//}
 
 static Module_Status StreamMemsToCLI(uint32_t Numofsamples, uint32_t timeout, SampleMemsToString function)
 {
@@ -2473,6 +2547,103 @@ void SamplebatSOCToString(char *cstring, size_t maxLen)
 	ReadCellStateOfCharge(&batSOC);
 	snprintf(cstring, maxLen, "batSOC: %.2f\r\n", batSOC);
 }
+
+/***************************************************************************/
+/*
+ * brief: Streams data to the specified port and module with a given number of samples.
+ * param targetModule: The target module to which data will be streamed.
+ * param portNumber: The port number on the module.
+ * param portFunction: Type of data that will be streamed (ACC, GYRO, MAG, or TEMP).
+ * param numOfSamples: The number of samples to stream.
+ * param streamTimeout: The interval (in milliseconds) between successive data transmissions.
+ * retval: of type Module_Status indicating the success or failure of the operation.
+ */
+Module_Status StreamToPort(uint8_t dstModule,uint8_t dstPort,All_Data dataFunction,uint32_t numOfSamples,uint32_t streamTimeout){
+	Module_Status Status =H05R0_OK;
+	uint32_t SamplePeriod =0u;
+
+	/* Check timer handle and timeout validity */
+	if((NULL == xTimerStream) || (0 == streamTimeout) || (0 == numOfSamples)){
+		return H05R0_ERROR; /* Assuming H05R0_ERROR is defined in Module_Status */
+	}
+
+	/* Set streaming parameters */
+	StreamMode = STREAM_MODE_TO_PORT;
+	PortModule =dstModule;
+	PortNumber =dstPort;
+	PortFunction =dataFunction;
+	PortNumOfSamples =numOfSamples;
+
+	/* Calculate the period from timeout and number of samples */
+	SamplePeriod =streamTimeout / numOfSamples;
+
+	/* Stop (Reset) the TimerStream if it's already running */
+	if(xTimerIsTimerActive(xTimerStream)){
+		if(pdFAIL == xTimerStop(xTimerStream,100)){
+			return H05R0_ERROR;
+		}
+	}
+
+	/* Start the stream timer */
+	if(pdFAIL == xTimerStart(xTimerStream,100)){
+		return H05R0_ERROR;
+	}
+
+	/* Update timer timeout - This also restarts the timer */
+	if(pdFAIL == xTimerChangePeriod(xTimerStream,SamplePeriod,100)){
+		return H05R0_ERROR;
+	}
+
+	return Status;
+}
+
+/***************************************************************************/
+/*
+ * brief: Streams data to the specified terminal port with a given number of samples.
+ * param targetPort: The port number on the terminal.
+ * param dataFunction: Type of data that will be streamed (ACC, GYRO, MAG, or TEMP).
+ * param numOfSamples: The number of samples to stream.
+ * param streamTimeout: The interval (in milliseconds) between successive data transmissions.
+ * retval: of type Module_Status indicating the success or failure of the operation.
+ */
+Module_Status StreamToTerminal(uint8_t dstPort,All_Data dataFunction,uint32_t numOfSamples,uint32_t streamTimeout){
+	Module_Status Status =H05R0_OK;
+	uint32_t SamplePeriod =0u;
+	/* Check timer handle and timeout validity */
+	if((NULL == xTimerStream) || (0 == streamTimeout)){
+		return H05R0_ERROR; /* Assuming H05R0_ERROR is defined in Module_Status */
+	}
+
+	/* Set streaming parameters */
+	StreamMode = STREAM_MODE_TO_TERMINAL;
+	TerminalPort =dstPort;
+	TerminalFunction =dataFunction;
+	TerminalTimeout =streamTimeout;
+	TerminalNumOfSamples =numOfSamples;
+
+	/* Calculate the period from timeout and number of samples */
+	SamplePeriod =streamTimeout / numOfSamples;
+
+	/* Stop (Reset) the TimerStream if it's already running */
+	if(xTimerIsTimerActive(xTimerStream)){
+		if(pdFAIL == xTimerStop(xTimerStream,100)){
+			return H05R0_ERROR;
+		}
+	}
+
+	/* Start the stream timer */
+	if(pdFAIL == xTimerStart(xTimerStream,100)){
+		return H05R0_ERROR;
+	}
+
+	/* Update timer timeout - This also restarts the timer */
+	if(pdFAIL == xTimerChangePeriod(xTimerStream,SamplePeriod,100)){
+		return H05R0_ERROR;
+	}
+
+	return Status;
+}
+
 
 /* -----------------------------------------------------------------------
  |								Commands							      |
