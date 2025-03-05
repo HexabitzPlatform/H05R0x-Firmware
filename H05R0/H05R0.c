@@ -84,8 +84,7 @@ uint32_t SampleCount = 0u;                   /* Total sample counter */
 
 /* Private function prototypes -----------------------------------------------*/
 void StreamTimeCallback(TimerHandle_t xTimerStream);
-Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction,uint32_t numOfSamples, uint32_t streamTimeout);
-
+Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) ;
 Module_Status Exporttoport(uint8_t module,uint8_t port,All_Data function);
 Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout);
 Module_Status Exportstreamtoterminal(uint32_t Numofsamples, uint32_t timeout,uint8_t Port,All_Data function);
@@ -859,7 +858,7 @@ void StreamTimeCallback(TimerHandle_t xTimerStream){
 	/* Stream mode to terminal: Export to terminal */
 	else if(STREAM_MODE_TO_TERMINAL == StreamMode){
 		if((SampleCount <= TerminalNumOfSamples) || (0 == TerminalNumOfSamples)){
-			SampleToTerminal(TerminalPort,TerminalFunction,TerminalNumOfSamples,TerminalTimeout);
+			SampleToTerminal(TerminalPort,TerminalFunction);
 		}
 		else{
 			SampleCount =0;
@@ -1722,25 +1721,11 @@ Module_Status ReadNumOfRemainingWrites(uint8_t *updatesRemaining)
  * @param  streamTimeout: Timeout period for the operation (in milliseconds).
  * @retval Module_Status indicating success or failure of the operation.
  */
-Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction,
-		uint32_t numOfSamples, uint32_t streamTimeout) {
+Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 	Module_Status status = H05R0_OK; /* Initialize operation status as success */
 	int8_t *pcOutputString = NULL; /* Pointer to CLI output buffer */
 	uint32_t period = 0u; /* Calculated period for the operation */
 	char cstring[100] = { 0 }; /* Buffer for formatted output string */
-
-	/* Check if the number of samples is valid to avoid division by zero */
-	if (numOfSamples == 0) {
-		return H05R0_ERR_WrongParams; /* Return error for invalid sample count */
-	}
-
-	/* Calculate the period by dividing timeout by number of samples */
-	period = streamTimeout / numOfSamples;
-
-	/* Validate the calculated period against minimum allowed value */
-	if (period < MIN_MEMS_PERIOD_MS) {
-		return H05R0_ERR_WrongParams; /* Return error if period is too short */
-	}
 
 	/* Process data based on the requested sensor function */
 	switch (dataFunction) {
@@ -2610,7 +2595,7 @@ Module_Status StreamToTerminal(uint8_t dstPort,All_Data dataFunction,uint32_t nu
 	Module_Status Status =H05R0_OK;
 	uint32_t SamplePeriod =0u;
 	/* Check timer handle and timeout validity */
-	if((NULL == xTimerStream) || (0 == streamTimeout)){
+	if((NULL == xTimerStream) || (0 == streamTimeout) || (0 == numOfSamples)){
 		return H05R0_ERROR; /* Assuming H05R0_ERROR is defined in Module_Status */
 	}
 
