@@ -556,23 +556,23 @@ BOS_Status SetButtonEvents(uint8_t port,ButtonState_e buttonState,uint8_t mode){
 /* Exported Functions ******************************************************/
 /***************************************************************************/
 /* select port 2 & port 3 for the selected ADC regular channel to be converted */
-//void ADCSelectChannel(uint8_t ADC_port,char *side){
-//
-//	if(ADC_port == 2 || ADC_port == 3){
-//		if(ADC_port == 2){
-//			adcSelectFlag[0] =1;
-//		}
-//		else{
-//			adcSelectFlag[1] =1;
-//		}
-//		HAL_UART_DeInit(GetUart(ADC_port));
-//		PortStatus[ADC_port] =CUSTOM;
-//		Channel =GetChannel(GetUart(ADC_port),side);
-//		adcChannelRank =GetRank(ADC_port,side);
-//		if(adcEnableFlag == 0)
-//			MX_ADC_Init();
-//	}
-//}
+void ADCSelectChannel(uint8_t ADC_port,char *side){
+
+	if(ADC_port == 2 || ADC_port == 3){
+		if(ADC_port == 2){
+			adcSelectFlag[0] =1;
+		}
+		else{
+			adcSelectFlag[1] =1;
+		}
+		HAL_UART_DeInit(GetUart(ADC_port));
+		PortStatus[ADC_port] =CUSTOM;
+		Channel =GetChannel(GetUart(ADC_port),side);
+		adcChannelRank =GetRank(ADC_port,side);
+		if(adcEnableFlag == 0)
+			MX_ADC_Init();
+	}
+}
 
 /***************************************************************************/
 void ReadADCChannel(uint8_t Port,char *side,float *ADC_Value){

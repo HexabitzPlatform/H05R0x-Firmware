@@ -245,8 +245,6 @@ void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler(void) {
 		DMA_IRQHandler(GetPort(&huart6));
 #endif
 
-	if (HAL_DMA_GET_IT_SOURCE(DMA2,DMA_ISR_GIF1) == SET)
-		HAL_DMA_IRQHandler(&hdma_adc1);
 }
 
 /***************************************************************************/
