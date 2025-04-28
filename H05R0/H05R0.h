@@ -1,23 +1,22 @@
 /*
- BitzOS (BOS) V0.3.6 - Copyright (C) 2017-2024 Hexabitz
+ BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
  
  File Name     : H05R0.h
  Description   : Header file for module H05R0.
- 	 	 	 	 (Description_of_module)
+ (Description_of_module)
 
-(Description of Special module peripheral configuration):
->>
->>
->>
-
+ (Description of Special module peripheral configuration):
+ >>
+ >>
+ >>
  */
 
-/* Define to prevent recursive inclusion -------------------------------------*/
+/* Define to prevent recursive inclusion ***********************************/
 #ifndef H05R0_H
 #define H05R0_H
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ****************************************************************/
 #include "BOS.h"
 #include "H05R0_MemoryMap.h"
 #include "H05R0_uart.h"
@@ -28,9 +27,8 @@
 #include "H05R0_eeprom.h"
 #include "MAX17330_reg_address.h"
 
-/* Exported definitions -------------------------------------------------------*/
+/* Exported Macros *********************************************************/
 #define	MODULE_PN		_H05R0
-
 
 /* Port-related Definitions */
 #define	NUM_OF_PORTS	5
@@ -50,13 +48,14 @@
 #define _USART4
 #define _USART6
 
-/* Port-UART mapping */
+/* Port-UART Mapping */
 #define UART_P1 &huart4
 #define UART_P2 &huart2
 #define UART_P3 &huart3
 #define UART_P4 &huart1
 #define UART_P5 &huart6
 
+/* Module-specific Hardware Definitions ************************************/
 /* Port Definitions */
 #define	USART1_TX_PIN		GPIO_PIN_9
 #define	USART1_RX_PIN		GPIO_PIN_10
@@ -94,15 +93,7 @@
 #define	USART6_RX_PORT		GPIOB
 #define	USART6_AF			GPIO_AF8_USART6
 
-/* Module-specific Definitions */
-
-/* Indicator LED */
-#define _IND_LED_PORT		 GPIOB
-#define _IND_LED_PIN		 GPIO_PIN_15
-
-#define NUM_MODULE_PARAMS	 1
-
-/* Module GPIO Pinout */
+/* GPIO Pin Definition */
 #define BAT_ALRT_Pin         GPIO_PIN_0
 #define BAT_ALRT_GPIO_Port   GPIOB
 #define BAT_ALRT_EXTI_IRQn   EXTI0_1_IRQn
@@ -115,30 +106,35 @@
 #define OUT_EN_3V3_Pin GPIO_PIN_12
 #define OUT_EN_3V3_GPIO_Port GPIOB
 
-/* Module GPIO Pin input */
 #define INPUT_3V3OUT_PG_Pin GPIO_PIN_13
 #define INPUT_3V3OUT_PG_GPIO_Port GPIOB
 #define INPUT_3V3OUT_PG_EXTI_IRQn EXTI4_15_IRQn
 
-/* Module Special ADC */
+/* ADC Pin Definition */
 #define CHARGER_CURRENT_SENSE_Pin GPIO_PIN_0
 #define CHARGER_CURRENT_SENSE_GPIO_Port GPIOB
-#define VBUS_SENSE_Pin GPIO_PIN_1
-#define VBUS_SENSE_GPIO_Port GPIOB
+#define VBUS_SENSE_Pin             GPIO_PIN_1
+#define VBUS_SENSE_GPIO_Port       GPIOB
 
-/* Module Special I2C */
+/* I2C Pin Definition */
 #define MCU_SDA_Pin          GPIO_PIN_6
 #define MCU_SDA_GPIO_Port    GPIOA
 #define MCU_SCL_Pin          GPIO_PIN_7
 #define MCU_SCL_GPIO_Port    GPIOA
 
-
 #define I2C_PORT					&hi2c2
 #define SMBUS_PORT					&hsmbus2
+
+/* Timer Definition */
+
+/* Indicator LED */
+#define _IND_LED_PORT		 GPIOB
+#define _IND_LED_PIN		 GPIO_PIN_15
+
+/* Module-specific Macro Definitions ***************************************/
+#define NUM_MODULE_PARAMS	 1
 #define TIM_OUT_10MS         		10u
 
-
-/* Module special parameters */
 #define MIN_PERIOD_MS				100
 #define UNSNGD_HALF_WORD_MAX_VAL    0xFFFF
 #define UNSNGD_HALF_WORD_MIN_VAL	0x0000
@@ -154,14 +150,25 @@
 /* Macros definitions */
 #define STREAM_MODE_TO_PORT      1
 #define STREAM_MODE_TO_TERMINAL  2
-/* Module EEPROM Variables */
-// Module Addressing Space 500 - 599
-#define _EE_MODULE			500
 
-/* Exported types ------------------------------------------------------------*/
-
+/* Module-specific Type Definition *****************************************/
+/* Module-status Type Definition */
 typedef enum {
-	batVolt=0,
+	H05R0_OK = 0,
+	H05R0_ERR_UnknownMessage,
+	H05R0_INV,
+	H05R0_UNKMSG,
+	H05R0_TMOUT,
+	H05R0_MSG_ACK,
+	H05R0_COM_ERR,
+	H05R0_ERR_TERMINATED,
+	H05R0_ERR_WrongParams,
+	H05R0_ERROR = 255
+} Module_Status;
+
+/* */
+typedef enum {
+	batVolt = 0,
 	batCurrent,
 	batPower,
 	Temp,
@@ -174,91 +181,81 @@ typedef enum {
 	batIntResistance,
 	setChargVolt,
 	setChargCurrent,
-
-}All_Data;
-/* Module_Status Type Definition */
-
-typedef enum {
-	H05R0_OK =0,				/* Battery charger/gauge OK */
-	H05R0_ERR_UnknownMessage,
-	H05R0_INV,
-	H05R0_UNKMSG,
-	H05R0_TMOUT,
-	H05R0_MSG_ACK, // A special case used only inside MessageConstructor() to indicate that command has executed successfully.
-	H05R0_COM_ERR,
-	H05R0_ERR_TERMINATED,
-	H05R0_ERR_WrongParams,
-	H05R0_ERROR =255 			/* Battery charger/gauge error */
-} Module_Status;
+} All_Data;
 
 /* Battery charger status type definitions */
-typedef enum
-{
-	EXT_THERM_DIS = 0x00,				/* Thermistors channels are disabled */
-	EXT_THERM_EN = 0x01,				/* Thermistor 1 is used as battery temperature, Thermistor 2 is used with DieTemp for calculating FETTemp. */
-	EXT_THERM1_EN,						/* Thermistor 1 is enabled. FETTemp is copied from DieTemp. */
-}ThermConfig;
-
-typedef enum
-{
-	EXT_THERM_10K = 0,					/* External thermistor is 10K NTC */
-	EXT_THERM_100K = 1,					/* External thermistor is 100K NTC */
-}ThermType;
-
-typedef enum
-{
-	AGE_FORCST_DIS = 0,					/* disable age forecasting */
-	AGE_FORCST_EN = 1,					/* enable age forecasting */
-}AgeForcast;
-
-typedef enum
-{
-	VOLT_TEMP_BACK_DIS = 0,				/* disable voltage and temperature backup */
-	VOLT_TEMP_BACK_EN = 1,				/* enable voltage and temperature backup */
-}VoltTempBack;
-
 typedef enum {
-	FALSE = 0u,
-	TRUE
+	EXT_THERM_DIS = 0x00, /* Thermistors channels are disabled */
+	EXT_THERM_EN = 0x01, /* Thermistor 1 is used as battery temperature, Thermistor 2 is used with DieTemp for calculating FETTemp. */
+	EXT_THERM1_EN, /* Thermistor 1 is enabled. FETTemp is copied from DieTemp. */
+} ThermConfig;
+
+/* */
+typedef enum {
+	EXT_THERM_10K = 0, /* External thermistor is 10K NTC */
+	EXT_THERM_100K = 1, /* External thermistor is 100K NTC */
+} ThermType;
+
+/* */
+typedef enum {
+	AGE_FORCST_DIS = 0, /* disable age forecasting */
+	AGE_FORCST_EN = 1, /* enable age forecasting */
+} AgeForcast;
+
+/* */
+typedef enum {
+	VOLT_TEMP_BACK_DIS = 0, /* disable voltage and temperature backup */
+	VOLT_TEMP_BACK_EN = 1, /* enable voltage and temperature backup */
+} VoltTempBack;
+
+/* */
+typedef enum {
+	FALSE = 0u, TRUE
 } Bool_State;
 
+/* */
 typedef enum {
-	CHARGING = 0u,
-	DISCHARGING
-} Charging_Status;
+	CHARGING = 0u, DISCHARGING
+} ChargingStatus;
 
+/* LDO Enable:
+ * To secure feeding for the processor after the charger is separated */
 typedef enum {
-	DISABLE_OUT = 0u,
-	ENABLE_OUT
-} Out_State;
+	DISABLE_OUT = 0u, ENABLE_OUT
+} LDOOutputState;
 
+/* */
 typedef enum {
-	BATTARY_EMPTY = 0u,
-	BATTARY_FULL
-} Battery_Status;
+	BATTARY_EMPTY = 0u, BATTARY_FULL
+} BatteryStatus;
+
+/* */
+typedef struct {
+	uint16_t ManId [MANFCTR_NAME_SIZE / 2];
+	uint16_t DevId [DEVICE_NAME_SIZE / 2];
+} IdType;
+
 /* Export Module typedef structure */
 typedef struct {
-	float batVolt;
-	float batCurrent;
-	float batPower;
+	ChargingStatus ChargingStatus;
+
+	uint8_t BatSOC;
+	uint8_t BatAge;
+
+	uint16_t BatCycles;
+
+	uint32_t BatTTE;
+	uint32_t BatTTF;
+
+	float BatVolt;
+	float BatCurrent;
+	float BatPower;
 	float Temp;
-	float batCapacity;
-	uint8_t batSOC;
-	uint32_t batTTE;
-	uint32_t batTTF;
-	uint8_t batAge;
-	uint16_t batCycles;
-	float batIntResistance;
-	float setChargVolt;
-	float setChargCurrent;
-	Charging_Status ChargingStatus;
-}AnalogMeasType;
-
-typedef struct {
-	uint16_t ManId[MANFCTR_NAME_SIZE / 2];
-	uint16_t DevId[DEVICE_NAME_SIZE / 2];
-}IdType;
-
+	float BatCapacity;
+	float BatIntResistance;
+	float SetChargVolt;
+	float SetChargCurrent;
+} AnalogMeasType;
 
 /* Export UART variables */
 extern UART_HandleTypeDef huart1;
@@ -276,14 +273,10 @@ extern void MX_USART4_UART_Init(void);
 extern void MX_USART5_UART_Init(void);
 extern void MX_USART6_UART_Init(void);
 extern void SystemClock_Config(void);
-extern void ExecuteMonitor(void);
 
-
-
-/* -----------------------------------------------------------------------
- |								  APIs							          |  																 	|
-/* -----------------------------------------------------------------------
- */
+/***************************************************************************/
+/***************************** General Functions ***************************/
+/***************************************************************************/
 Module_Status ReadCellVoltage(float *batVolt);
 Module_Status ReadCellCurrent(float *batCurrent);
 Module_Status ReadCellPower(float *batPower);
@@ -302,38 +295,17 @@ Module_Status WriteConfigsToNV(void);
 Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status ReadChargerCurrent(float *ChargerCurrent);
 Module_Status ReadVBUSVoltage(float *VBUSVolt);
-Module_Status MCULDOEnable( Out_State PinState);
-Module_Status MCUOutVoltEnable( Out_State PinState);
-Module_Status VBUSOutSwitchEnable( Out_State PinState);
+Module_Status MCULDOEnable(LDOOutputState PinState);
+Module_Status MCUOutVoltEnable(LDOOutputState PinState);
+Module_Status VBUSOutSwitchEnable(LDOOutputState PinState);
 
 Module_Status LockNonVolatileMemory(void);
 Module_Status CheckChargingStatus(void);
 Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction);
-Module_Status StreamToPort(uint8_t dstModule,uint8_t dstPort,All_Data dataFunction,uint32_t numOfSamples,uint32_t streamTimeout);
-Module_Status StreamToTerminal(uint8_t dstPort,All_Data dataFunction,uint32_t numOfSamples,uint32_t streamTimeout);
-void SetupPortForRemoteBootloaderUpdate(uint8_t port);
-void remoteBootloaderUpdate(uint8_t src,uint8_t dst,uint8_t inport,uint8_t outport);
-
-
-/* -----------------------------------------------------------------------
- |								Commands							      |															 	|
-/* -----------------------------------------------------------------------
- */
-extern const CLI_Command_Definition_t CLI_ReadCellVoltageCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellCurrentCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellPowerCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadTemperatureCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellCapacityCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellStateOfChargeCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellEstimatedTTECommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellEstimatedTTFCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellAgeCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellCyclesCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadCellCalInterResCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadSetChargVoltageCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadSetChargCurrentCommandDefinition;
-extern const CLI_Command_Definition_t CLI_ReadAllAnalogMeasurementsCommandDefinition;
+Module_Status StreamToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction, uint32_t numOfSamples,
+		uint32_t streamTimeout);
+Module_Status StreamToTerminal(uint8_t dstPort, All_Data dataFunction, uint32_t numOfSamples, uint32_t streamTimeout);
 
 #endif /* H05R0_H */
 
-/************************ (C) COPYRIGHT HEXABITZ *****END OF FILE****/
+/***************** (C) COPYRIGHT HEXABITZ ***** END OF FILE ****************/
