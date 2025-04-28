@@ -21,6 +21,7 @@
 #include "BOS.h"
 #include "H05R0_MemoryMap.h"
 #include "H05R0_uart.h"
+//#include "H05R0_adc.h"
 #include "H05R0_gpio.h"
 #include "H05R0_dma.h"
 #include "H05R0_inputs.h"
@@ -28,14 +29,12 @@
 #include "MAX17330_reg_address.h"
 
 /* Exported definitions -------------------------------------------------------*/
+#define	MODULE_PN		_H05R0
 
-#define	modulePN		_H05R0
 
-
-/* Port-related definitions */
-#define	NumOfPorts			5
-
-#define P_PROG 				P2						/* ST factory bootloader UART */
+/* Port-related Definitions */
+#define	NUM_OF_PORTS	5
+#define P_PROG 			P2		/* ST factory bootloader UART */
 
 /* Define available ports */
 #define _P1 
@@ -45,19 +44,18 @@
 #define _P5 
 
 /* Define available USARTs */
-#define _Usart1 1
-#define _Usart2 1
-#define _Usart3 1
-#define _Usart4 1
-#define _Usart6	1
+#define _USART1
+#define _USART2
+#define _USART3
+#define _USART4
+#define _USART6
 
 /* Port-UART mapping */
-
-#define P1uart &huart4
-#define P2uart &huart2
-#define P3uart &huart3
-#define P4uart &huart1
-#define P5uart &huart6
+#define UART_P1 &huart4
+#define UART_P2 &huart2
+#define UART_P3 &huart3
+#define UART_P4 &huart1
+#define UART_P5 &huart6
 
 /* Port Definitions */
 #define	USART1_TX_PIN		GPIO_PIN_9
@@ -133,6 +131,11 @@
 #define MCU_SDA_GPIO_Port    GPIOA
 #define MCU_SCL_Pin          GPIO_PIN_7
 #define MCU_SCL_GPIO_Port    GPIOA
+
+
+#define I2C_PORT					&hi2c2
+#define SMBUS_PORT					&hsmbus2
+#define TIM_OUT_10MS         		10u
 
 
 /* Module special parameters */
