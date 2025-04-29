@@ -13,22 +13,15 @@
 
 /* Exported Variables ******************************************************/
 I2C_HandleTypeDef hi2c2;
-SMBUS_HandleTypeDef hsmbus2;
 
 /* Local Function Prototypes ***********************************************/
 void MX_I2C2_Init(void);
-void MX_I2C2_SMBUS_Init(void);
 
 /***************************************************************************/
 /* Configure I2C ***********************************************************/
 /***************************************************************************/
 void MX_I2C_Init(void) {
 	MX_I2C2_Init();
-}
-
-/***************************************************************************/
-void MX_I2C_SMBUS_Init(void) {
-	MX_I2C2_SMBUS_Init();
 }
 
 /***************************************************************************/
@@ -71,12 +64,12 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *i2cHandle) {
 		 PA6     ------> I2C2_SDA
 		 PA7     ------> I2C2_SCL
 		 */
-		GPIO_InitStruct.Pin = MCU_SDA_Pin | MCU_SCL_Pin;
+		GPIO_InitStruct.Pin = MCU_SDA_PIN | MCU_SCL_PIN;
 		GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 		GPIO_InitStruct.Alternate = GPIO_AF8_I2C2;
-		HAL_GPIO_Init(MCU_SDA_GPIO_Port, &GPIO_InitStruct);
+		HAL_GPIO_Init(MCU_SDA_GPIO_PORT, &GPIO_InitStruct);
 
 		/* I2C2 clock enable */
 		__HAL_RCC_I2C2_CLK_ENABLE();
@@ -94,87 +87,9 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef *i2cHandle) {
 		 PA6     ------> I2C2_SDA
 		 PA7     ------> I2C2_SCL
 		 */
-		HAL_GPIO_DeInit(MCU_SDA_GPIO_Port, MCU_SDA_Pin);
+		HAL_GPIO_DeInit(MCU_SDA_GPIO_PORT, MCU_SDA_PIN);
 
-		HAL_GPIO_DeInit(MCU_SDA_GPIO_Port, MCU_SCL_Pin);
-
-	}
-}
-
-/***************************************************************************/
-/* I2C2 init function */
-void MX_I2C2_SMBUS_Init(void) {
-
-	hsmbus2.Instance = I2C2;
-	hsmbus2.Init.Timing = 0x20303E5D;
-	hsmbus2.Init.AnalogFilter = SMBUS_ANALOGFILTER_ENABLE;
-	hsmbus2.Init.OwnAddress1 = 2;
-	hsmbus2.Init.AddressingMode = SMBUS_ADDRESSINGMODE_7BIT;
-	hsmbus2.Init.DualAddressMode = SMBUS_DUALADDRESS_DISABLE;
-	hsmbus2.Init.OwnAddress2 = 0;
-	hsmbus2.Init.OwnAddress2Masks = SMBUS_OA2_NOMASK;
-	hsmbus2.Init.GeneralCallMode = SMBUS_GENERALCALL_DISABLE;
-	hsmbus2.Init.NoStretchMode = SMBUS_NOSTRETCH_DISABLE;
-	hsmbus2.Init.PacketErrorCheckMode = SMBUS_PEC_DISABLE;
-	hsmbus2.Init.PeripheralMode = SMBUS_PERIPHERAL_MODE_SMBUS_HOST;
-	hsmbus2.Init.SMBusTimeout = 0x00008019; //0x00008249
-	HAL_SMBUS_Init(&hsmbus2);
-
-	HAL_SMBUS_ConfigDigitalFilter(&hsmbus2, 0);
-
-}
-
-/***************************************************************************/
-void HAL_SMBUS_MspInit(SMBUS_HandleTypeDef *smbusHandle) {
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-	RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
-	if (smbusHandle->Instance == I2C2) {
-
-		/* Initializes the peripherals clocks */
-		PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C2;
-		PeriphClkInit.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
-		HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
-
-		__HAL_RCC_GPIOA_CLK_ENABLE();
-		/**I2C2 GPIO Configuration
-		 PA6     ------> I2C2_SDA
-		 PA7     ------> I2C2_SCL
-		 */
-		GPIO_InitStruct.Pin = GPIO_PIN_6 | GPIO_PIN_7;
-		GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-		GPIO_InitStruct.Pull = GPIO_NOPULL;
-		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-		GPIO_InitStruct.Alternate = GPIO_AF8_I2C2;
-		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-//    GPIO_InitStruct.Pin = GPIO_PIN_12;
-//    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-//    GPIO_InitStruct.Pull = GPIO_NOPULL;
-//    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-//    GPIO_InitStruct.Alternate = GPIO_AF8_I2C2;
-//    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-		/* I2C2 clock enable */
-		__HAL_RCC_I2C2_CLK_ENABLE();
-
-	}
-}
-
-/***************************************************************************/
-void HAL_SMBUS_MspDeInit(SMBUS_HandleTypeDef *smbusHandle) {
-
-	if (smbusHandle->Instance == I2C2) {
-		/* Peripheral clock disable */
-		__HAL_RCC_I2C2_CLK_DISABLE();
-
-		/**I2C2 GPIO Configuration
-		 PA6     ------> I2C2_SDA
-		 PA7     ------> I2C2_SCL
-		 */
-		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6);
-
-		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_7);
-
+		HAL_GPIO_DeInit(MCU_SDA_GPIO_PORT, MCU_SCL_PIN);
 	}
 }
 
@@ -244,46 +159,6 @@ Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer) 
 	}
 
 	return H05R0_OK;
-}
-
-/***************************************************************************/
-/* write n bytes to an SMBUS register
- * @param1: SMBUS port handle
- * @param2: Device address to be written
- * @param3: Data to be sent
- * @param4: Data size
- */
-Module_Status WriteSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size) {
-	Module_Status Status = H05R0_ERROR;
-
-	if (NULL != xPort && NULL != pData) {
-		if (HAL_OK == HAL_SMBUS_Master_Transmit_IT(xPort, (uint16_t) sAddress, pData, Size,
-		SMBUS_FIRST_AND_LAST_FRAME_NO_PEC))
-			Status = H05R0_OK;
-	} else
-		Status = H05R0_ERROR;
-
-	return Status;
-}
-
-/***************************************************************************/
-/* read n bytes from an SMBUS device
- * @param1: SMBUS port handle
- * @param2: Device address to be read
- * @param3: Pointer to buffer to store received data in
- * @param4: Data size
- */
-Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size) {
-	Module_Status Status;
-
-	if (NULL != xPort && NULL != rBuffer) {
-		if (HAL_OK == HAL_SMBUS_Master_Receive_IT(xPort, (uint16_t) sAddress, rBuffer, Size,
-		SMBUS_FIRST_AND_LAST_FRAME_NO_PEC))
-			Status = H05R0_OK;
-	} else
-		Status = H05R0_ERROR;
-
-	return Status;
 }
 
 /***************************************************************************/

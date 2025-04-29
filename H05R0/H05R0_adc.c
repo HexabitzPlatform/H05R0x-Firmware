@@ -9,7 +9,6 @@
 
 /* Includes ****************************************************************/
 #include "BOS.h"
-#include "H05R0_adc.h"
 
 /* Exported Variables ******************************************************/
 ADC_HandleTypeDef hadc1;
@@ -91,10 +90,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *adcHandle) {
 		 PB0     ------> ADC1_IN8
 		 PB1     ------> ADC1_IN9
 		 */
-		GPIO_InitStruct.Pin = CHARGER_CURRENT_SENSE_Pin | VBUS_SENSE_Pin;
+		GPIO_InitStruct.Pin = CURRENT_SENSE_PIN | VBUS_SENSE_PIN;
 		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
-		HAL_GPIO_Init(VBUS_SENSE_GPIO_Port, &GPIO_InitStruct);
+		HAL_GPIO_Init(VBUS_SENSE_GPIO_PORT, &GPIO_InitStruct);
 
 	}
 }
@@ -109,7 +108,8 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef *adcHandle) {
 		 PB0     ------> ADC1_IN8
 		 PB1     ------> ADC1_IN9
 		 */
-		HAL_GPIO_DeInit(GPIOB, CHARGER_CURRENT_SENSE_Pin | VBUS_SENSE_Pin);
+		HAL_GPIO_DeInit(CURRENT_SENSE_GPIO_PORT, CURRENT_SENSE_PIN);
+		HAL_GPIO_DeInit(VBUS_SENSE_GPIO_PORT, VBUS_SENSE_PIN);
 	}
 }
 
@@ -135,8 +135,8 @@ void SelectADCChannel(ADC_Channel ADC_Channel) {
 }
 
 /***************************************************************************/
-Module_Status ReadADCValue(ADC_HandleTypeDef *hadc, ADC_Channel ADC_Channel, uint32_t *ADC_Value, uint32_t Timeout) {
-	Module_Status Status = H05R0_ERROR;
+BOS_Status ReadADCValue(ADC_HandleTypeDef *hadc, ADC_Channel ADC_Channel, uint32_t *ADC_Value, uint32_t Timeout) {
+	BOS_Status Status = BOS_ERROR;
 
 	SelectADCChannel(ADC_Channel);
 	/* Calibrate The ADC On Power-Up For Better Accuracy */
@@ -144,9 +144,9 @@ Module_Status ReadADCValue(ADC_HandleTypeDef *hadc, ADC_Channel ADC_Channel, uin
 
 	/* Start ADC Conversion */
 	if (HAL_OK == HAL_ADC_Start(hadc))
-		Status = H05R0_OK;
+		Status = BOS_OK;
 	 else
-		return H05R0_ERROR;
+		return BOS_ERROR;
 
 	/* Poll ADC1 Perihperal & TimeOut */
 	HAL_ADC_PollForConversion(hadc, Timeout);

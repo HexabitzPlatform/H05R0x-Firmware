@@ -19,21 +19,16 @@ extern "C" {
 
 /* Exported Variables ******************************************************/
 extern I2C_HandleTypeDef        hi2c2;
-extern SMBUS_HandleTypeDef      hsmbus2;
 
-/* I2C Typedef ******************************************************/
+/* I2C Typedef *************************************************************/
 typedef I2C_HandleTypeDef 		I2C_HANDLE;
-typedef SMBUS_HandleTypeDef		SMBUS_HANDLE;
 
 /* Exported Functions ******************************************************/
 void MX_I2C_Init(void);
-void MX_I2C_SMBUS_Init(void);
 
 extern Module_Status CheckI2C(I2C_HANDLE *xPort, uint8_t *addBuffer, uint8_t *rBuffer);
 extern Module_Status WriteI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
 extern Module_Status ReadI2C(I2C_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
-extern Module_Status WriteSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *pData, uint16_t Size);
-extern Module_Status ReadSMBUS(SMBUS_HANDLE *xPort, uint16_t sAddress, uint8_t *rBuffer, uint16_t Size);
 
 #ifdef __cplusplus
 }

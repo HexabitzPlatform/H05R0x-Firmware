@@ -20,7 +20,7 @@
 #include "BOS.h"
 #include "H05R0_MemoryMap.h"
 #include "H05R0_uart.h"
-//#include "H05R0_adc.h"
+#include "H05R0_adc.h"
 #include "H05R0_gpio.h"
 #include "H05R0_dma.h"
 #include "H05R0_inputs.h"
@@ -94,146 +94,126 @@
 #define	USART6_AF			GPIO_AF8_USART6
 
 /* GPIO Pin Definition */
-#define BAT_ALRT_Pin         GPIO_PIN_0
-#define BAT_ALRT_GPIO_Port   GPIOB
-#define BAT_ALRT_EXTI_IRQn   EXTI0_1_IRQn
-#define STATUS_LED_Pin       GPIO_PIN_4
-#define STATUS_LED_GPIO_Port GPIOB
-#define VBUS_OUT_EN_Pin GPIO_PIN_4
-#define VBUS_OUT_EN_GPIO_Port GPIOA
-#define MCU_LDO_EN_Pin GPIO_PIN_2
-#define MCU_LDO_EN_GPIO_Port GPIOB
-#define OUT_EN_3V3_Pin GPIO_PIN_12
-#define OUT_EN_3V3_GPIO_Port GPIOB
-
-#define INPUT_3V3OUT_PG_Pin GPIO_PIN_13
-#define INPUT_3V3OUT_PG_GPIO_Port GPIOB
-#define INPUT_3V3OUT_PG_EXTI_IRQn EXTI4_15_IRQn
+#define BAT_ALRT_PIN              GPIO_PIN_0
+#define BAT_ALRT_GPIO_PORT        GPIOB
+#define BAT_ALRT_EXTI_IRQN        EXTI0_1_IRQn
+#define STATUS_LED_PIN            GPIO_PIN_4
+#define STATUS_LED_GPIO_PORT      GPIOB
+#define VBUS_OUT_EN_PIN           GPIO_PIN_4
+#define VBUS_OUT_EN_GPIO_PORT     GPIOA
+#define MCU_LDO_EN_PIN            GPIO_PIN_2
+#define MCU_LDO_EN_GPIO_PORT      GPIOB
+#define OUT_EN_3V3_PIN            GPIO_PIN_12
+#define OUT_EN_3V3_GPIO_PORT      GPIOB
+#define INPUT_3V3OUT_PG_PIN       GPIO_PIN_13
+#define INPUT_3V3OUT_PG_GPIO_PORT GPIOB
+#define INPUT_3V3OUT_PG_EXTI_IRQN EXTI4_15_IRQn
 
 /* ADC Pin Definition */
-#define CHARGER_CURRENT_SENSE_Pin GPIO_PIN_0
-#define CHARGER_CURRENT_SENSE_GPIO_Port GPIOB
-#define VBUS_SENSE_Pin             GPIO_PIN_1
-#define VBUS_SENSE_GPIO_Port       GPIOB
+#define CURRENT_SENSE_PIN         GPIO_PIN_0
+#define CURRENT_SENSE_GPIO_PORT   GPIOB
+#define VBUS_SENSE_PIN            GPIO_PIN_1
+#define VBUS_SENSE_GPIO_PORT      GPIOB
 
 /* I2C Pin Definition */
-#define MCU_SDA_Pin          GPIO_PIN_6
-#define MCU_SDA_GPIO_Port    GPIOA
-#define MCU_SCL_Pin          GPIO_PIN_7
-#define MCU_SCL_GPIO_Port    GPIOA
-
-#define I2C_PORT					&hi2c2
-#define SMBUS_PORT					&hsmbus2
+#define MCU_SDA_PIN               GPIO_PIN_6
+#define MCU_SDA_GPIO_PORT         GPIOA
+#define MCU_SCL_PIN               GPIO_PIN_7
+#define MCU_SCL_GPIO_PORT         GPIOA
+#define I2C_PORT				  &hi2c2
 
 /* Timer Definition */
+#define TIMER_CCR                 TIM1->CCR1
 
 /* Indicator LED */
-#define _IND_LED_PORT		 GPIOB
-#define _IND_LED_PIN		 GPIO_PIN_15
+#define _IND_LED_PORT		      GPIOB
+#define _IND_LED_PIN		      GPIO_PIN_15
 
 /* Module-specific Macro Definitions ***************************************/
-#define NUM_MODULE_PARAMS	 1
-#define TIM_OUT_10MS         		10u
+#define NUM_MODULE_PARAMS	      1
+#define TIM_OUT_10MS         	  10u
 
-#define MIN_PERIOD_MS				100
-#define UNSNGD_HALF_WORD_MAX_VAL    0xFFFF
-#define UNSNGD_HALF_WORD_MIN_VAL	0x0000
-#define TWO_COMPL_VAL_MASK			0x7FFF
-#define MIN_MEMS_PERIOD_MS			100
-#define MAX_MEMS_TIMEOUT_MS			0xFFFFFFFF
-#define MAX_CCR_VALUE   			20000
-#define MIN_CHARGING_CURRENT_VALUE  +0.010
+#define UNSNGD_HALF_WORD_MAX_VAL  0xFFFF
+#define UNSNGD_HALF_WORD_MIN_VAL  0x0000
+#define TWO_COMPL_VAL_MASK		  0x7FFF
 
-#define SENSE_CHARGER_VAL	    0.01
-#define GAIN_CHARGER_VAL  		50
+#define MAX_CCR_VALUE   		  20000
+
+#define SENSE_CHARGER_VAL	      0.01
+#define GAIN_CHARGER_VAL  		  50
 
 /* Macros definitions */
-#define STREAM_MODE_TO_PORT      1
-#define STREAM_MODE_TO_TERMINAL  2
+#define MIN_MEMS_PERIOD_MS		  100
+#define MAX_MEMS_TIMEOUT_MS		  0xFFFFFFFF
+#define MIN_PERIOD_MS			  100
+#define STREAM_MODE_TO_PORT       1
+#define STREAM_MODE_TO_TERMINAL   2
 
 /* Module-specific Type Definition *****************************************/
 /* Module-status Type Definition */
 typedef enum {
 	H05R0_OK = 0,
-	H05R0_ERR_UnknownMessage,
+	H05R0_ERR_UNKNOWNMESSAGE,
 	H05R0_INV,
 	H05R0_UNKMSG,
 	H05R0_TMOUT,
 	H05R0_MSG_ACK,
 	H05R0_COM_ERR,
 	H05R0_ERR_TERMINATED,
-	H05R0_ERR_WrongParams,
+	H05R0_ERR_WRONGPARAMS,
 	H05R0_ERROR = 255
 } Module_Status;
 
 /* */
 typedef enum {
-	batVolt = 0,
-	batCurrent,
-	batPower,
-	Temp,
-	batCapacity,
-	batSOC,
-	batTTE,
-	batTTF,
-	batAge,
-	batCycles,
-	batIntResistance,
-	setChargVolt,
-	setChargCurrent,
+	BATTERY_VOLTAGE = 0,
+	BATTERY_CURRENT,
+	BATTERY_POWER,
+	BATTERY_TEMP,
+	BATTERY_CAPACITY,
+	BATTERY_SOC,
+	BATTERY_TTE,
+	BATTERY_TTF,
+	BATTERY_AGE,
+	BATTERY_CYCLES,
+	BATTERY_INT_RESISTANCE,
+	SET_CHARGE_VOLT,
+	SET_CHARGE_CURRENT,
 } All_Data;
 
-/* Battery charger status type definitions */
+/* Thermistors channels status */
 typedef enum {
-	EXT_THERM_DIS = 0x00, /* Thermistors channels are disabled */
+	EXT_THERM_DIS = 0x00,
 	EXT_THERM_EN = 0x01, /* Thermistor 1 is used as battery temperature, Thermistor 2 is used with DieTemp for calculating FETTemp. */
-	EXT_THERM1_EN, /* Thermistor 1 is enabled. FETTemp is copied from DieTemp. */
+	EXT_THERM1_EN,      /* Thermistor 1 is enabled. FETTemp is copied from DieTemp. */
 } ThermConfig;
 
-/* */
+/* External thermistor Values */
 typedef enum {
-	EXT_THERM_10K = 0, /* External thermistor is 10K NTC */
-	EXT_THERM_100K = 1, /* External thermistor is 100K NTC */
+	EXT_THERM_10K = 0,  /* 10K NTC  */
+	EXT_THERM_100K = 1, /* 100K NTC */
 } ThermType;
 
 /* */
 typedef enum {
-	AGE_FORCST_DIS = 0, /* disable age forecasting */
-	AGE_FORCST_EN = 1, /* enable age forecasting */
-} AgeForcast;
-
-/* */
-typedef enum {
-	VOLT_TEMP_BACK_DIS = 0, /* disable voltage and temperature backup */
-	VOLT_TEMP_BACK_EN = 1, /* enable voltage and temperature backup */
-} VoltTempBack;
-
-/* */
-typedef enum {
 	FALSE = 0u, TRUE
-} Bool_State;
+} BoolState;
 
-/* */
+/* Charging Status */
 typedef enum {
 	CHARGING = 0u, DISCHARGING
 } ChargingStatus;
+
+/* Battery Status */
+typedef enum {
+	BATTARY_EMPTY = 0u, BATTARY_FULL
+} BatteryStatus;
 
 /* LDO Enable:
  * To secure feeding for the processor after the charger is separated */
 typedef enum {
 	DISABLE_OUT = 0u, ENABLE_OUT
 } LDOOutputState;
-
-/* */
-typedef enum {
-	BATTARY_EMPTY = 0u, BATTARY_FULL
-} BatteryStatus;
-
-/* */
-typedef struct {
-	uint16_t ManId [MANFCTR_NAME_SIZE / 2];
-	uint16_t DevId [DEVICE_NAME_SIZE / 2];
-} IdType;
 
 /* Export Module typedef structure */
 typedef struct {
@@ -291,16 +271,13 @@ Module_Status ReadCellCalInterRes(float *batIntResistance);
 Module_Status ReadSetChargVoltage(float *setChargVolt);
 Module_Status ReadSetChargCurrent(float *setChargCurrent);
 Module_Status ReadAllAnalogMeasurements(AnalogMeasType *analMeasurements);
-Module_Status WriteConfigsToNV(void);
-Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status ReadChargerCurrent(float *ChargerCurrent);
-Module_Status ReadVBUSVoltage(float *VBUSVolt);
-Module_Status MCULDOEnable(LDOOutputState PinState);
-Module_Status MCUOutVoltEnable(LDOOutputState PinState);
-Module_Status VBUSOutSwitchEnable(LDOOutputState PinState);
-
-Module_Status LockNonVolatileMemory(void);
 Module_Status CheckChargingStatus(void);
+
+Module_Status ReadVBUSVoltage(float *VBUSVolt);
+Module_Status EnableVBusOutput(LDOOutputState PinState);
+Module_Status Enable3_3Output(LDOOutputState PinState);
+
 Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction);
 Module_Status StreamToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction, uint32_t numOfSamples,
 		uint32_t streamTimeout);

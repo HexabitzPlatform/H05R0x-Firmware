@@ -31,7 +31,7 @@ typedef enum {
 void MX_ADC_Init(void);
 
 void SelectADCChannel(ADC_Channel ADC_Channel);
-Module_Status ReadADCValue(ADC_HandleTypeDef *hadc,ADC_Channel ADC_Channel,uint32_t *ADC_Value, uint32_t Timeout);
+BOS_Status ReadADCValue(ADC_HandleTypeDef *hadc,ADC_Channel ADC_Channel,uint32_t *ADC_Value, uint32_t Timeout);
 
 #ifdef __cplusplus
 }

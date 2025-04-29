@@ -16,7 +16,6 @@
 #include "BOS.h"
 #include "H05R0_inputs.h"
 #include "H05R0_i2c.h"
-#include "H05R0_adc.h"
 
 /* Exported Typedef ******************************************************/
 /* Define UART variables */
@@ -75,6 +74,10 @@ void MX_TIM1_Init(void);
 void LipoChargerTask(void *argument);
 
 Module_Status Init_MAX17330(void);
+Module_Status WriteConfigsToNV(void);
+Module_Status LockNonVolatileMemory(void);
+Module_Status MCULDOEnable(LDOOutputState PinState);
+Module_Status ReadNumOfRemainingWrites(uint8_t *remWrites);
 Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVal);
 Module_Status BAT_ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes);
 
@@ -743,59 +746,59 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 
 	switch (code) {
 	case CODE_H05R0_CELLVOLTAGE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batVolt);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_VOLTAGE);
 		break;
 
 	case CODE_H05R0_CELLCURRENT:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batCurrent);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CURRENT);
 		break;
 
 	case CODE_H05R0_CELLPOWER:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batPower);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_POWER);
 		break;
 
 	case CODE_H05R0_CELLTEMPERATURE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], Temp);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_TEMP);
 		break;
 
 	case CODE_H05R0_CELLCAPACITY:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batCapacity);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CAPACITY);
 		break;
 
 	case CODE_H05R0_CELLSTATEOFCHARGE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batSOC);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_SOC);
 		break;
 
 	case CODE_H05R0_CELLESTIMATEDTTE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batTTE);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_TTE);
 		break;
 
 	case CODE_H05R0_CELLESTIMATEDTTF:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batTTF);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_TTF);
 		break;
 
 	case CODE_H05R0_CELLAGE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batAge);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_AGE);
 		break;
 
 	case CODE_H05R0_CELLCYCLES:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batCycles);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CYCLES);
 		break;
 
 	case CODE_H05R0_CELLCALINTERRES:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], batIntResistance);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_INT_RESISTANCE);
 		break;
 
 	case CODE_H05R0_SETCHARGVOLTAGE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], setChargVolt);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], SET_CHARGE_VOLT);
 		break;
 
 	case CODE_H05R0_SETCHARGCURRENT:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], setChargCurrent);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], SET_CHARGE_CURRENT);
 		break;
 
 	default:
-		result = H05R0_ERR_UnknownMessage;
+		result = H05R0_ERR_UNKNOWNMESSAGE;
 		break;
 	}
 
@@ -891,7 +894,7 @@ void LipoChargerTask(void *argument) {
 			if (StateOfCharger == 100) {
 				FullCharge = BATTARY_FULL;
 				ChargStatus = CHARGING;
-				TIM1->CCR1 = MAX_CCR_VALUE;
+				TIMER_CCR = MAX_CCR_VALUE;
 			}
 
 			if (StateOfCharger < 99) {
@@ -911,18 +914,18 @@ void LipoChargerTask(void *argument) {
 						StopeCliStreamFlag = 0;
 				}
 				/* increase CCR */
-				TIM1->CCR1 = timer;
+				TIMER_CCR = timer;
 			}
 
 			if ((ChargingVolt * ChargingCurrent) < 0.1 && FullCharge == BATTARY_EMPTY) {
 				ChargStatus = DISCHARGING;		//Stop the loads and wait for the current to increase
-				TIM1->CCR1 = 0;
+				TIMER_CCR = 0;
 			}
 
 		} else if (AnalogMeasurement.ChargingStatus == 1 && ChargingCurrent < 0) {
 			ChargStatus = DISCHARGING;
 			FullCharge = BATTARY_EMPTY;
-			TIM1->CCR1 = 0;
+			TIMER_CCR = 0;
 		}
 
 		taskYIELD();
@@ -1030,36 +1033,6 @@ Module_Status ReadReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes) {
 }
 
 /***************************************************************************/
-/* read 16-bit data from a Battery charger/gauge register
- * regAddress: register's address to read data from
- * Buffer: pointer to a buffer to store received data
- * NoBytes: Number of data to be read
- */
-Module_Status ReadIdReg(uint16_t regAddress, uint16_t *Buffer, uint8_t NoBytes) {
-	Module_Status Status = H05R0_OK;
-	uint8_t tempBuffer [2] = { 0 };
-	uint8_t i2cSize = 0;
-	uint8_t i2cSlaveWriteAdd = 0;
-	uint8_t i2cSlaveReadAdd = 0;
-
-	if (Buffer == NULL)
-		return Status;
-
-	tempBuffer [0] = (uint8_t) regAddress;
-	i2cSize = 1;
-	i2cSlaveWriteAdd = I2C_16h_W_ADD;
-	i2cSlaveReadAdd = I2C_16h_R_ADD;
-
-	if (H05R0_OK != WriteSMBUS(SMBUS_PORT, i2cSlaveWriteAdd, tempBuffer, i2cSize))
-		return H05R0_ERROR;
-
-	if (H05R0_OK != ReadSMBUS(SMBUS_PORT, i2cSlaveReadAdd, (uint8_t*) Buffer, NoBytes))
-		return H05R0_ERROR;
-
-	return Status;
-}
-
-/***************************************************************************/
 /* initialize Battery charger/gauge */
 Module_Status Init_MAX17330(void) {
 	Module_Status Status = H05R0_OK;
@@ -1115,37 +1088,6 @@ Module_Status Init_MAX17330(void) {
 }
 
 /***************************************************************************/
-/* read Battery charger/gauge IDs
- * BatId: pointer to a buffer to store received data
- */
-Module_Status ReadID(IdType *BatId) {
-	Module_Status Status = H05R0_OK;
-
-	if (BatId == NULL)
-		return H05R0_INV;
-
-	/* de-initialize I2C and initialize SMBUS protocol. All chip's name and Id registers are reached
-	 * through SMBUS  */
-	HAL_I2C_DeInit(I2C_PORT);
-	MX_I2C_SMBUS_Init();
-
-	HAL_SMBUS_IsDeviceReady(&hsmbus2, 0x16, 5, 1000);
-
-	if (H05R0_OK != ReadIdReg(MANFCTR_NAME_REG_ADD, BatId->ManId, MANFCTR_NAME_SIZE))
-		return H05R0_ERROR;
-
-//	if (H05R0_OK != ReadIdReg(DEVICE_NAME_REG_ADD, BatId->DevId,DEVICE_NAME_SIZE))
-//		Status = H05R0_ERROR;
-
-	/* de-initialize SMBUS and initialize I2C protocol to let the I2C port run in standard condition
-	 * whenever it is called */
-	HAL_SMBUS_DeInit(SMBUS_PORT);
-	MX_I2C_Init();
-
-	return Status;
-}
-
-/***************************************************************************/
 /* read battery cell calculated internal resistance
  * twosComplVal: the raw value to be processed
  * sgnDecimalVal: pointer to a buffer to store converted signed value
@@ -1162,6 +1104,267 @@ Module_Status ConvertTwosComplToDec(uint16_t twosComplVal, int16_t *sgnDecimalVa
 		*sgnDecimalVal = twosComplVal;
 
 	return H05R0_OK;
+}
+
+
+/***************************************************************************/
+/*
+ * @brief: write configurations to non-volatile memory registers
+ * @param1: pointer to a buffer storing the configurations to be written
+ * @retval: status
+ */
+Module_Status WriteConfigsToNV(void) {
+	Module_Status Status = H05R0_OK;
+	uint16_t tempVar = 0u;
+	uint16_t POR_CMD = 1u;
+
+	/* 1-  Write 0x0000 to the CommStat register (0x061) 2 times in a row to unlock Write Protection */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	/* 2- write the desired configs to their addresses at the shadow RAM */
+	/* Set the under voltage protection to: 3.3 v */
+	WriteReg(0x01D0, 0XDC8C); // Under voltage Protection Threshold = 3.33 v
+
+	/* Set the maximum discharging current to: 8 A default value = 0x4BB5  */
+//	WriteReg(0x01D3, 0x4B9C); // 0x9c --> 8 A
+	WriteReg(0x01D3, 0x4B83); // 0x83 --> 10 A
+
+	/* Set the maximum charging current to: 2 A default value = 0x7F4B */
+//	WriteReg(0x01D8, 0X64FF);  // R = 5 m OM
+	WriteReg(0x01D8, 0X3CFF);  // R = 3.33 m OM
+
+	/* Set CmOvrdEn.bit = 1 to allows the ChgOff and DisOff bits in CommStat to be
+	 * set by I2C communication to turn off the protection FETs
+	 * default value = 0x2800 .
+	 * Set the value to 0x2C00 */
+//	WriteReg(PROTECT_CONFIGS_REG_ADD, 0x2C00);
+	/* 3- Write 0x0000 to the CommStat register (0x061) to clear CommStat.NVError bit */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	/* 4- Write 0xE904 to the Command register 0x060 to initiate a block copy  */
+	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE904))
+		return H05R0_COM_ERR;
+
+	/* 5- Wait tBLOCK for the copy to complete.  */
+	Delay_ms(7000);
+
+	/* 6- Check the CommStat.NVBusy bit. Continue to wait while CommStat.NVBusy = 1
+	 * If NVBusy is 1, keep waiting; if it becomes 0, proceed */
+	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
+		return H05R0_COM_ERR;
+
+	/* 7- Check the CommStat.NVError bit. If set, return to Step 2 to repeat the process.
+	 *  If clear, continue */
+	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
+		return H05R0_COM_ERR;
+
+	/* 8- Write 0x000F to the Command register 0x060 to POR the IC */
+	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0x000F))
+		return H05R0_COM_ERR;
+
+	/* 9- wait 10msec */
+	Delay_ms(10);
+
+	/* 10- Verify all of the nonvolatile memory locations are recalled correctly
+	 * Check that all nonvolatile memory locations contain the expected values. */
+	ReadReg(0x01D0, &tempVar, 2);
+
+	ReadReg(0x01D3, &tempVar, 2);
+
+	ReadReg(0x01D8, &tempVar, 2);
+
+	/* 11- Write 0x0000 to the CommStat register (0x061) 3 times in a row to
+	 *  unlock Write Protection and clear NVError bit */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+		return H05R0_COM_ERR;
+
+	/* 12- Write 0x8000 to Config2 register 0x0AB to reset firmware */
+	if (H05R0_OK != WriteReg(CONFIG2_REG_ADD, 0x8000))
+		return H05R0_COM_ERR;
+
+	/* 13- Wait for POR_CMD bit (bit 15) of the Config2 register to
+	 *  be cleared to indicate POR sequence is complete */
+	while (POR_CMD != 0) {
+
+		if (H05R0_OK != ReadReg(CONFIG2_REG_ADD, &tempVar, sizeof(tempVar)))
+			return H05R0_COM_ERR;
+
+		POR_CMD = (tempVar | 0X00000) >> 15;
+	}
+
+	/* 14- Write 0x00F9 to the CommStat register (0x061) 2 times in a row to lock Write Protection */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
+		return H05R0_COM_ERR;
+
+	return Status;
+}
+
+/***************************************************************************/
+/* read number of remaining non-volatile memory writes
+ * @param1: pointer to a buffer to store received data
+ */
+Module_Status ReadNumOfRemainingWrites(uint8_t *updatesRemaining) {
+	Module_Status Status = H05R0_OK;
+	uint16_t tempVar = 0u;
+	uint8_t updatesUsed = 0, index = 0, combinedData = 0;
+	uint8_t totalUpdates = 7;
+
+	/* the following steps are implemented as stated in the data sheet */
+	/* 1- write 0xE29B to the Command register 0x060 to initiate a block copy */
+	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE29B))
+		return H05R0_COM_ERR;
+
+	/* 2- wait t_BLOCK for the copy to complete */
+	Delay_ms(RECALL_TIME);
+
+	/* 3- read memory address 1FDh */
+	if (H05R0_OK != ReadReg(REM_UPDT_REG_ADD, &tempVar, 2))
+		return H05R0_COM_ERR;
+
+	/* 4- decode the received data */
+	/* Logical OR of upper and lower bytes:
+	 * (data >> 8): This effectively discards the lower byte, leaving only the upper byte.
+	 * (data & 0xFF): This operation retains only the lower byte and sets the upper byte to zero.
+	 * The result is an 8-bit value (combinedData) where the upper byte comes from the original data
+	 * (shifted right) and the lower byte comes from the original data (masked with 0xFF).
+	 */
+	combinedData = (tempVar >> 8) | (tempVar & 0xFF);
+
+	// Count the number of 1s (updates used)
+	for (index = 0; index < 7; ++index) {
+		if (combinedData & (1 << index)) {
+			updatesUsed++;
+		}
+	}
+
+	/* Calculate updates remaining */
+	*updatesRemaining = totalUpdates - updatesUsed;
+
+	return Status;
+}
+
+/***************************************************************************/
+/* read number of remaining non-volatile memory writes */
+Module_Status LockNonVolatileMemory(void) {
+	bool csErrorBit = 0;
+	uint16_t tempVar = 0u;
+
+	/* read command status register */
+	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, 1))
+		return H05R0_COM_ERR;
+
+	//csErrorBit = tempVar & 32;
+
+	/* repeat the process till CommStat.NVError bit is zero */
+	while (TRUE == csErrorBit) {
+		/* write 0x0000 to the CommStat register (0x61) two times in a row to unlock write protection */
+		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+			return H05R0_COM_ERR;
+
+		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+			return H05R0_COM_ERR;
+
+		/* write 0x0000 to the CommStat register (0x61) one more time to clear CommStat.NVError bit */
+		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+			return H05R0_COM_ERR;
+
+		/* write 0x6AXX to the Command register 0x060 to lock desired blocks */
+		if (H05R0_OK != WriteReg(CMD_REG_ADD, 0x6A00))
+			return H05R0_COM_ERR;
+
+		/* wait tUPDATE for the copy to complete */
+		Delay_ms(UPDATE_TIME);
+
+		/* check the CommStat.NVError bit. If set, repeat the process */
+		if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, 1))
+			return H05R0_COM_ERR;
+
+		csErrorBit = tempVar & 32;
+	}
+
+	/* write 0x00F9 to the CommStat register (0x61) two times in a row to lock write protection */
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
+		return H05R0_COM_ERR;
+
+	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
+		return H05R0_COM_ERR;
+
+	return 0;
+}
+
+/***************************************************************************/
+/* MCU LDO Enable To secure feeding for the processor after the charger is separated */
+Module_Status MCULDOEnable(LDOOutputState PinState) {
+	Module_Status Status = H05R0_OK;
+
+	if (PinState == ENABLE_OUT)
+		HAL_GPIO_WritePin(MCU_LDO_EN_GPIO_PORT, MCU_LDO_EN_PIN, GPIO_PIN_SET);
+	else
+		HAL_GPIO_WritePin(MCU_LDO_EN_GPIO_PORT, MCU_LDO_EN_PIN, GPIO_PIN_RESET);
+
+	return Status;
+}
+
+/***************************************************************************/
+void SampleVoltageToString(char *cstring, size_t maxLen) {
+	float Voltage = 0;
+
+	ReadCellVoltage(&Voltage);
+	snprintf(cstring, maxLen, "Voltage: %.2f\r\n", Voltage);
+}
+
+/***************************************************************************/
+void SamplecurrentToString(char *cstring, size_t maxLen) {
+	float current = 0;
+
+	ReadCellCurrent(&current);
+	snprintf(cstring, maxLen, "current: %.2f\r\n", current);
+}
+
+/***************************************************************************/
+void SamplepowrToString(char *cstring, size_t maxLen) {
+	float powr = 0;
+
+	ReadCellPower(&powr);
+	snprintf(cstring, maxLen, "powr: %.2f\r\n", powr);
+}
+
+/***************************************************************************/
+void SampleTempToString(char *cstring, size_t maxLen) {
+	float Temp = 0;
+
+	ReadTemperature(&Temp);
+	snprintf(cstring, maxLen, "Temp: %.2f\r\n", Temp);
+}
+
+/***************************************************************************/
+void SamplebatCapacityToString(char *cstring, size_t maxLen) {
+	float batCapacity = 0;
+
+	ReadCellCapacity(&batCapacity);
+	snprintf(cstring, maxLen, "batCapacity: %.2f\r\n", batCapacity);
+}
+
+/***************************************************************************/
+void SamplebatSOCToString(char *cstring, size_t maxLen) {
+	uint8_t batSOC = 0;
+
+	ReadCellStateOfCharge(&batSOC);
+	snprintf(cstring, maxLen, "batSOC: %.2f\r\n", batSOC);
 }
 
 /***************************************************************************/
@@ -1211,8 +1414,8 @@ Module_Status ReadCellCurrent(float *batCurrent) {
 	return Status;
 }
 /***************************************************************************/
-/* read battery cell power
- * @param1: pointer to a buffer to store received data
+/* Read battery cell power
+ * batPower: pointer to a buffer to store received data
  */
 Module_Status ReadCellPower(float *batPower)
 {
@@ -1505,7 +1708,10 @@ Module_Status ReadChargerCurrent(float *ChargerCurrent) {
 }
 
 /***************************************************************************/
-/* read  VBUS Voltage
+/* Read VBUS Voltage
+ * Note: VBus refers to the battery or charger voltage.
+ * When this is enabled, the battery voltage becomes available
+ * through the green connector.
  * VBUSVolt: pointer to a buffer to store received data
  */
 Module_Status ReadVBUSVoltage(float *VBUSVolt) {
@@ -1521,192 +1727,48 @@ Module_Status ReadVBUSVoltage(float *VBUSVolt) {
 }
 
 /***************************************************************************/
-/* MCU LDO Enable To secure feeding for the processor after the charger is separated */
-Module_Status MCULDOEnable(LDOOutputState PinState) {
-	Module_Status Status = H05R0_OK;
-
-	if (PinState == ENABLE_OUT)
-		HAL_GPIO_WritePin(MCU_LDO_EN_GPIO_Port, MCU_LDO_EN_Pin, GPIO_PIN_SET);
-	else
-		HAL_GPIO_WritePin(MCU_LDO_EN_GPIO_Port, MCU_LDO_EN_Pin, GPIO_PIN_RESET);
-
-	return Status;
-}
-
-/***************************************************************************/
 /* MCU Out Volt Enable To secure 3.3V for other Modules */
-Module_Status MCUOutVoltEnable(LDOOutputState PinState) {
+Module_Status Enable3_3Output(LDOOutputState PinState) {
 	Module_Status Status = H05R0_OK;
 
 	if (PinState == ENABLE_OUT)
-		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_Port, OUT_EN_3V3_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_SET);
 	else
-		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_Port, OUT_EN_3V3_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_RESET);
 
 	return Status;
 }
 
 /***************************************************************************/
-/* VBUS Output Switch Enable To Load Control */
-Module_Status VBUSOutSwitchEnable(LDOOutputState PinState) {
+/* VBUS Output Switch Enable */
+Module_Status EnableVBusOutput(LDOOutputState PinState) {
 	Module_Status Status = H05R0_OK;
 
 	if (PinState == ENABLE_OUT)
-		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_Port, VBUS_OUT_EN_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_RESET);
 	else
-		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_Port, VBUS_OUT_EN_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_SET);
 
 	return Status;
 }
 
 /***************************************************************************/
-/*
- * @brief: write configurations to non-volatile memory registers
- * @param1: pointer to a buffer storing the configurations to be written
- * @retval: status
- */
-Module_Status WriteConfigsToNV(void) {
-	Module_Status Status = H05R0_OK;
+Module_Status CheckChargingStatus(void) {
 	uint16_t tempVar = 0u;
-	uint16_t POR_CMD = 1u;
+	uint16_t sixthBit = 0u;
+	Module_Status status = H05R0_OK;
 
-	/* 1-  Write 0x0000 to the CommStat register (0x061) 2 times in a row to unlock Write Protection */
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
+	if (H05R0_OK != ReadReg(FPROT_STAT_REG_ADD, &tempVar, 2))
 		return H05R0_COM_ERR;
 
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
-		return H05R0_COM_ERR;
+	// Shift the value right by 5 bits to bring the sixth bit to the least significant position
+	sixthBit = (tempVar >> 5) & 1;
+	if (sixthBit == 0)
+		AnalogMeasurement.ChargingStatus = CHARGING;
+	else
+		AnalogMeasurement.ChargingStatus = DISCHARGING;
 
-	/* 2- write the desired configs to their addresses at the shadow RAM */
-	/* Set the under voltage protection to: 3.3 v */
-	WriteReg(0x01D0, 0XDC8C); // Under voltage Protection Threshold = 3.33 v
-
-	/* Set the maximum discharging current to: 8 A default value = 0x4BB5  */
-//	WriteReg(0x01D3, 0x4B9C); // 0x9c --> 8 A
-	WriteReg(0x01D3, 0x4B83); // 0x83 --> 10 A
-
-	/* Set the maximum charging current to: 2 A default value = 0x7F4B */
-//	WriteReg(0x01D8, 0X64FF);  // R = 5 m OM
-	WriteReg(0x01D8, 0X3CFF);  // R = 3.33 m OM
-
-	/* Set CmOvrdEn.bit = 1 to allows the ChgOff and DisOff bits in CommStat to be
-	 * set by I2C communication to turn off the protection FETs
-	 * default value = 0x2800 .
-	 * Set the value to 0x2C00 */
-//	WriteReg(PROTECT_CONFIGS_REG_ADD, 0x2C00);
-	/* 3- Write 0x0000 to the CommStat register (0x061) to clear CommStat.NVError bit */
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
-		return H05R0_COM_ERR;
-
-	/* 4- Write 0xE904 to the Command register 0x060 to initiate a block copy  */
-	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE904))
-		return H05R0_COM_ERR;
-
-	/* 5- Wait tBLOCK for the copy to complete.  */
-	Delay_ms(7000);
-
-	/* 6- Check the CommStat.NVBusy bit. Continue to wait while CommStat.NVBusy = 1
-	 * If NVBusy is 1, keep waiting; if it becomes 0, proceed */
-	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
-		return H05R0_COM_ERR;
-
-	/* 7- Check the CommStat.NVError bit. If set, return to Step 2 to repeat the process.
-	 *  If clear, continue */
-	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, sizeof(tempVar)))
-		return H05R0_COM_ERR;
-
-	/* 8- Write 0x000F to the Command register 0x060 to POR the IC */
-	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0x000F))
-		return H05R0_COM_ERR;
-
-	/* 9- wait 10msec */
-	Delay_ms(10);
-
-	/* 10- Verify all of the nonvolatile memory locations are recalled correctly
-	 * Check that all nonvolatile memory locations contain the expected values. */
-	ReadReg(0x01D0, &tempVar, 2);
-
-	ReadReg(0x01D3, &tempVar, 2);
-
-	ReadReg(0x01D8, &tempVar, 2);
-
-	/* 11- Write 0x0000 to the CommStat register (0x061) 3 times in a row to
-	 *  unlock Write Protection and clear NVError bit */
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
-		return H05R0_COM_ERR;
-
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
-		return H05R0_COM_ERR;
-
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
-		return H05R0_COM_ERR;
-
-	/* 12- Write 0x8000 to Config2 register 0x0AB to reset firmware */
-	if (H05R0_OK != WriteReg(CONFIG2_REG_ADD, 0x8000))
-		return H05R0_COM_ERR;
-
-	/* 13- Wait for POR_CMD bit (bit 15) of the Config2 register to
-	 *  be cleared to indicate POR sequence is complete */
-	while (POR_CMD != 0) {
-
-		if (H05R0_OK != ReadReg(CONFIG2_REG_ADD, &tempVar, sizeof(tempVar)))
-			return H05R0_COM_ERR;
-
-		POR_CMD = (tempVar | 0X00000) >> 15;
-	}
-
-	/* 14- Write 0x00F9 to the CommStat register (0x061) 2 times in a row to lock Write Protection */
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
-		return H05R0_COM_ERR;
-
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
-		return H05R0_COM_ERR;
-
-	return Status;
-}
-
-/***************************************************************************/
-/* read number of remaining non-volatile memory writes
- * @param1: pointer to a buffer to store received data
- */
-Module_Status ReadNumOfRemainingWrites(uint8_t *updatesRemaining) {
-	Module_Status Status = H05R0_OK;
-	uint16_t tempVar = 0u;
-	uint8_t updatesUsed = 0, index = 0, combinedData = 0;
-	uint8_t totalUpdates = 7;
-
-	/* the following steps are implemented as stated in the data sheet */
-	/* 1- write 0xE29B to the Command register 0x060 to initiate a block copy */
-	if (H05R0_OK != WriteReg(CMD_REG_ADD, 0xE29B))
-		return H05R0_COM_ERR;
-
-	/* 2- wait t_BLOCK for the copy to complete */
-	Delay_ms(RECALL_TIME);
-
-	/* 3- read memory address 1FDh */
-	if (H05R0_OK != ReadReg(REM_UPDT_REG_ADD, &tempVar, 2))
-		return H05R0_COM_ERR;
-
-	/* 4- decode the received data */
-	/* Logical OR of upper and lower bytes:
-	 * (data >> 8): This effectively discards the lower byte, leaving only the upper byte.
-	 * (data & 0xFF): This operation retains only the lower byte and sets the upper byte to zero.
-	 * The result is an 8-bit value (combinedData) where the upper byte comes from the original data
-	 * (shifted right) and the lower byte comes from the original data (masked with 0xFF).
-	 */
-	combinedData = (tempVar >> 8) | (tempVar & 0xFF);
-
-	// Count the number of 1s (updates used)
-	for (index = 0; index < 7; ++index) {
-		if (combinedData & (1 << index)) {
-			updatesUsed++;
-		}
-	}
-
-	/* Calculate updates remaining */
-	*updatesRemaining = totalUpdates - updatesUsed;
-
-	return Status;
+	return H05R0_OK;
 }
 
 /***************************************************************************/
@@ -1739,7 +1801,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 
 	/* Process data based on the requested sensor function */
 	switch (dataFunction) {
-	case batVolt:
+	case BATTERY_VOLTAGE:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery voltage data */
@@ -1753,7 +1815,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case batCurrent:
+	case BATTERY_CURRENT:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery current data */
@@ -1767,7 +1829,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case batPower:
+	case BATTERY_POWER:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery power data */
@@ -1781,7 +1843,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case Temp:
+	case BATTERY_TEMP:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample temperature data */
@@ -1795,7 +1857,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case batCapacity:
+	case BATTERY_CAPACITY:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery capacity data */
@@ -1809,7 +1871,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case batSOC:
+	case BATTERY_SOC:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery state of charge data */
@@ -1822,7 +1884,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case batTTE:
+	case BATTERY_TTE:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery estimated time to empty data */
@@ -1836,7 +1898,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case batTTF:
+	case BATTERY_TTF:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery estimated time to full data */
@@ -1850,7 +1912,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case batAge:
+	case BATTERY_AGE:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery age data */
@@ -1864,7 +1926,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-	case batCycles:
+	case BATTERY_CYCLES:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample battery cycles data */
@@ -1878,7 +1940,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-		case setChargVolt:
+		case SET_CHARGE_VOLT:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample set charge voltage data */
@@ -1892,7 +1954,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-		case setChargCurrent:
+		case SET_CHARGE_CURRENT:
 		pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
 		/* Sample set charge current data */
@@ -1906,12 +1968,12 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
 		cmd500ms, HAL_MAX_DELAY);
 		break;
 
-		case batIntResistance:
+		case BATTERY_INT_RESISTANCE:
 		/* Note: This case is empty in the original code, leaving it as a placeholder */
-		return H05R0_ERR_WrongParams; /* Return error as no implementation exists */
+		return H05R0_ERR_WRONGPARAMS; /* Return error as no implementation exists */
 
 		default:
-		return H05R0_ERR_WrongParams; /* Return error for invalid sensor function */
+		return H05R0_ERR_WRONGPARAMS; /* Return error for invalid sensor function */
 	}
 
 		/* Return final status indicating success or prior error */
@@ -1945,74 +2007,6 @@ static Module_Status PollingSleepCLISafe(uint32_t period, long Numofsamples) {
 }
 
 /***************************************************************************/
-/* read number of remaining non-volatile memory writes */
-Module_Status LockNonVolatileMemory(void) {
-	bool csErrorBit = 0;
-	uint16_t tempVar = 0u;
-
-	/* read command status register */
-	if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, 1))
-		return H05R0_COM_ERR;
-
-	//csErrorBit = tempVar & 32;
-
-	/* repeat the process till CommStat.NVError bit is zero */
-	while (TRUE == csErrorBit) {
-		/* write 0x0000 to the CommStat register (0x61) two times in a row to unlock write protection */
-		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
-			return H05R0_COM_ERR;
-
-		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
-			return H05R0_COM_ERR;
-
-		/* write 0x0000 to the CommStat register (0x61) one more time to clear CommStat.NVError bit */
-		if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x0000))
-			return H05R0_COM_ERR;
-
-		/* write 0x6AXX to the Command register 0x060 to lock desired blocks */
-		if (H05R0_OK != WriteReg(CMD_REG_ADD, 0x6A00))
-			return H05R0_COM_ERR;
-
-		/* wait tUPDATE for the copy to complete */
-		Delay_ms(UPDATE_TIME);
-
-		/* check the CommStat.NVError bit. If set, repeat the process */
-		if (H05R0_OK != ReadReg(CMD_STAT_REG_ADD, &tempVar, 1))
-			return H05R0_COM_ERR;
-
-		csErrorBit = tempVar & 32;
-	}
-
-	/* write 0x00F9 to the CommStat register (0x61) two times in a row to lock write protection */
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
-		return H05R0_COM_ERR;
-
-	if (H05R0_OK != WriteReg(CMD_STAT_REG_ADD, 0x00F9))
-		return H05R0_COM_ERR;
-
-	return 0;
-}
-
-/***************************************************************************/
-Module_Status CheckChargingStatus(void) {
-	uint16_t tempVar = 0u;
-	uint16_t sixthBit = 0u;
-	Module_Status status = H05R0_OK;
-
-	if (H05R0_OK != ReadReg(FPROT_STAT_REG_ADD, &tempVar, 2))
-		return H05R0_COM_ERR;
-
-	// Shift the value right by 5 bits to bring the sixth bit to the least significant position
-	sixthBit = (tempVar >> 5) & 1;
-	if (sixthBit == 0)
-		AnalogMeasurement.ChargingStatus = CHARGING;
-	else
-		AnalogMeasurement.ChargingStatus = DISCHARGING;
-
-	return H05R0_OK;
-}
-
-/***************************************************************************/
 /* Samples data from a sensor and exports it to a specified port or module.
  * @param  dstModule: The module number to export data to.
  * @param  dstPort: The port number to export data to.
@@ -2037,11 +2031,11 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 
 	/* Check if the port and module ID are valid */
 	if (dstPort == 0 && dstModule == myID)
-		return H05R0_ERR_WrongParams;
+		return H05R0_ERR_WRONGPARAMS;
 
 	/* Process data based on the requested sensor function */
 	switch (dataFunction) {
-	case batVolt:
+	case BATTERY_VOLTAGE:
 		status = ReadCellVoltage(&voltage);
 
 		/* If data is to be sent locally */
@@ -2059,7 +2053,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batCurrent:
+	case BATTERY_CURRENT:
 		status = ReadCellCurrent(&current);
 
 		/* If data is to be sent locally */
@@ -2077,7 +2071,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batPower:
+	case BATTERY_POWER:
 		status = ReadCellPower(&power);
 
 		/* If data is to be sent locally */
@@ -2095,7 +2089,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case Temp:
+	case BATTERY_TEMP:
 		status = ReadTemperature(&temperature);
 
 		/* If data is to be sent locally */
@@ -2113,7 +2107,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batCapacity:
+	case BATTERY_CAPACITY:
 		status = ReadCellCapacity(&capacity);
 
 		/* If data is to be sent locally */
@@ -2131,7 +2125,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batSOC:
+	case BATTERY_SOC:
 		status = ReadCellStateOfCharge(&stateOfCharge);
 
 		/* If data is to be sent locally */
@@ -2148,7 +2142,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batTTE:
+	case BATTERY_TTE:
 		status = ReadCellEstimatedTTE(&timeToEmpty);
 
 		/* If data is to be sent locally */
@@ -2166,7 +2160,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batTTF:
+	case BATTERY_TTF:
 		status = ReadCellEstimatedTTF(&timeToFull);
 
 		/* If data is to be sent locally */
@@ -2184,7 +2178,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batAge:
+	case BATTERY_AGE:
 		status = ReadCellAge(&age);
 
 		/* If data is to be sent locally */
@@ -2201,7 +2195,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batCycles:
+	case BATTERY_CYCLES:
 		status = ReadCellCycles(&cycles);
 
 		/* If data is to be sent locally */
@@ -2220,9 +2214,9 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case batIntResistance:
+	case BATTERY_INT_RESISTANCE:
 		/* Note: Original code lacks sampling function, assuming placeholder */
-		status = H05R0_ERR_WrongParams; /* Return error as no implementation exists */
+		status = H05R0_ERR_WRONGPARAMS; /* Return error as no implementation exists */
 
 		/* If data is to be sent locally */
 		if (dstModule == myID || dstModule == 0) {
@@ -2238,7 +2232,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case setChargVolt:
+	case SET_CHARGE_VOLT:
 		status = ReadSetChargVoltage(&chargeVoltage);
 
 		/* If data is to be sent locally */
@@ -2256,7 +2250,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		}
 		break;
 
-	case setChargCurrent:
+	case SET_CHARGE_CURRENT:
 		status = ReadSetChargCurrent(&chargeCurrent);
 
 		/* If data is to be sent locally */
@@ -2275,7 +2269,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 		break;
 
 	default:
-		return H05R0_ERR_WrongParams; /* Return error for invalid sensor function */
+		return H05R0_ERR_WRONGPARAMS; /* Return error for invalid sensor function */
 	}
 
 	/* Clear the temp buffer */
@@ -2286,64 +2280,12 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 }
 
 /***************************************************************************/
-//Module_Status SampleToPort(uint8_t module,uint8_t port,All_Data function)
-// {
-//	Module_Status status = H05R0_OK;
-//	StreamMode = SAMPLE_TO_PORT;
-//	port2 = port;
-//	module2 = module;
-//	mode2 = function;
-//	return status;
-//}
-
-/***************************************************************************/
-/*
- * Sending a Stream of the required module on the required port
- * 	period=timeout/Numofsamples -->minimum=100
- * 	The minimum time between one sample and another is its value 100ms
- *
- */
-//Module_Status StreamtoPort(uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
-//{
-//	Module_Status status = H05R0_OK;
-//	StreamMode=STREAM_TO_PORT;
-//	port1 = port ;
-//	module1 =module;
-//	Numofsamples1=Numofsamples;
-//	timeout1=timeout;
-//	mode1= function;
-//	return status;
-//
-//}
-
-/***************************************************************************/
-//Module_Status Exportstreamtoport (uint8_t module,uint8_t port,All_Data function,uint32_t Numofsamples,uint32_t timeout)
-// {
-//	Module_Status status = H05R0_OK;
-//	uint32_t samples = 0;
-//	uint32_t period = 0;
-//	period = timeout / Numofsamples;
-//
-//	if (timeout < MIN_PERIOD_MS || period < MIN_PERIOD_MS)
-//		return H05R0_ERR_WrongParams;
-//
-//	while (samples < Numofsamples) {
-//		status = Exporttoport(module, port, function);
-//		vTaskDelay(pdMS_TO_TICKS(period));
-//		samples++;
-//	}
-//	StreamMode = DEFAULT;
-//	samples = 0;
-//	return status;
-//}
-
-/***************************************************************************/
 static Module_Status StreamMemsToCLI(uint32_t Numofsamples, uint32_t timeout, SampleMemsToString function) {
 	Module_Status status = H05R0_OK;
 	int8_t *pcOutputString = NULL;
 	uint32_t period = timeout / Numofsamples;
 	if (period < MIN_MEMS_PERIOD_MS)
-		return H05R0_ERR_WrongParams;
+		return H05R0_ERR_WRONGPARAMS;
 
 	// TODO: Check if CLI is enable or not
 	for (uint8_t chr = 0; chr < MSG_RX_BUF_SIZE; chr++) {
@@ -2377,54 +2319,6 @@ static Module_Status StreamMemsToCLI(uint32_t Numofsamples, uint32_t timeout, Sa
 	sprintf((char*) pcOutputString, "\r\n");
 
 	return status;
-}
-
-/***************************************************************************/
-void SampleVoltageToString(char *cstring, size_t maxLen) {
-	float Voltage = 0;
-
-	ReadCellVoltage(&Voltage);
-	snprintf(cstring, maxLen, "Voltage: %.2f\r\n", Voltage);
-}
-
-/***************************************************************************/
-void SamplecurrentToString(char *cstring, size_t maxLen) {
-	float current = 0;
-
-	ReadCellCurrent(&current);
-	snprintf(cstring, maxLen, "current: %.2f\r\n", current);
-}
-
-/***************************************************************************/
-void SamplepowrToString(char *cstring, size_t maxLen) {
-	float powr = 0;
-
-	ReadCellPower(&powr);
-	snprintf(cstring, maxLen, "powr: %.2f\r\n", powr);
-}
-
-/***************************************************************************/
-void SampleTempToString(char *cstring, size_t maxLen) {
-	float Temp = 0;
-
-	ReadTemperature(&Temp);
-	snprintf(cstring, maxLen, "Temp: %.2f\r\n", Temp);
-}
-
-/***************************************************************************/
-void SamplebatCapacityToString(char *cstring, size_t maxLen) {
-	float batCapacity = 0;
-
-	ReadCellCapacity(&batCapacity);
-	snprintf(cstring, maxLen, "batCapacity: %.2f\r\n", batCapacity);
-}
-
-/***************************************************************************/
-void SamplebatSOCToString(char *cstring, size_t maxLen) {
-	uint8_t batSOC = 0;
-
-	ReadCellStateOfCharge(&batSOC);
-	snprintf(cstring, maxLen, "batSOC: %.2f\r\n", batSOC);
 }
 
 /***************************************************************************/
@@ -2514,7 +2408,6 @@ Module_Status StreamToTerminal(uint8_t dstPort, All_Data dataFunction, uint32_t 
 
 	return Status;
 }
-
 
 /***************************************************************************/
 /********************************* Commands ********************************/
