@@ -143,8 +143,8 @@
 #define GAIN_CHARGER_VAL  		  50
 
 /* Macros definitions */
-#define MIN_PERIOD_MS		  100
-#define MAX_TIMEOUT_MS		  0xFFFFFFFF
+#define MIN_PERIOD_MS		      100
+#define MAX_TIMEOUT_MS		      0xFFFFFFFF
 #define MIN_PERIOD_MS			  100
 #define STREAM_MODE_TO_PORT       1
 #define STREAM_MODE_TO_TERMINAL   2

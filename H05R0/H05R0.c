@@ -64,17 +64,16 @@ uint8_t H05R0_batAge = 0;
 uint16_t H05R0_batCycles = 0;/* Module exported parameters ------------------------------------------------*/
 /* Exported Typedef */
 ModuleParam_t ModuleParam[NUM_MODULE_PARAMS] = {
-    {.ParamPtr = &H05R0_batVolt, .ParamFormat = FMT_FLOAT, .ParamName = "batVolt"},
-    {.ParamPtr = &H05R0_batCurrent, .ParamFormat = FMT_FLOAT, .ParamName = "batCurrent"},
-    {.ParamPtr = &H05R0_batPower, .ParamFormat = FMT_FLOAT, .ParamName = "batPower"},
+    {.ParamPtr = &H05R0_batVolt, .ParamFormat = FMT_FLOAT, .ParamName = "batvolt"},
+    {.ParamPtr = &H05R0_batCurrent, .ParamFormat = FMT_FLOAT, .ParamName = "batcurrent"},
+    {.ParamPtr = &H05R0_batPower, .ParamFormat = FMT_FLOAT, .ParamName = "batpower"},
     {.ParamPtr = &H05R0_Temp, .ParamFormat = FMT_FLOAT, .ParamName = "temperature"},
-    {.ParamPtr = &H05R0_batCapacity, .ParamFormat = FMT_FLOAT, .ParamName = "batCapacity"},
-    {.ParamPtr = &H05R0_batAge, .ParamFormat = FMT_UINT8, .ParamName = "batAge"},
-    {.ParamPtr = &H05R0_batCycles, .ParamFormat = FMT_UINT16, .ParamName = "batCycles"},
+    {.ParamPtr = &H05R0_batCapacity, .ParamFormat = FMT_FLOAT, .ParamName = "batcapacity"},
+    {.ParamPtr = &H05R0_batAge, .ParamFormat = FMT_UINT8, .ParamName = "batage"},
+    {.ParamPtr = &H05R0_batCycles, .ParamFormat = FMT_UINT16, .ParamName = "batcycles"},
 };
 
 /* Local Typedef related to stream functions */
-//typedef void (*SampleToPort)(uint8_t, uint8_t);
 typedef void (*SampleToString)(char *, size_t);
 typedef void (*SampleToBuffer)(float *buffer);
 
@@ -105,207 +104,27 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) ;
 static Module_Status POLLINGSLEEPCLISAFE(uint32_t period, long Numofsamples);
 static Module_Status StreamToCLI(uint32_t Numofsamples, uint32_t timeout, SampleToString function);
 
-/* Create CLI commands *****************************************************/
-portBASE_TYPE CLI_ReadCellVoltageCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellVoltageCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellCurrentCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellPowerCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadTemperatureCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellCapacityCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellStateOfChargeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellEstimatedTTECommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellEstimatedTTFCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellAgeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellCyclesCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellCalInterResCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadSetChargVoltageCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadSetChargCurrentCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadAllAnalogMeasurementsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellcurrentCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellPowrCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellsocCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCellcapacityCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE CLI_ReadCelltempCommandstream( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 
+/* Create CLI commands *****************************************************/
+static portBASE_TYPE SampleSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString);
+static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString);
 
 /* CLI command structure ***************************************************/
-/* CLI command structure : ReadCellVoltage */
-const CLI_Command_Definition_t CLI_ReadCellVoltageCommandDefinition = {
-		(const int8_t*) "cellvoltage", /* The command string to type. */
-        (const int8_t*) "cellvoltage:\r\n Parameters required to execute a readcellvoltage \r\n\r\n",
-		CLI_ReadCellVoltageCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
+/* CLI command structure : sample */
+const CLI_Command_Definition_t SampleCommandDefinition = {
+    (const int8_t*)"sample",
+    (const int8_t*)"sample:\r\n Syntax: sample [volt]/[curr]/[pow]/[temp]/[cap]/[age]/[cycles].\r\n\r\n",
+    SampleSensorCommand,
+    1
 };
 
 /***************************************************************************/
-/* CLI command structure : ReadCellVoltage(stream) */
-const CLI_Command_Definition_t CLI_ReadCellVoltageCommandDefinitionstream = {
-		(const int8_t*) "streamvoltage", /* The command string to type. */
-        (const int8_t*) "streamvoltage:\r\n Parameters required to execute a streamvoltage \r\n\r\n",
-		CLI_ReadCellVoltageCommandstream, /* The function to run. */
-		2 /* tow parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellcurren(stream) */
-const CLI_Command_Definition_t CLI_ReadCellCurrentCommandDefinitionstream = {
-		(const int8_t*) "streamcurrent", /* The command string to type. */
-        (const int8_t*) "streamcurrent:\r\n Parameters required to execute a streamcurrent \r\n\r\n",
-		CLI_ReadCellcurrentCommandstream, /* The function to run. */
-		2 /* tow parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellCurrent */
-const CLI_Command_Definition_t CLI_ReadCellCurrentCommandDefinition = {
-		(const int8_t*) "cellcurrent", /* The command string to type. */
-        (const int8_t*) "cellcurrent:\r\n Parameters required to execute a readcellcurrent \r\n\r\n",
-		CLI_ReadCellCurrentCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellPower */
-const CLI_Command_Definition_t CLI_ReadCellPowerCommandDefinition = {
-		(const int8_t*) "cellpower", /* The command string to type. */
-        (const int8_t*) "cellpower:\r\n Parameters required to execute a readcellpower \r\n\r\n",
-		CLI_ReadCellPowerCommand, /* The function to run. */
-        0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellPower(stream) */
-const CLI_Command_Definition_t CLI_ReadCellPowerCommandDefinitionstream = {
-		(const int8_t*) "streampower", /* The command string to type. */
-        (const int8_t*) "streampower:\r\n Parameters required to execute a streampower \r\n\r\n",
-        CLI_ReadCellPowrCommandstream, /* The function to run. */
-        2 /* tow parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellTemp (stream) */
-const CLI_Command_Definition_t CLI_ReadCellTempCommandDefinitionstream = {
-		(const int8_t*) "streamtemp", /* The command string to type. */
-        (const int8_t*) "streamtemp:\r\n Parameters required to execute a streamtemp \r\n\r\n",
-		CLI_ReadCelltempCommandstream, /* The function to run. */
-        2 /* tow parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellbatCapacity (stream) */
-const CLI_Command_Definition_t CLI_ReadCellCapacityCommandDefinitionstream = {
-		(const int8_t*) "streamcapacity", /* The command string to type. */
-        (const int8_t*) "streamcapacity:\r\n Parameters required to execute a streamcapacity \r\n\r\n",
-		CLI_ReadCellcapacityCommandstream, /* The function to run. */
-		2 /* tow parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadSOC (stream) */
-const CLI_Command_Definition_t CLI_ReadCellSOCCommandDefinitionstream = {
-		(const int8_t*) "streamsoc", /* The command string to type. */
-        (const int8_t*) "streamsoc:\r\n Parameters required to execute a streamsoc \r\n\r\n",
-		CLI_ReadCellsocCommandstream, /* The function to run. */
-        2 /* tow parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadTemperature */
-const CLI_Command_Definition_t CLI_ReadTemperatureCommandDefinition = {
-		(const int8_t*) "temperature", /* The command string to type. */
-        (const int8_t*) "temperature:\r\n Parameters required to execute a readtemperature \r\n\r\n",
-		CLI_ReadTemperatureCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellCapacity */
-const CLI_Command_Definition_t CLI_ReadCellCapacityCommandDefinition = {
-		(const int8_t*) "cellcapacity", /* The command string to type. */
-        (const int8_t*) "cellcapacity:\r\n Parameters required to execute a readcellcapacity \r\n\r\n",
-		CLI_ReadCellCapacityCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellStateOfCharge */
-const CLI_Command_Definition_t CLI_ReadCellStateOfChargeCommandDefinition = {
-		(const int8_t*) "cellstateofcharge", /* The command string to type. */
-        (const int8_t*) "cellstateofcharge:\r\n Parameters required to execute a readcellstateofcharge \r\n\r\n",
-		CLI_ReadCellStateOfChargeCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellEstimatedTTE */
-const CLI_Command_Definition_t CLI_ReadCellEstimatedTTECommandDefinition = {
-		(const int8_t*) "cellestimatedtte", /* The command string to type. */
-        (const int8_t*) "cellestimatedtte:\r\n Parameters required to execute a readcellestimatedtte \r\n\r\n",
-		CLI_ReadCellEstimatedTTECommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellEstimatedTTF */
-const CLI_Command_Definition_t CLI_ReadCellEstimatedTTFCommandDefinition = {
-		(const int8_t*) "cellestimatedttf", /* The command string to type. */
-		(const int8_t*) "cellestimatedttf:\r\n Parameters required to execute a readcellestimatedttf \r\n\r\n",
-		CLI_ReadCellEstimatedTTFCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellAge */
-const CLI_Command_Definition_t CLI_ReadCellAgeCommandDefinition = {
-		(const int8_t*) "cellage", /* The command string to type. */
-		(const int8_t*) "cellage:\r\n Parameters required to execute a readcellage \r\n\r\n",
-		CLI_ReadCellAgeCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellCycles */
-const CLI_Command_Definition_t CLI_ReadCellCyclesCommandDefinition = {
-		(const int8_t*) "cellcycles", /* The command string to type. */
-		(const int8_t*) "cellcycles:\r\n Parameters required to execute a readcellcycles \r\n\r\n",
-		CLI_ReadCellCyclesCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadCellCalInterRes */
-const CLI_Command_Definition_t CLI_ReadCellCalInterResCommandDefinition = {
-		(const int8_t*) "cellcalinterres", /* The command string to type. */
-		(const int8_t*) "cellcalinterres:\r\n Parameters required to execute a readcellcalinterres \r\n\r\n",
-		CLI_ReadCellCalInterResCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadSetChargVoltage */
-const CLI_Command_Definition_t CLI_ReadSetChargVoltageCommandDefinition = {
-		(const int8_t*) "setchargvoltage", /* The command string to type. */
-		(const int8_t*) "setchargvoltage:\r\n Parameters required to execute a readsetchargvoltage \r\n\r\n",
-		CLI_ReadSetChargVoltageCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadSetChargCurrent */
-const CLI_Command_Definition_t CLI_ReadSetChargCurrentCommandDefinition = {
-		(const int8_t*) "setchargcurrent", /* The command string to type. */
-		(const int8_t*) "setchargcurrent:\r\n Parameters required to execute a readsetchargcurrent \r\n\r\n",
-		CLI_ReadSetChargCurrentCommand, /* The function to run. */
-		0 /* zero parameters are expected. */
-};
-
-/***************************************************************************/
-/* CLI command structure : ReadAllAnalogMeasurements */
-const CLI_Command_Definition_t CLI_ReadAllAnalogMeasurementsCommandDefinition = {
-		(const int8_t*) "allanalogmeasurements", /* The command string to type. */
-		(const int8_t*) "allanalogmeasurements:\r\n Parameters required to execute a readallanalogmeasurements \r\n\r\n",
-		CLI_ReadAllAnalogMeasurementsCommand, /* The function to run. */
-        0 /* zero parameters are expected. */
+/* CLI command structure : stream */
+const CLI_Command_Definition_t StreamCommandDefinition = {
+    (const int8_t*)"stream",
+    (const int8_t*)"stream:\r\n Syntax: stream [volt]/[curr]/[pow]/[temp]/[cap]/[age]/[cycles] (Numofsamples) (timeout) [port] [module].\r\n\r\n",
+    StreamSensorCommand,
+    -1
 };
 
 /***************************************************************************/
@@ -778,36 +597,12 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CAPACITY);
 		break;
 
-	case CODE_H05R0_CELLSTATEOFCHARGE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_SOC);
-		break;
-
-	case CODE_H05R0_CELLESTIMATEDTTE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_TTE);
-		break;
-
-	case CODE_H05R0_CELLESTIMATEDTTF:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_TTF);
-		break;
-
 	case CODE_H05R0_CELLAGE:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_AGE);
 		break;
 
 	case CODE_H05R0_CELLCYCLES:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CYCLES);
-		break;
-
-	case CODE_H05R0_CELLCALINTERRES:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_INT_RESISTANCE);
-		break;
-
-	case CODE_H05R0_SETCHARGVOLTAGE:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], SET_CHARGE_VOLT);
-		break;
-
-	case CODE_H05R0_SETCHARGCURRENT:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], SET_CHARGE_CURRENT);
 		break;
 
 	default:
@@ -841,28 +636,8 @@ uint8_t GetPort(UART_HandleTypeDef *huart) {
 /***************************************************************************/
 /* Register this module CLI Commands */
 void RegisterModuleCLICommands(void) {
-
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellSOCCommandDefinitionstream);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellCapacityCommandDefinitionstream);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellTempCommandDefinitionstream);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellVoltageCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellVoltageCommandDefinitionstream);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellCurrentCommandDefinitionstream);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellPowerCommandDefinitionstream);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellCurrentCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellPowerCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadTemperatureCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellCapacityCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellStateOfChargeCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellEstimatedTTECommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellEstimatedTTFCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellAgeCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellCyclesCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadCellCalInterResCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadSetChargVoltageCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadSetChargCurrentCommandDefinition);
-	FreeRTOS_CLIRegisterCommand(&CLI_ReadAllAnalogMeasurementsCommandDefinition);
-
+	FreeRTOS_CLIRegisterCommand(&SampleCommandDefinition);
+	FreeRTOS_CLIRegisterCommand(&StreamCommandDefinition);
 }
 
 /***************************************************************************/
@@ -879,6 +654,7 @@ Module_Status GetModuleParameter(uint8_t paramIndex, float *value) {
         /* Sample battery voltage */
         case 1:
             status = ReadCellVoltage(value);
+            *value=20 ;
             break;
 
         /* Sample battery current */
@@ -933,6 +709,83 @@ Module_Status GetModuleParameter(uint8_t paramIndex, float *value) {
 /****************************** Local Functions ****************************/
 /***************************************************************************/
 /***************************************************************************/
+/***************************************************************************/
+/* Formats voltage data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleVoltageToString(char *cstring, size_t maxLen) {
+    float voltage;
+    ReadCellVoltage(&voltage);
+    snprintf(cstring, maxLen, "Voltage(V) | %.2f\r\n", voltage);
+}
+
+/***************************************************************************/
+/* Formats current data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleCurrentToString(char *cstring, size_t maxLen) {
+    float current;
+    ReadCellCurrent(&current);
+    snprintf(cstring, maxLen, "Current(A) | %.2f\r\n", current);
+}
+
+/***************************************************************************/
+/* Formats power data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SamplePowerToString(char *cstring, size_t maxLen) {
+    float power;
+    ReadCellPower(&power);
+    snprintf(cstring, maxLen, "Power(W) | %.2f\r\n", power);
+}
+
+/***************************************************************************/
+/* Formats temperature data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleTemperatureToString(char *cstring, size_t maxLen) {
+    float temperature;
+    ReadTemperature(&temperature);
+    snprintf(cstring, maxLen, "Temp(Celsius) | %.2f\r\n", temperature);
+}
+
+/***************************************************************************/
+/* Formats capacity data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleCapacityToString(char *cstring, size_t maxLen) {
+    float capacity;
+    ReadCellCapacity(&capacity);
+    snprintf(cstring, maxLen, "Capacity(mAh) | %.2f\r\n", capacity);
+}
+
+/***************************************************************************/
+/* Formats age data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleAgeToString(char *cstring, size_t maxLen) {
+    uint8_t age;
+    ReadCellAge(&age);
+    snprintf(cstring, maxLen, "Age(%%) | %u\r\n", age);
+}
+
+/***************************************************************************/
+/* Formats cycles data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleCyclesToString(char *cstring, size_t maxLen) {
+    uint16_t cycles;
+    ReadCellCycles(&cycles);
+    snprintf(cstring, maxLen, "Cycles | %u\r\n", cycles);
+}
+
 /* Samples cell voltage data into a buffer.
  * buffer: Pointer to the buffer where voltage data will be stored.
  */
@@ -1486,54 +1339,6 @@ Module_Status MCULDOEnable(LDOOutputState PinState) {
 }
 
 /***************************************************************************/
-void SampleVoltageToString(char *cstring, size_t maxLen) {
-	float Voltage = 0;
-
-	ReadCellVoltage(&Voltage);
-	snprintf(cstring, maxLen, "Voltage: %.2f\r\n", Voltage);
-}
-
-/***************************************************************************/
-void SamplecurrentToString(char *cstring, size_t maxLen) {
-	float current = 0;
-
-	ReadCellCurrent(&current);
-	snprintf(cstring, maxLen, "current: %.2f\r\n", current);
-}
-
-/***************************************************************************/
-void SamplepowrToString(char *cstring, size_t maxLen) {
-	float powr = 0;
-
-	ReadCellPower(&powr);
-	snprintf(cstring, maxLen, "powr: %.2f\r\n", powr);
-}
-
-/***************************************************************************/
-void SampleTempToString(char *cstring, size_t maxLen) {
-	float Temp = 0;
-
-	ReadTemperature(&Temp);
-	snprintf(cstring, maxLen, "Temp: %.2f\r\n", Temp);
-}
-
-/***************************************************************************/
-void SamplebatCapacityToString(char *cstring, size_t maxLen) {
-	float batCapacity = 0;
-
-	ReadCellCapacity(&batCapacity);
-	snprintf(cstring, maxLen, "batCapacity: %.2f\r\n", batCapacity);
-}
-
-/***************************************************************************/
-void SamplebatSOCToString(char *cstring, size_t maxLen) {
-	uint8_t batSOC = 0;
-
-	ReadCellStateOfCharge(&batSOC);
-	snprintf(cstring, maxLen, "batSOC: %.2f\r\n", batSOC);
-}
-
-/***************************************************************************/
 /***************************** General Functions ***************************/
 /***************************************************************************/
 /* read battery cell voltage
@@ -1960,6 +1765,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
 
+
             /* Format voltage data into a string */
             snprintf(CString, 50, "Voltage(V) | %.2f\r\n", value);
             break;
@@ -2323,424 +2129,194 @@ Module_Status StreamToBuffer(float *buffer, All_Data function, uint32_t Numofsam
 /***************************************************************************/
 /********************************* Commands ********************************/
 /***************************************************************************/
-portBASE_TYPE CLI_ReadCellVoltageCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	float batVolt = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellVoltage is:%0.3fV\n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
+/***************************************************************************/
+static portBASE_TYPE SampleSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
+    const char *const VoltCmdName = "volt";
+    const char *const CurrCmdName = "curr";
+    const char *const PowCmdName = "pow";
+    const char *const TempCmdName = "temp";
+    const char *const CapCmdName = "cap";
+    const char *const AgeCmdName = "age";
+    const char *const CyclesCmdName = "cycles";
 
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
+    const char *pSensName = NULL;
+    portBASE_TYPE sensNameLen = 0;
 
-	status = ReadCellVoltage(&batVolt);
+    // Make sure we return something
+    *pcWriteBuffer = '\0';
 
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batVolt);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
+    pSensName = (const char*)FreeRTOS_CLIGetParameter(pcCommandString, 1, &sensNameLen);
 
-	return pdFALSE;
+    if (pSensName == NULL) {
+        snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Invalid Arguments\r\n");
+        return pdFALSE;
+    }
+
+    do {
+        if (!strncmp(pSensName, VoltCmdName, strlen(VoltCmdName))) {
+            SampleToTerminal(pcPort, BATTERY_VOLTAGE);
+        }
+        else if (!strncmp(pSensName, CurrCmdName, strlen(CurrCmdName))) {
+            SampleToTerminal(pcPort, BATTERY_CURRENT);
+        }
+        else if (!strncmp(pSensName, PowCmdName, strlen(PowCmdName))) {
+            SampleToTerminal(pcPort, BATTERY_POWER);
+        }
+        else if (!strncmp(pSensName, TempCmdName, strlen(TempCmdName))) {
+            SampleToTerminal(pcPort, BATTERY_TEMP);
+        }
+        else if (!strncmp(pSensName, CapCmdName, strlen(CapCmdName))) {
+            SampleToTerminal(pcPort, BATTERY_CAPACITY);
+        }
+        else if (!strncmp(pSensName, AgeCmdName, strlen(AgeCmdName))) {
+            SampleToTerminal(pcPort, BATTERY_AGE);
+        }
+        else if (!strncmp(pSensName, CyclesCmdName, strlen(CyclesCmdName))) {
+            SampleToTerminal(pcPort, BATTERY_CYCLES);
+        }
+        else {
+            snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Invalid Arguments\r\n");
+        }
+
+        return pdFALSE;
+    } while (0);
+
+    snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Error reading Sensor\r\n");
+    return pdFALSE;
 }
 
 /***************************************************************************/
-portBASE_TYPE CLI_ReadCellVoltageCommandstream(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
+// Port Mode => false and CLI Mode => true
+static bool StreamCommandParser(const int8_t *pcCommandString, const char **ppSensName, portBASE_TYPE *pSensNameLen,
+                                bool *pPortOrCLI, uint32_t *pPeriod, uint32_t *pTimeout, uint8_t *pPort, uint8_t *pModule) {
+    const char *pPeriodMSStr = NULL;
+    const char *pTimeoutMSStr = NULL;
 
-	uint32_t Numofsamples, pTimeout;
-	static int8_t *pcParameterString1, *pcParameterString2;
-	portBASE_TYPE xParameterStringLength1 = 0, xParameterStringLength2 = 0;
+    portBASE_TYPE periodStrLen = 0;
+    portBASE_TYPE timeoutStrLen = 0;
 
-	(void) xWriteBufferLen;
-	pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1, &xParameterStringLength1);
-	pcParameterString2 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 2, &xParameterStringLength2);
+    const char *pPortStr = NULL;
+    const char *pModStr = NULL;
 
-	Numofsamples = atoi(pcParameterString1);
-	pTimeout = atoi(pcParameterString2);
+    portBASE_TYPE portStrLen = 0;
+    portBASE_TYPE modStrLen = 0;
 
-	StreamToCLI(Numofsamples, pTimeout, SampleVoltageToString);
+    *ppSensName = (const char*)FreeRTOS_CLIGetParameter(pcCommandString, 1, pSensNameLen);
+    pPeriodMSStr = (const char*)FreeRTOS_CLIGetParameter(pcCommandString, 2, &periodStrLen);
+    pTimeoutMSStr = (const char*)FreeRTOS_CLIGetParameter(pcCommandString, 3, &timeoutStrLen);
+
+    // At least 3 Parameters are required!
+    if ((*ppSensName == NULL) || (pPeriodMSStr == NULL) || (pTimeoutMSStr == NULL))
+        return false;
+
+    // TODO: Check if Period and Timeout are integers or not!
+    *pPeriod = atoi(pPeriodMSStr);
+    *pTimeout = atoi(pTimeoutMSStr);
+    *pPortOrCLI = true;
+
+    pPortStr = (const char*)FreeRTOS_CLIGetParameter(pcCommandString, 4, &portStrLen);
+    pModStr = (const char*)FreeRTOS_CLIGetParameter(pcCommandString, 5, &modStrLen);
+
+    if ((pModStr == NULL) && (pPortStr == NULL))
+        return true;
+    if ((pModStr == NULL) || (pPortStr == NULL)) // If user has provided 4 Arguments.
+        return false;
+
+    *pPort = atoi(pPortStr);
+    *pModule = atoi(pModStr);
+    *pPortOrCLI = false;
+
+    return true;
 }
 
 /***************************************************************************/
-portBASE_TYPE CLI_ReadCellPowrCommandstream(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-
-	uint32_t Numofsamples, pTimeout;
-	static int8_t *pcParameterString1, *pcParameterString2;
-	portBASE_TYPE xParameterStringLength1 = 0, xParameterStringLength2 = 0;
-
-	(void) xWriteBufferLen;
-	pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1, &xParameterStringLength1);
-	pcParameterString2 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 2, &xParameterStringLength2);
-
-	Numofsamples = atoi(pcParameterString1);
-	pTimeout = atoi(pcParameterString2);
-
-	StreamToCLI(Numofsamples, pTimeout, SamplepowrToString);
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellsocCommandstream(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-
-	uint32_t Numofsamples, pTimeout;
-	static int8_t *pcParameterString1, *pcParameterString2;
-	portBASE_TYPE xParameterStringLength1 = 0, xParameterStringLength2 = 0;
-
-	(void) xWriteBufferLen;
-	pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1, &xParameterStringLength1);
-	pcParameterString2 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 2, &xParameterStringLength2);
-
-	Numofsamples = atoi(pcParameterString1);
-	pTimeout = atoi(pcParameterString2);
-
-	StreamToCLI(Numofsamples, pTimeout, SamplebatSOCToString);
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellcapacityCommandstream(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-
-	uint32_t Numofsamples, pTimeout;
-	static int8_t *pcParameterString1, *pcParameterString2;
-	portBASE_TYPE xParameterStringLength1 = 0, xParameterStringLength2 = 0;
-
-	(void) xWriteBufferLen;
-	pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1, &xParameterStringLength1);
-	pcParameterString2 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 2, &xParameterStringLength2);
-
-	Numofsamples = atoi(pcParameterString1);
-	pTimeout = atoi(pcParameterString2);
-
-	StreamToCLI(Numofsamples, pTimeout, SamplebatCapacityToString);
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCelltempCommandstream(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-
-	uint32_t Numofsamples, pTimeout;
-	static int8_t *pcParameterString1, *pcParameterString2;
-	portBASE_TYPE xParameterStringLength1 = 0, xParameterStringLength2 = 0;
-
-	(void) xWriteBufferLen;
-	pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1, &xParameterStringLength1);
-	pcParameterString2 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 2, &xParameterStringLength2);
-
-	Numofsamples = atoi(pcParameterString1);
-	pTimeout = atoi(pcParameterString2);
-
-	StreamToCLI(Numofsamples, pTimeout, SampleTempToString);
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellcurrentCommandstream(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-
-	uint32_t Numofsamples, pTimeout;
-	static int8_t *pcParameterString1, *pcParameterString2;
-	portBASE_TYPE xParameterStringLength1 = 0, xParameterStringLength2 = 0;
-
-	(void) xWriteBufferLen;
-	pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1, &xParameterStringLength1);
-	pcParameterString2 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 2, &xParameterStringLength2);
-
-	Numofsamples = atoi(pcParameterString1);
-	pTimeout = atoi(pcParameterString2);
-
-	StreamToCLI(Numofsamples, pTimeout, SamplecurrentToString);
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellCurrentCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	float batCurrent = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellCurrent is:%0.3fA\n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellCurrent(&batCurrent);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batCurrent);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellPowerCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	float batPower = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellPower is:%0.3fW \n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellPower(&batPower);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batPower);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadTemperatureCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	float Temp = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "Temperature is:%0.3fC\n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadTemperature(&Temp);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, Temp);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellCapacityCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	float batCapacity = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellCapacity is:%0.3fA\n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellCapacity(&batCapacity);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batCapacity);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellStateOfChargeCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	uint8_t batSOC = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellStateOfCharge is:%d%% \n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellStateOfCharge(&batSOC);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batSOC);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellEstimatedTTECommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	uint32_t batTTE = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellEstimatedTTE is:%dms \n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellEstimatedTTE(&batTTE);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batTTE);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellEstimatedTTFCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	uint32_t batTTF = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellEstimatedTTF is:%dms \n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellEstimatedTTF(&batTTF);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batTTF);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellAgeCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	uint8_t batAge = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellAge is:%d%% \n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellAge(&batAge);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batAge);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellCyclesCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	uint16_t batCycles = 0;
-	static const uint16_t *pcOKMessage = (uint16_t*) "CellCycles is:%d \n\r";
-	static const uint16_t *pcErrorsMessage = (uint16_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellCycles(&batCycles);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batCycles);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadCellCalInterResCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	float batIntResistance = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "CellCalInterRes is:%0.3fohm \n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadCellCalInterRes(&batIntResistance);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batIntResistance);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadSetChargVoltageCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	float setChargVolt = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "SetChargVoltage is:%0.3fV\n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadSetChargVoltage(&setChargVolt);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, setChargVolt);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadSetChargCurrentCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	float setChargCurrent = 0;
-	static const int8_t *pcOKMessage = (int8_t*) "SetChargCurrent is:%0.3fA \n\r";
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadSetChargCurrent(&setChargCurrent);
-
-	if (status == H05R0_OK)
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, setChargCurrent);
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
-}
-
-/***************************************************************************/
-portBASE_TYPE CLI_ReadAllAnalogMeasurementsCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen,
-		const int8_t *pcCommandString) {
-	Module_Status status = H05R0_OK;
-	AnalogMeasType batMeasurements;
-
-	static const int8_t *pcOKMessage = (int8_t*) "AllAnalogMeasurements: \r\n"
-			"CellVoltage is:%0.3fV\n\r"
-			"CellCurrent is:%0.3fA\n\r"
-			"CellPower is:%0.3fW \n\r"
-			"Temperature is:%0.3fC\n\r"
-			"CellCapacity is:%0.3fA\n\r"
-			"CellStateOfCharge is:%d%% \n\r"
-			"CellEstimatedTTE is:%dms \n\r"
-			"CellEstimatedTTF is:%dms \n\r"
-			"CellAge is:%d%% \n\r"
-			"CellCycles is:%d \n\r"
-			"CellCalInterRes is:%0.3fohm \n\r"
-			"SetChargVoltage is:%0.3fV\n\r"
-			"SetChargCurrent is:%0.3fA \n\r";
-
-	static const int8_t *pcErrorsMessage = (int8_t*) "Error Params!\n\r";
-
-	(void) xWriteBufferLen;
-	configASSERT(pcWriteBuffer);
-
-	status = ReadAllAnalogMeasurements(&batMeasurements);
-
-	if (status == H05R0_OK) {
-		sprintf((char*) pcWriteBuffer, (char*) pcOKMessage, batMeasurements.BatVolt, batMeasurements.BatCurrent,
-				batMeasurements.BatPower, batMeasurements.Temp, batMeasurements.BatCapacity, batMeasurements.BatSOC,
-				batMeasurements.BatTTE, batMeasurements.BatTTF, batMeasurements.BatAge, batMeasurements.BatCycles,
-				batMeasurements.BatIntResistance, batMeasurements.SetChargVolt, batMeasurements.SetChargCurrent);
-
-	}
-
-	else if (status == H05R0_ERROR)
-		strcpy((char*) pcWriteBuffer, (char*) pcErrorsMessage);
-
-	return pdFALSE;
+static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
+    const char *const VoltCmdName = "volt";
+    const char *const CurrCmdName = "curr";
+    const char *const PowCmdName = "pow";
+    const char *const TempCmdName = "temp";
+    const char *const CapCmdName = "cap";
+    const char *const AgeCmdName = "age";
+    const char *const CyclesCmdName = "cycles";
+
+    uint32_t Numofsamples = 0;
+    uint32_t timeout = 0;
+    uint8_t port = 0;
+    uint8_t module = 0;
+
+    bool portOrCLI = true; // Port Mode => false and CLI Mode => true
+
+    const char *pSensName = NULL;
+    portBASE_TYPE sensNameLen = 0;
+
+    // Make sure we return something
+    *pcWriteBuffer = '\0';
+
+    if (!StreamCommandParser(pcCommandString, &pSensName, &sensNameLen, &portOrCLI, &Numofsamples, &timeout, &port, &module)) {
+        snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Invalid Arguments\r\n");
+        return pdFALSE;
+    }
+
+    do {
+        if (!strncmp(pSensName, VoltCmdName, strlen(VoltCmdName))) {
+            if (portOrCLI) {
+                StreamToCLI(Numofsamples, timeout, SampleVoltageToString);
+            } else {
+                StreamtoPort(module, port, BATTERY_VOLTAGE, Numofsamples, timeout);
+            }
+        }
+        else if (!strncmp(pSensName, CurrCmdName, strlen(CurrCmdName))) {
+            if (portOrCLI) {
+                StreamToCLI(Numofsamples, timeout, SampleCurrentToString);
+            } else {
+                StreamtoPort(module, port, BATTERY_CURRENT, Numofsamples, timeout);
+            }
+        }
+        else if (!strncmp(pSensName, PowCmdName, strlen(PowCmdName))) {
+            if (portOrCLI) {
+                StreamToCLI(Numofsamples, timeout, SamplePowerToString);
+            } else {
+                StreamtoPort(module, port, BATTERY_POWER, Numofsamples, timeout);
+            }
+        }
+        else if (!strncmp(pSensName, TempCmdName, strlen(TempCmdName))) {
+            if (portOrCLI) {
+                StreamToCLI(Numofsamples, timeout, SampleTemperatureToString);
+            } else {
+                StreamtoPort(module, port, BATTERY_TEMP, Numofsamples, timeout);
+            }
+        }
+        else if (!strncmp(pSensName, CapCmdName, strlen(CapCmdName))) {
+            if (portOrCLI) {
+                StreamToCLI(Numofsamples, timeout, SampleCapacityToString);
+            } else {
+                StreamtoPort(module, port, BATTERY_CAPACITY, Numofsamples, timeout);
+            }
+        }
+        else if (!strncmp(pSensName, AgeCmdName, strlen(AgeCmdName))) {
+            if (portOrCLI) {
+                StreamToCLI(Numofsamples, timeout, SampleAgeToString);
+            } else {
+                StreamtoPort(module, port, BATTERY_AGE, Numofsamples, timeout);
+            }
+        }
+        else if (!strncmp(pSensName, CyclesCmdName, strlen(CyclesCmdName))) {
+            if (portOrCLI) {
+                StreamToCLI(Numofsamples, timeout, SampleCyclesToString);
+            } else {
+                StreamtoPort(module, port, BATTERY_CYCLES, Numofsamples, timeout);
+            }
+        }
+        else {
+            snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Invalid Arguments\r\n");
+        }
+
+        snprintf((char*)pcWriteBuffer, xWriteBufferLen, "\r\n");
+        return pdFALSE;
+    } while (0);
+
+    snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Error reading Sensor\r\n");
+    return pdFALSE;
 }
 
 /***************************************************************************/
