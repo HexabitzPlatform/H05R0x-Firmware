@@ -540,7 +540,6 @@ void Module_Peripheral_Init(void) {
 	LipoGPIOInit();
 	MX_I2C_Init();
 	MX_ADC_Init();
-	MX_TIM1_Init();
 	Init_MAX17330();
 
 	MCULDOEnable(ENABLE_OUT);
@@ -895,62 +894,34 @@ static Module_Status StreamToBuf(float *buffer, uint32_t Numofsamples, uint32_t 
 }
 /* Module special task function (if needed) */
 void LipoChargerTask(void *argument) {
-
 	int static timer = 0, StopeCliStreamFlag = 0;
 
-	/* Infinite loop */
+/* Infinite loop */
 	for (;;) {
 
 		/* Read Charging Current */
 		CheckChargingStatus();
 
-		/* in case the battery is charging */
+		/* Check if the battery is charging */
 		if (AnalogMeasurement.ChargingStatus == 0) {
+			/* Read current, voltage, and state of charge */
 			ReadCellCurrent(&ChargingCurrent);
 			ReadCellVoltage(&ChargingVolt);
 			ReadCellStateOfCharge(&StateOfCharger);
 
-			if (StateOfCharger == 100) {
-				FullCharge = BATTARY_FULL;
-				ChargStatus = CHARGING;
-				TIMER_CCR = MAX_CCR_VALUE;
+			/* If battery charge is less than 98%, blink LED */
+			if (StateOfCharger < 98) {
+				HAL_GPIO_TogglePin(STATUS_LED_GPIO_PORT, STATUS_LED_PIN); /* Toggle LED state */
+				HAL_Delay(500); /* Delay for 500ms to achieve 0.5s ON, 0.5s OFF */
+			} else {
+				HAL_GPIO_WritePin(STATUS_LED_GPIO_PORT, STATUS_LED_PIN,GPIO_PIN_RESET); /* Turn off LED */
 			}
 
-			if (StateOfCharger < 99) {
-				ChargStatus = CHARGING;
-				FullCharge = BATTARY_EMPTY;
-			}
-
-			if ((ChargingVolt * ChargingCurrent) >= 0.1 && FullCharge == BATTARY_EMPTY) {
-				ChargStatus = CHARGING;
-				if (timer < MAX_CCR_VALUE && StopeCliStreamFlag == 0) {
-					timer += 200;
-					if (timer >= MAX_CCR_VALUE)
-						StopeCliStreamFlag = 1;
-				} else if (StopeCliStreamFlag == 1) {
-					timer -= 200;
-					if (timer <= 0)
-						StopeCliStreamFlag = 0;
-				}
-				/* increase CCR */
-				TIMER_CCR = timer;
-			}
-
-			if ((ChargingVolt * ChargingCurrent) < 0.1 && FullCharge == BATTARY_EMPTY) {
-				ChargStatus = DISCHARGING;		//Stop the loads and wait for the current to increase
-				TIMER_CCR = 0;
-			}
-
-		} else if (AnalogMeasurement.ChargingStatus == 1 && ChargingCurrent < 0) {
-			ChargStatus = DISCHARGING;
-			FullCharge = BATTARY_EMPTY;
-			TIMER_CCR = 0;
+			/* Yield to other tasks */
+			taskYIELD();
 		}
-
-		taskYIELD();
 	}
 }
-
 /***************************************************************************/
 /*
  * brief: Callback function triggered by a timer to manage data streaming.

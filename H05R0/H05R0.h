@@ -97,8 +97,8 @@
 #define BAT_ALRT_PIN              GPIO_PIN_0
 #define BAT_ALRT_GPIO_PORT        GPIOB
 #define BAT_ALRT_EXTI_IRQN        EXTI0_1_IRQn
-#define STATUS_LED_PIN            GPIO_PIN_4
-#define STATUS_LED_GPIO_PORT      GPIOB
+#define STATUS_LED_PIN            GPIO_PIN_8
+#define STATUS_LED_GPIO_PORT      GPIOA
 #define VBUS_OUT_EN_PIN           GPIO_PIN_4
 #define VBUS_OUT_EN_GPIO_PORT     GPIOA
 #define MCU_LDO_EN_PIN            GPIO_PIN_2
