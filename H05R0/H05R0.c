@@ -34,13 +34,6 @@ TimerHandle_t xTimerStream = NULL;
 TaskHandle_t LipoChargerTaskHandle = NULL;
 
 /* Private Variables *******************************************************/
-uint8_t FullCharge = 0;
-uint8_t ChargStatus = 1u;
-uint8_t StateOfCharger = 0;
-float ChargingVolt = 0.0f;
-float ChargingCurrent = 0.0f;
-
-/* Private Variables *******************************************************/
 /* Streaming variables */
 static bool stopStream = false;         /* Flag to indicate whether to stop streaming process */
 uint8_t PortModule = 0u;                /* Module ID for the destination port */
@@ -894,8 +887,10 @@ static Module_Status StreamToBuf(float *buffer, uint32_t Numofsamples, uint32_t 
 }
 /* Module special task function (if needed) */
 void LipoChargerTask(void *argument) {
-	int static timer = 0, StopeCliStreamFlag = 0;
 
+	uint8_t StateOfCharger = 0;
+	float ChargingVolt = 0.0f;
+	float ChargingCurrent = 0.0f;
 /* Infinite loop */
 	for (;;) {
 
