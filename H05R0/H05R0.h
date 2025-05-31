@@ -130,7 +130,7 @@
 #define _IND_LED_PIN		      GPIO_PIN_15
 
 /* Module-specific Macro Definitions ***************************************/
-#define NUM_MODULE_PARAMS	      7
+#define NUM_MODULE_PARAMS	      8
 #define TIM_OUT_10MS         	  10u
 
 #define UNSNGD_HALF_WORD_MAX_VAL  0xFFFF

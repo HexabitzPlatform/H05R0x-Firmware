@@ -53,6 +53,7 @@ float H05R0_batCurrent = 0.0f;
 float H05R0_batPower = 0.0f;
 float H05R0_Temp = 0.0f;
 float H05R0_batCapacity = 0.0f;
+uint8_t H05R0_soc = 0.0f;
 uint8_t H05R0_batAge = 0;
 uint16_t H05R0_batCycles = 0;/* Module exported parameters ------------------------------------------------*/
 /* Exported Typedef */
@@ -62,7 +63,8 @@ ModuleParam_t ModuleParam[NUM_MODULE_PARAMS] = {
     {.ParamPtr = &H05R0_batPower, .ParamFormat = FMT_FLOAT, .ParamName = "batpower"},
     {.ParamPtr = &H05R0_Temp, .ParamFormat = FMT_FLOAT, .ParamName = "temperature"},
     {.ParamPtr = &H05R0_batCapacity, .ParamFormat = FMT_FLOAT, .ParamName = "batcapacity"},
-    {.ParamPtr = &H05R0_batAge, .ParamFormat = FMT_UINT8, .ParamName = "batage"},
+    {.ParamPtr = &H05R0_soc, .ParamFormat = FMT_FLOAT, .ParamName = "soc"},
+	{.ParamPtr = &H05R0_batAge, .ParamFormat = FMT_UINT8, .ParamName = "batage"},
     {.ParamPtr = &H05R0_batCycles, .ParamFormat = FMT_UINT16, .ParamName = "batcycles"},
 };
 
@@ -596,6 +598,9 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 	case CODE_H05R0_CELLCYCLES:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CYCLES);
 		break;
+	case CODE_H05R0_SOC:
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CYCLES);
+		break;
 
 	default:
 		result = H05R0_ERR_UNKNOWNMESSAGE;
@@ -669,8 +674,15 @@ Module_Status GetModuleParameter(uint8_t paramIndex, float *value) {
             status = ReadCellCapacity(value);
             break;
 
-        /* Sample battery age (convert uint8_t to float) */
         case 6: {
+                uint8_t temp = 0;
+                status = ReadCellStateOfCharge(&temp);
+                if (status == BOS_OK)
+                    *value = (float)temp;
+                break;
+            }
+        /* Sample battery age (convert uint8_t to float) */
+        case 7: {
             uint8_t temp = 0;
             status = ReadCellAge(&temp);
             if (status == BOS_OK)
@@ -679,7 +691,7 @@ Module_Status GetModuleParameter(uint8_t paramIndex, float *value) {
         }
 
         /* Sample battery cycles (convert uint16_t to float) */
-        case 7: {
+        case 8: {
             uint16_t temp = 0;
             status = ReadCellCycles(&temp);
             if (status == BOS_OK)
@@ -1772,6 +1784,15 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
             snprintf(CString, 50, "Capacity(mAh) | %.2f\r\n", value);
             break;
 
+        case BATTERY_SOC:
+
+            if (ReadSetChargCurrent(&value) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format capacity data into a string */
+            snprintf(CString, 50, "SOC | %u\r\n", value);
+            break;
+
         case BATTERY_AGE:
             /* Sample age data in percentage */
             if (ReadCellAge(&age) != H05R0_OK) {
@@ -1842,7 +1863,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
     float value = 0.0f;
     uint8_t age = 0;
     uint16_t cycles = 0;
-
+    uint8_t soc = 0;
     /* Check if the port and module ID are valid */
     if ((dstPort == 0) && (dstModule == myID)) {
         return H05R0_ERR_WRONGPARAMS;
@@ -1878,6 +1899,13 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
             if (ReadCellCapacity(&value) != H05R0_OK) {
                 return H05R0_ERROR;
             }
+            break;
+
+        case BATTERY_SOC:
+            if (ReadCellStateOfCharge(&soc) != H05R0_OK) {
+                return H05R0_ERROR;
+            }
+            value = (float)soc;
             break;
 
         case BATTERY_AGE:
@@ -2104,6 +2132,7 @@ static portBASE_TYPE SampleSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
     const char *const CapCmdName = "cap";
     const char *const AgeCmdName = "age";
     const char *const CyclesCmdName = "cycles";
+    const char *const SOCCmdName = "soc";
 
     const char *pSensName = NULL;
     portBASE_TYPE sensNameLen = 0;
@@ -2139,6 +2168,9 @@ static portBASE_TYPE SampleSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
         }
         else if (!strncmp(pSensName, CyclesCmdName, strlen(CyclesCmdName))) {
             SampleToTerminal(pcPort, BATTERY_CYCLES);
+        }
+        else if (!strncmp(pSensName, SOCCmdName, strlen(CyclesCmdName))) {
+            SampleToTerminal(pcPort, BATTERY_SOC);
         }
         else {
             snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Invalid Arguments\r\n");
@@ -2204,6 +2236,7 @@ static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
     const char *const CapCmdName = "cap";
     const char *const AgeCmdName = "age";
     const char *const CyclesCmdName = "cycles";
+    const char *const SOCCmdName = "soc";
 
     uint32_t Numofsamples = 0;
     uint32_t timeout = 0;
@@ -2266,6 +2299,13 @@ static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
                 StreamtoPort(module, port, BATTERY_AGE, Numofsamples, timeout);
             }
         }
+        else if (!strncmp(pSensName, SOCCmdName, strlen(SOCCmdName))) {
+             if (portOrCLI) {
+                 StreamToCLI(Numofsamples, timeout, SampleAgeToString);
+             } else {
+                 StreamtoPort(module, port, BATTERY_SOC, Numofsamples, timeout);
+             }
+         }
         else if (!strncmp(pSensName, CyclesCmdName, strlen(CyclesCmdName))) {
             if (portOrCLI) {
                 StreamToCLI(Numofsamples, timeout, SampleCyclesToString);
