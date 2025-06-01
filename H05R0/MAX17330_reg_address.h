@@ -17,7 +17,7 @@
 #define FST_I2C_LMT_ADD				0xFF
 
 /* Battery Charger/Gauge special macros */
-#define SENSE_RES_VAL				0.01
+#define SENSE_RES_VAL				0.01 / 3
 #define SENSE_RES_REG_VAL			0x03E8
 #define CAP_RESOL_VAL				0.000005/SENSE_RES_VAL
 #define PERCENT_RESOL_VAL			256
@@ -35,7 +35,7 @@
 #define MANFCTR_INFO_SIZE			0x18
 #define SERIAL_NUUM_SIZE			0x08
 #define ID_BUF_SIZE					MANFCTR_NAME_SIZE + DEVICE_NAME_SIZE
-#define BLOCK_TIME 					7500
+#define BLOCK_TIME 					368
 #define UPDATE_TIME 				1300
 #define RECALL_TIME 				5
 #define NUM_1S_1					1
@@ -121,3 +121,6 @@
 #define CMD_REG_ADD					0x0060			/*  charger/gauge command register */
 #define CMD_STAT_REG_ADD			0x0061			/*  charger/gauge command status register */
 #define REM_UPDT_REG_ADD			0x01FD			/*  charger/gauge remaining updates register */
+
+/*Status Registers */
+#define FPROT_STAT_REG_ADD			0x00DA

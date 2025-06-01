@@ -134,6 +134,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_MemoryMap.h</locationURI>
 		</link>
 		<link>
+			<name>H05R0/H05R0_adc.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_adc.c</locationURI>
+		</link>
+		<link>
+			<name>H05R0/H05R0_adc.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_adc.h</locationURI>
+		</link>
+		<link>
 			<name>H05R0/H05R0_dma.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/H05R0/H05R0_dma.c</locationURI>
@@ -234,6 +244,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>Thirdparty/EEPROM_Emul</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/H01R0-firmware/Thirdparty/EEPROM_Emul</locationURI>
+		</link>
+		<link>
 			<name>Thirdparty/Middleware</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -267,6 +282,16 @@
 			<name>Thirdparty/CMSIS/STM32G0xx</name>
 			<type>2</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Thirdparty/CMSIS/STM32G0xx</locationURI>
+		</link>
+		<link>
+			<name>Thirdparty/EEPROM_Emul/Core</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Thirdparty/EEPROM_Emul/Core</locationURI>
+		</link>
+		<link>
+			<name>Thirdparty/EEPROM_Emul/Porting</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Thirdparty/EEPROM_Emul/Porting</locationURI>
 		</link>
 		<link>
 			<name>Thirdparty/Middleware/STM32G0xx</name>
