@@ -2,10 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_adc.c
- Description   : This file provides code for the configuration of the ADC instances.
-
- */
+ File Name  : H05R0_adc.c
+ Description: Configures and manages ADC instances for module H05R0.
+ ADC: Initializes ADC1 with 12-bit resolution for channels 8 and 9 on pins PB0 and PB1.
+ Data: Provides functions for channel selection and reading ADC values.
+*/
 
 /* Includes ****************************************************************/
 #include "BOS.h"

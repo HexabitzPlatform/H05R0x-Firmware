@@ -2,10 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_adc.h
- Description   : This file contains all the functions prototypes for the ADC
-
- */
+ File Name  : H05R0_adc.h
+ Description: Header file for ADC configuration function prototypes.
+ ADC: Declares ADC1 handle and functions for initialization and channel reading.
+ Types: Defines ADC_Channel enum for channel selection.
+*/
 
 /* Define to prevent recursive inclusion ***********************************/
 #ifndef __ADC_H__

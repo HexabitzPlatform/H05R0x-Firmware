@@ -2,14 +2,10 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_timers.c
- Description   : Peripheral timers setup source file.
-
- Required MCU resources :
-
- >> Timer 16 for micro-sec delay.
- >> Timer 17 for milli-sec delay.
-
+ File Name  : H01R0_timers.c
+ Description: Configures timers and watchdog for delays and PWM.
+ Timers: TIM14 (usec), TIM15 (msec).
+ IWDG: 500 ms timeout watchdog.
  */
 
 /* Includes ****************************************************************/

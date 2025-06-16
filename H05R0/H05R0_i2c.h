@@ -2,9 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_i2c.h
- Description   :This file contains all the functions prototypes for the i2c
- */
+ File Name  : H05R0_i2c.h
+ Description: Header file for I2C configuration and function prototypes.
+ I2C: Declares I2C2 handle and functions for initialization, read, write, and device check.
+ Typedef: Defines I2C_HANDLE for I2C operations.
+*/
 
 /* Define to prevent recursive inclusion ***********************************/
 #ifndef __I2C_H__

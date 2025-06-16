@@ -1,16 +1,11 @@
 /*
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
- 
- File Name     : H05R0.h
- Description   : Header file for module H05R0.
- (Description_of_module)
 
- (Description of Special module peripheral configuration):
- >>
- >>
- >>
- */
+ File Name  : H05R0.h
+ Description: Header file for H05R0 module, a battery management module.
+ Module: Manages LiPo battery charging and monitoring using MAX17330.
+*/
 
 /* Define to prevent recursive inclusion ***********************************/
 #ifndef H05R0_H

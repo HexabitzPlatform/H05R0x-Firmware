@@ -2,9 +2,10 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_inputs.h
- Description   : header file for Bitz digital and analog inputs.
- 
+ File Name  : H05R0_inputs.h
+ Description: Header file for digital and analog input configurations.
+ ADC: Declares functions and macros for ADC operations on ports P1 and P2.
+ Buttons: Defines structures and prototypes for button management.
 */
 
 /* Includes ****************************************************************/

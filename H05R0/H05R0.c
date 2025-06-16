@@ -2,15 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0.c
- Description   : Source code for module H05R0.
- 	 	 	 	 (Description_of_module)
-
-(Description of Special module peripheral configuration):
->>
->>
->>
- */
+ File Name  : H05R0.c
+ Description: Source code for H05R0 module, implementing battery management functions.
+ Functions: Initializes peripherals, reads battery parameters (voltage, current, power, temperature, capacity, SOC, age, cycles),
+ streams data to ports or terminal, and handles CLI commands.
+*/
 
 /* Includes ****************************************************************/
 #include "BOS.h"

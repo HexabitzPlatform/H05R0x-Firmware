@@ -2,9 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_uart.h
- Description   : Header file provides configuration for USART instances.
- */
+ File Name  : H05R0_uart.h
+ Description: Header file for USART UART function prototypes.
+ UART: Declares functions for reading, writing, and port direction management.
+ API: Provides mutex-protected UART communication interfaces.
+*/
 
 /* Define to prevent recursive inclusion ***********************************/
 #ifndef __usart_H

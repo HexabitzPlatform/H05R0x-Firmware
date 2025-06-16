@@ -2,11 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_gpio.h
- Description   : Header file contains all the functions prototypes for
- the GPIO .
-
- */
+ File Name  : H05R0_gpio.h
+ Description: Header file for GPIO configuration function prototypes.
+ GPIO: Declares functions for initializing GPIO pins and LED.
+ Factory Reset: Declares function to detect reset via UART pin connection.
+*/
 
 
 /* Define to prevent recursive inclusion ***********************************/

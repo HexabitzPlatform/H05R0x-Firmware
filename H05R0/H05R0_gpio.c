@@ -2,10 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H2BR0_gpio.c
- Description   : Source code provides code for the configuration of all used GPIO pins .
-
- */
+ File Name  : H2BR0_gpio.c
+ Description: Configures GPIO pins for module operation.
+ GPIO: Initializes ports A, B, C, D, F for UART, LED, and battery management.
+ Factory Reset: Checks P1 TXD to last port RXD connection for reset condition.
+*/
 
 /* Includes ****************************************************************/
 #include "BOS.h"

@@ -2,10 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_it.c
- Description   :Interrupt Service Routines.
-
- */
+ File Name  : H05R0_it.c
+ Description: Handles interrupt service routines for module H05R0.
+ System: Manages system tick and hard fault interrupts.
+ UART: Processes UART interrupts for ports USART1 to USART6 with DMA support.
+*/
 
 /* Includes ****************************************************************/
 #include "BOS.h"

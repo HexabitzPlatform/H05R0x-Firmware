@@ -2,10 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_i2c.c
- Description   : This file provides code for the configuration of the I2C instances.
-
- */
+ File Name  : H05R0_i2c.c
+ Description: Configures and manages I2C communication for module H05R0.
+ I2C: Initializes I2C2 with 100 kHz, 7-bit addressing, and GPIO pins PA6 (SDA), PA7 (SCL).
+ Data: Provides functions for reading, writing, and checking devices on the I2C bus.
+*/
 
 /* Includes ****************************************************************/
 #include "BOS.h"

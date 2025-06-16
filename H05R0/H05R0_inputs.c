@@ -2,10 +2,11 @@
  BitzOS (BOS) V0.4.0 - Copyright (C) 2017-2025 Hexabitz
  All rights reserved
 
- File Name     : H05R0_inputs.c
- Description   : Source code for Bitz digital and analog inputs.
-
- */
+ File Name  : H05R0_inputs.c
+ Description: Manages digital and analog inputs for module H05R0.
+ Buttons: Configures and monitors button states on array ports with debouncing.
+ ADC: Initializes ADC1 for reading analog inputs on ports P1 and P2, including temperature and voltage reference.
+*/
 
 /* Includes ****************************************************************/
 #include "H05R0_inputs.h"
