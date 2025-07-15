@@ -599,7 +599,7 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CYCLES);
 		break;
 	case CODE_H05R0_SOC:
-		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CYCLES);
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_SOC);
 		break;
 
 	default:
