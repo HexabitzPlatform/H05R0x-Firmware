@@ -48,12 +48,74 @@ void buttonClickedCallback(uint8_t port);
 void buttonDblClickedCallback(uint8_t port);
 
 /* Private ADC function prototypes *****************************************/
+void MX_ADC_Init(void);
 void Error_Handler(void);
 uint8_t GetRank(uint8_t Port,ModuleLayer_t side);
 uint32_t GetChannel(UART_HandleTypeDef *huart,ModuleLayer_t side);
 
 /***************************************************************************/
 /* Private Functions *******************************************************/
+/***************************************************************************/
+/* Configure the global features of the ADC (Clock, Resolution,
+ * Data Alignment and number of conversion) to read multiple ADC
+ * channel in Port 2 and port 3 and for calculate internal temperature and internal voltage
+ */
+//void MX_ADC_Init(void){
+//	hadc.Instance = ADC1;
+//	hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+//	hadc.Init.Resolution = ADC_RESOLUTION_12B;
+//	hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+//	hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
+//	hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+//	hadc.Init.LowPowerAutoWait =DISABLE;
+//	hadc.Init.LowPowerAutoPowerOff =DISABLE;
+//	hadc.Init.ContinuousConvMode =ENABLE;
+//	hadc.Init.DiscontinuousConvMode =DISABLE;
+//	hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+//	hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+//	hadc.Init.DMAContinuousRequests =DISABLE;
+//	hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+//
+//	if(HAL_ADC_Init(&hadc) != HAL_OK){
+//		Error_Handler();
+//	}
+//	adcEnableFlag =1;
+//}
+//
+///***************************************************************************/
+//void HAL_ADC_MspInit(ADC_HandleTypeDef *adcHandle){
+//	GPIO_InitTypeDef GPIO_InitStruct ={0};
+//	/* ADC1 clock enable */
+//	__HAL_RCC_ADC_CLK_ENABLE();
+//	__HAL_RCC_GPIOA_CLK_ENABLE();
+//
+//	if(adcSelectFlag[0] == 1){
+//		GPIO_InitStruct.Pin = ADC_CH1_PIN | ADC_CH2_PIN;
+//		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+//		GPIO_InitStruct.Pull = GPIO_NOPULL;
+//		HAL_GPIO_Init(ADC12_GPIO_PORT,&GPIO_InitStruct);
+//	}
+//	else{
+//		GPIO_InitStruct.Pin = ADC_CH3_PIN | ADC_CH4_PIN;
+//		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+//		GPIO_InitStruct.Pull = GPIO_NOPULL;
+//		HAL_GPIO_Init(ADC34_GPIO_PORT,&GPIO_InitStruct);
+//	}
+//}
+//
+///***************************************************************************/
+//void HAL_ADC_MspDeInit(ADC_HandleTypeDef *adcHandle){
+//
+//	if(adcHandle->Instance == ADC1){
+//
+//		/* Peripheral clock disable */
+//		__HAL_RCC_ADC_CLK_DISABLE();
+//		HAL_GPIO_DeInit(ADC12_GPIO_PORT,ADC_CH1_PIN);
+//		HAL_GPIO_DeInit(ADC12_GPIO_PORT,ADC_CH2_PIN);
+//		HAL_GPIO_DeInit(ADC34_GPIO_PORT,ADC_CH3_PIN);
+//		HAL_GPIO_DeInit(ADC34_GPIO_PORT,ADC_CH4_PIN);
+//	}
+//}
 /***************************************************************************/
 void Error_Handler(void){
 
@@ -529,10 +591,7 @@ BOS_Status ReadADCChannel(uint8_t adcPort, ModuleLayer_t side,float *adcVoltage)
 void ReadTempAndVref(float *temp,float *Vref){
 
 	if(0 == adcEnableFlag)
-	{
 		MX_ADC_Init();
-		adcDeInitFlag = 0;
-	}
 
 	/* Enable internal temperature channel */
 	sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
