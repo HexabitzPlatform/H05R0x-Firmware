@@ -172,13 +172,8 @@ typedef enum {
 	BATTERY_TEMP,
 	BATTERY_CAPACITY,
 	BATTERY_SOC,
-	BATTERY_TTE,
-	BATTERY_TTF,
 	BATTERY_AGE,
 	BATTERY_CYCLES,
-	BATTERY_INT_RESISTANCE,
-	SET_CHARGE_VOLT,
-	SET_CHARGE_CURRENT,
 } All_Data;
 
 /* Thermistors channels status */
@@ -218,23 +213,17 @@ typedef enum {
 /* Export Module typedef structure */
 typedef struct {
 	ChargingStatus ChargingStatus;
-
 	uint8_t BatSOC;
 	uint8_t BatAge;
-
 	uint16_t BatCycles;
-
-	uint32_t BatTTE;
-	uint32_t BatTTF;
-
 	float BatVolt;
 	float BatCurrent;
 	float BatPower;
 	float Temp;
 	float BatCapacity;
-	float BatIntResistance;
-	float SetChargVolt;
-	float SetChargCurrent;
+	float ChargerCurrent;
+	float VBUSVolt;
+
 } AnalogMeasType;
 
 /* Export UART variables */
@@ -260,26 +249,22 @@ extern void SystemClock_Config(void);
 Module_Status ReadCellVoltage(float *batVolt);
 Module_Status ReadCellCurrent(float *batCurrent);
 Module_Status ReadCellPower(float *batPower);
-Module_Status ReadTemperature(float *Temp);
+Module_Status ReadTemperature(float *batTemp);
 Module_Status ReadCellCapacity(float *batCapacity);
 Module_Status ReadCellStateOfCharge(uint8_t *batSOC);
-Module_Status ReadCellEstimatedTTE(uint32_t *batTTE);
-Module_Status ReadCellEstimatedTTF(uint32_t *batTTF);
 Module_Status ReadCellAge(uint8_t *batAge);
 Module_Status ReadCellCycles(uint16_t *batCycles);
-Module_Status ReadCellCalInterRes(float *batIntResistance);
-Module_Status ReadSetChargVoltage(float *setChargVolt);
-Module_Status ReadSetChargCurrent(float *setChargCurrent);
-Module_Status ReadAllAnalogMeasurements(AnalogMeasType *analMeasurements);
+Module_Status CheckChargingStatus(ChargingStatus *StatusCharging);
 Module_Status ReadChargerCurrent(float *ChargerCurrent);
-Module_Status CheckChargingStatus(void);
-
 Module_Status ReadVBUSVoltage(float *VBUSVolt);
+Module_Status ReadAllMeasurements(AnalogMeasType *batMeasurements);
+
 Module_Status EnableVBusOutput(LDOOutputState PinState);
 Module_Status Enable3_3Output(LDOOutputState PinState);
 
+
+
 Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction);
-Module_Status StreamToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction, uint32_t numOfSamples,uint32_t streamTimeout);
 Module_Status StreamToTerminal(uint8_t dstPort, All_Data dataFunction, uint32_t numOfSamples, uint32_t streamTimeout);
 Module_Status StreamToBuffer(float *buffer, All_Data function, uint32_t Numofsamples, uint32_t timeout);
 
