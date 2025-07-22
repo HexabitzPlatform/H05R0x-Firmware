@@ -21,7 +21,7 @@ uint16_t batCycles=0;
 float ChargerCurrent=0;
 ChargingStatus StatusCharging;
 float VBUSVolt =0;
-AnalogMeasType batMeasurements;
+AllMeasType batMeasurements;
 /* Private Function Prototypes *********************************************/
 
 /* Main Function ***********************************************************/
@@ -59,7 +59,7 @@ void UserTask(void *argument){
 //		Delay_ms(500);
 
 		/*******************************************************************/
-
+//		SendDataRequestToModule(disModuleID, code, pDataReceived, timeout)
 //		SampleToPort (1,1,BATTERY_VOLTAGE);
 //		StreamToTerminal (1, BATTERY_VOLTAGE,3,1000);
 //		StreamToBuffer (&buffer, BATTERY_VOLTAGE ,3,1000);

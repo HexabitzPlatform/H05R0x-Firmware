@@ -28,7 +28,7 @@ UART_HandleTypeDef huart6;
 
 All_Data PortFunction;
 All_Data TerminalFunction;
-AnalogMeasType AnalogMeasurement;
+AllMeasType AllMeasurement;
 
 TimerHandle_t xTimerStream = NULL;
 TaskHandle_t LipoChargerTaskHandle = NULL;
@@ -571,35 +571,55 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 	Module_Status result = H05R0_OK;
 
 	switch (code) {
-	case CODE_H05R0_CELLVOLTAGE:
+	case CODE_H05R0_CELL_VOLTAGE:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_VOLTAGE);
 		break;
 
-	case CODE_H05R0_CELLCURRENT:
+	case CODE_H05R0_CELL_CURRENT:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CURRENT);
 		break;
 
-	case CODE_H05R0_CELLPOWER:
+	case CODE_H05R0_CELL_POWER:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_POWER);
 		break;
 
-	case CODE_H05R0_CELLTEMPERATURE:
+	case CODE_H05R0_CELL_TEMPERATURE:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_TEMP);
 		break;
 
-	case CODE_H05R0_CELLCAPACITY:
+	case CODE_H05R0_CELL_CAPACITY:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CAPACITY);
 		break;
 
-	case CODE_H05R0_CELLAGE:
+	case CODE_H05R0_CELL_AGE:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_AGE);
 		break;
 
-	case CODE_H05R0_CELLCYCLES:
+	case CODE_H05R0_CELL_CYCLES:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_CYCLES);
 		break;
-	case CODE_H05R0_SOC:
+	case CODE_H05R0_CELL_STATE_OF_CHARGE:
 		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], BATTERY_SOC);
+		break;
+
+	case CODE_H05R0_CHARGING_STATUS:
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], CHARGING_STATUS);
+		break;
+
+	case CODE_H05R0_CHARGER_CURRENT:
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], CHARGER_CURRENT);
+		break;
+
+	case CODE_H05R0_VBUS_VOLTAGE:
+		SampleToPort(cMessage [port - 1] [shift], cMessage [port - 1] [1 + shift], VBUS_VOLTAGE);
+		break;
+
+	case CODE_H05R0_ENABLE_VBUS:
+		EnableVBusOutput(cMessage [port - 1] [shift]);
+		break;
+
+	case CODE_H05R0_ENABLE_3V3:
+		Enable3_3Output(cMessage [port - 1] [shift]);
 		break;
 
 	default:
@@ -1495,7 +1515,7 @@ Module_Status ReadCellCycles(uint16_t *batCycles) {
 /*
  * ReadAllMeasurements
  */
-Module_Status ReadAllMeasurements(AnalogMeasType *batMeasurements) {
+Module_Status ReadAllMeasurements(AllMeasType *batMeasurements) {
 	Module_Status Status = H05R0_OK;
 	uint8_t cntStatus = 0u;
 
@@ -1586,7 +1606,6 @@ Module_Status ReadVBUSVoltage(float *VBUSVolt) {
 
 /***************************************************************************/
 /* MCU Out Volt Enable To secure 3.3V for other Modules
- * LDO Enable
  * LDOOutputState:{ ENABLE_OUT=0, DISABLE_OUT=1}
 */
 Module_Status Enable3_3Output(LDOOutputState PinState) {
@@ -1602,9 +1621,8 @@ Module_Status Enable3_3Output(LDOOutputState PinState) {
 
 /***************************************************************************/
 /* VBUS Output Switch Enable
- * LDO Enable
  * When this is enabled, the battery voltage becomes available
-   through the green connector.
+   through the external connector.
 * LDOOutputState:{ ENABLE_OUT=0, DISABLE_OUT=1}
  */
 Module_Status EnableVBusOutput(LDOOutputState PinState) {
@@ -1635,11 +1653,11 @@ Module_Status CheckChargingStatus(ChargingStatus *StatusCharging) {
 	// Shift the value right by 5 bits to bring the sixth bit to the least significant position
 	sixthBit = (tempVar >> 5) & 1;
 	if (sixthBit == 0)
-		AnalogMeasurement.ChargingStatus = CHARGING;
+		AllMeasurement.ChargingStatus = CHARGING;
 	else
-		AnalogMeasurement.ChargingStatus = DISCHARGING;
+		AllMeasurement.ChargingStatus = DISCHARGING;
 
-	*StatusCharging=AnalogMeasurement.ChargingStatus;
+	*StatusCharging=AllMeasurement.ChargingStatus;
 
 	return H05R0_OK;
 }
@@ -1788,6 +1806,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
     uint8_t age = 0;
     uint16_t cycles = 0;
     uint8_t soc = 0;
+    ChargingStatus StatusCharging;
 
     /* Check if the port and module ID are valid */
     if ((dstPort == 0) && (dstModule == myID)) {
@@ -1813,8 +1832,8 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[0] = FMT_FLOAT;                                    /* Data format: float */
                 MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
                 MessageParams[2] = 1;                                           /* Number of elements */
-                MessageParams[3] = (uint8_t)(CODE_H05R0_CELLVOLTAGE >> 0);      /* Command code LSB */
-                MessageParams[4] = (uint8_t)(CODE_H05R0_CELLVOLTAGE >> 8);      /* Command code MSB */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CELL_VOLTAGE >> 0);      /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CELL_VOLTAGE >> 8);      /* Command code MSB */
                 MessageParams[5] = (uint8_t)(*(uint32_t*)&value);               /* value byte 0 */
                 MessageParams[6] = (uint8_t)((*(uint32_t*)&value) >> 8);        /* value byte 1 */
                 MessageParams[7] = (uint8_t)((*(uint32_t*)&value) >> 16);       /* value byte 2 */
@@ -1841,8 +1860,8 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[0] = FMT_FLOAT;                                    /* Data format: float */
                 MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
                 MessageParams[2] = 1;                                           /* Number of elements */
-                MessageParams[3] = (uint8_t)(CODE_H05R0_CELLCURRENT >> 0);      /* Command code LSB */
-                MessageParams[4] = (uint8_t)(CODE_H05R0_CELLCURRENT >> 8);      /* Command code MSB */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CELL_CURRENT >> 0);      /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CELL_CURRENT >> 8);      /* Command code MSB */
                 MessageParams[5] = (uint8_t)(*(uint32_t*)&value);               /* value byte 0 */
                 MessageParams[6] = (uint8_t)((*(uint32_t*)&value) >> 8);        /* value byte 1 */
                 MessageParams[7] = (uint8_t)((*(uint32_t*)&value) >> 16);       /* value byte 2 */
@@ -1869,8 +1888,8 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[0] = FMT_FLOAT;                                    /* Data format: float */
                 MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
                 MessageParams[2] = 1;                                           /* Number of elements */
-                MessageParams[3] = (uint8_t)(CODE_H05R0_CELLPOWER >> 0);        /* Command code LSB */
-                MessageParams[4] = (uint8_t)(CODE_H05R0_CELLPOWER >> 8);        /* Command code MSB */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CELL_POWER >> 0);        /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CELL_POWER >> 8);        /* Command code MSB */
                 MessageParams[5] = (uint8_t)(*(uint32_t*)&value);               /* value byte 0 */
                 MessageParams[6] = (uint8_t)((*(uint32_t*)&value) >> 8);        /* value byte 1 */
                 MessageParams[7] = (uint8_t)((*(uint32_t*)&value) >> 16);       /* value byte 2 */
@@ -1897,8 +1916,8 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[0] = FMT_FLOAT;                                    /* Data format: float */
                 MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
                 MessageParams[2] = 1;                                           /* Number of elements */
-                MessageParams[3] = (uint8_t)(CODE_H05R0_CELLTEMPERATURE >> 0);  /* Command code LSB */
-                MessageParams[4] = (uint8_t)(CODE_H05R0_CELLTEMPERATURE >> 8);  /* Command code MSB */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CELL_TEMPERATURE >> 0);  /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CELL_TEMPERATURE >> 8);  /* Command code MSB */
                 MessageParams[5] = (uint8_t)(*(uint32_t*)&value);               /* value byte 0 */
                 MessageParams[6] = (uint8_t)((*(uint32_t*)&value) >> 8);        /* value byte 1 */
                 MessageParams[7] = (uint8_t)((*(uint32_t*)&value) >> 16);       /* value byte 2 */
@@ -1925,8 +1944,8 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[0] = FMT_FLOAT;                                    /* Data format: float */
                 MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
                 MessageParams[2] = 1;                                           /* Number of elements */
-                MessageParams[3] = (uint8_t)(CODE_H05R0_CELLCAPACITY >> 0);     /* Command code LSB */
-                MessageParams[4] = (uint8_t)(CODE_H05R0_CELLCAPACITY >> 8);     /* Command code MSB */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CELL_CAPACITY >> 0);     /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CELL_CAPACITY >> 8);     /* Command code MSB */
                 MessageParams[5] = (uint8_t)(*(uint32_t*)&value);               /* value byte 0 */
                 MessageParams[6] = (uint8_t)((*(uint32_t*)&value) >> 8);        /* value byte 1 */
                 MessageParams[7] = (uint8_t)((*(uint32_t*)&value) >> 16);       /* value byte 2 */
@@ -1950,8 +1969,8 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[0] = FMT_UINT8;                                    /* Data format: uint8 */
                 MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
                 MessageParams[2] = 1;                                           /* Number of elements */
-                MessageParams[3] = (uint8_t)(CODE_H05R0_SOC >> 0); /* Command code LSB */
-                MessageParams[4] = (uint8_t)(CODE_H05R0_SOC >> 8); /* Command code MSB */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CELL_STATE_OF_CHARGE >> 0); /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CELL_STATE_OF_CHARGE >> 8); /* Command code MSB */
                 MessageParams[5] = (uint8_t)(soc);                              /* soc byte 0 */
 
                 SendMessageToModule(dstModule, CODE_READ_RESPONSE, (sizeof(uint8_t) * 1) + 5);
@@ -1972,8 +1991,8 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[0] = FMT_UINT8;                                    /* Data format: uint8 */
                 MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
                 MessageParams[2] = 1;                                           /* Number of elements */
-                MessageParams[3] = (uint8_t)(CODE_H05R0_CELLAGE >> 0);          /* Command code LSB */
-                MessageParams[4] = (uint8_t)(CODE_H05R0_CELLAGE >> 8);          /* Command code MSB */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CELL_AGE >> 0);          /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CELL_AGE >> 8);          /* Command code MSB */
                 MessageParams[5] = (uint8_t)(age);                              /* age byte 0 */
 
                 SendMessageToModule(dstModule, CODE_READ_RESPONSE, (sizeof(uint8_t) * 1) + 5);
@@ -1995,8 +2014,8 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[0] = FMT_UINT16;                                   /* Data format: uint16 */
                 MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
                 MessageParams[2] = 1;                                           /* Number of elements */
-                MessageParams[3] = (uint8_t)(CODE_H05R0_CELLCYCLES >> 0);       /* Command code LSB */
-                MessageParams[4] = (uint8_t)(CODE_H05R0_CELLCYCLES >> 8);       /* Command code MSB */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CELL_CYCLES >> 0);       /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CELL_CYCLES >> 8);       /* Command code MSB */
                 MessageParams[5] = (uint8_t)(cycles);                           /* cycles byte 0 */
                 MessageParams[6] = (uint8_t)(cycles >> 8);                      /* cycles byte 1 */
 
@@ -2004,6 +2023,84 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
             }
             break;
 
+        case CHARGING_STATUS:
+            if (CheckChargingStatus(&StatusCharging) != H05R0_OK) {
+                return H05R0_ERROR;
+            }
+            if (dstModule == myID || dstModule == 0) {
+                /* LSB first */
+                Temp[0] = (uint8_t)(StatusCharging);         /* StatusCharging byte 0 */
+
+                writePxITMutex(dstPort, (char*)&Temp[0], 1 * sizeof(uint8_t), 10);
+            } else {
+                /* LSB first */
+                MessageParams[0] = FMT_BOOL;                                   /* Data format: bool */
+                MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
+                MessageParams[2] = 1;                                           /* Number of elements */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CHARGING_STATUS >> 0);       /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CHARGING_STATUS >> 8);       /* Command code MSB */
+                MessageParams[5] = (uint8_t)(StatusCharging);                           /* StatusCharging byte 0 */
+
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, (sizeof(uint16_t) * 1) + 4);
+            }
+            break;
+
+		case CHARGER_CURRENT:
+			if (ReadChargerCurrent(&value) != H05R0_OK) {
+				return H05R0_ERROR;
+			}
+            if (dstModule == myID || dstModule == 0) {
+                /* LSB first */
+                Temp[0] = (uint8_t)(*(uint32_t*)&value);         /* value byte 0 */
+                Temp[1] = (uint8_t)((*(uint32_t*)&value) >> 8);  /* value byte 1 */
+                Temp[2] = (uint8_t)((*(uint32_t*)&value) >> 16); /* value byte 2 */
+                Temp[3] = (uint8_t)((*(uint32_t*)&value) >> 24); /* value byte 3 */
+
+                writePxITMutex(dstPort, (char*)&Temp[0], 4 * sizeof(uint8_t), 10);
+            } else {
+                /* LSB first */
+                MessageParams[0] = FMT_FLOAT;                                    /* Data format: float */
+                MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
+                MessageParams[2] = 1;                                           /* Number of elements */
+                MessageParams[3] = (uint8_t)(CODE_H05R0_CHARGER_CURRENT >> 0);        /* Command code LSB */
+                MessageParams[4] = (uint8_t)(CODE_H05R0_CHARGER_CURRENT >> 8);        /* Command code MSB */
+                MessageParams[5] = (uint8_t)(*(uint32_t*)&value);               /* value byte 0 */
+                MessageParams[6] = (uint8_t)((*(uint32_t*)&value) >> 8);        /* value byte 1 */
+                MessageParams[7] = (uint8_t)((*(uint32_t*)&value) >> 16);       /* value byte 2 */
+                MessageParams[8] = (uint8_t)((*(uint32_t*)&value) >> 24);       /* value byte 3 */
+
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, (sizeof(float) * 1) + 5);
+            }
+			break;
+
+		case VBUS_VOLTAGE:
+			if (ReadVBUSVoltage(&value) != H05R0_OK) {
+				return H05R0_ERROR;
+			}
+			if (dstModule == myID || dstModule == 0) {
+				/* LSB first */
+				Temp[0] = (uint8_t)(*(uint32_t*)&value);         /* value byte 0 */
+				Temp[1] = (uint8_t)((*(uint32_t*)&value) >> 8);  /* value byte 1 */
+				Temp[2] = (uint8_t)((*(uint32_t*)&value) >> 16); /* value byte 2 */
+				Temp[3] = (uint8_t)((*(uint32_t*)&value) >> 24); /* value byte 3 */
+
+				writePxITMutex(dstPort, (char*)&Temp[0], 4 * sizeof(uint8_t), 10);
+			} else {
+				/* LSB first */
+				MessageParams[0] = FMT_FLOAT;                                    /* Data format: float */
+				MessageParams[1] = (H05R0_OK == Status) ? BOS_OK : BOS_ERROR;   /* Operation status */
+				MessageParams[2] = 1;                                           /* Number of elements */
+				MessageParams[3] = (uint8_t)(CODE_H05R0_VBUS_VOLTAGE >> 0);        /* Command code LSB */
+				MessageParams[4] = (uint8_t)(CODE_H05R0_VBUS_VOLTAGE >> 8);        /* Command code MSB */
+				MessageParams[5] = (uint8_t)(*(uint32_t*)&value);               /* value byte 0 */
+				MessageParams[6] = (uint8_t)((*(uint32_t*)&value) >> 8);        /* value byte 1 */
+				MessageParams[7] = (uint8_t)((*(uint32_t*)&value) >> 16);       /* value byte 2 */
+				MessageParams[8] = (uint8_t)((*(uint32_t*)&value) >> 24);       /* value byte 3 */
+
+				SendMessageToModule(dstModule, CODE_READ_RESPONSE, (sizeof(float) * 1) + 5);
+			}
+			break;
         default:
             return H05R0_ERR_WRONGPARAMS;
     }

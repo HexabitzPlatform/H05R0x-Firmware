@@ -174,6 +174,9 @@ typedef enum {
 	BATTERY_SOC,
 	BATTERY_AGE,
 	BATTERY_CYCLES,
+	CHARGING_STATUS,
+	CHARGER_CURRENT,
+	VBUS_VOLTAGE,
 } All_Data;
 
 /* Thermistors channels status */
@@ -224,7 +227,7 @@ typedef struct {
 	float ChargerCurrent;
 	float VBUSVolt;
 
-} AnalogMeasType;
+} AllMeasType;
 
 /* Export UART variables */
 extern UART_HandleTypeDef huart1;
@@ -257,7 +260,9 @@ Module_Status ReadCellCycles(uint16_t *batCycles);
 Module_Status CheckChargingStatus(ChargingStatus *StatusCharging);
 Module_Status ReadChargerCurrent(float *ChargerCurrent);
 Module_Status ReadVBUSVoltage(float *VBUSVolt);
-Module_Status ReadAllMeasurements(AnalogMeasType *batMeasurements);
+
+
+Module_Status ReadAllMeasurements(AllMeasType *batMeasurements);
 
 Module_Status EnableVBusOutput(LDOOutputState PinState);
 Module_Status Enable3_3Output(LDOOutputState PinState);
