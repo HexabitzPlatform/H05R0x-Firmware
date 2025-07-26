@@ -108,7 +108,7 @@ static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
 /* CLI command structure : sample */
 const CLI_Command_Definition_t SampleCommandDefinition = {
     (const int8_t*)"sample",
-    (const int8_t*)"sample:\r\n Syntax: sample [volt]/[curr]/[pow]/[temp]/[cap]/[age]/[cycles].\r\n\r\n",
+    (const int8_t*)"sample:\r\n Syntax: sample [volt]/[curr]/[pow]/[temp]/[cap]/[age]/[cycles]/[statuscharging]/[chargercurrent]/[vbusvolt].\r\n\r\n",
     SampleSensorCommand,
     1
 };
@@ -117,7 +117,7 @@ const CLI_Command_Definition_t SampleCommandDefinition = {
 /* CLI command structure : stream */
 const CLI_Command_Definition_t StreamCommandDefinition = {
     (const int8_t*)"stream",
-    (const int8_t*)"stream:\r\n Syntax: stream [volt]/[curr]/[pow]/[temp]/[cap]/[age]/[cycles] (Numofsamples) (timeout) [port] [module].\r\n\r\n",
+    (const int8_t*)"stream:\r\n Syntax: stream [volt]/[curr]/[pow]/[temp]/[cap]/[age]/[cycles]/[statuscharging]/[chargercurrent]/[vbusvolt] (Numofsamples) (timeout).\r\n\r\n",
     StreamSensorCommand,
     -1
 };
@@ -452,7 +452,7 @@ uint8_t ClearROtopology(void){
 	memset(Array,0,sizeof(Array));
 	N =1;
 	myID =0;
-	
+
 	return SaveTopologyToRO();
 }
 
@@ -539,6 +539,7 @@ void Module_Peripheral_Init(void) {
 
 	MCULDOEnable(ENABLE_OUT);
 
+//	Enable3_3Output(ENABLE_OUT);
 	/* Circulating DMA Channels ON All Module */
 	for (int i = 1; i <= NUM_OF_PORTS; i++) {
 		if (GetUart(i) == &huart1) {
@@ -810,13 +811,55 @@ void SampleCyclesToString(char *cstring, size_t maxLen) {
     snprintf(cstring, maxLen, "Cycles | %u\r\n", cycles);
 }
 
+/***************************************************************************/
+/* Formats SOC data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleSOCToString(char *cstring, size_t maxLen) {
+    uint8_t batSOC;
+    ReadCellStateOfCharge(&batSOC);
+    snprintf(cstring, maxLen, "SOC(%%) | %u\r\n", batSOC);
+}
+
+/***************************************************************************/
+/* Formats StatusCharging data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleStatusChargingToString(char *cstring, size_t maxLen) {
+	ChargingStatus  StatusCharging;
+    CheckChargingStatus(&StatusCharging);
+    snprintf(cstring, maxLen, "StatusCharging | %u\r\n", StatusCharging);
+}
+
+/* Formats VBUSVolt data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleVBUSVoltToString(char *cstring, size_t maxLen) {
+    float VBUSVolt;
+    ReadVBUSVoltage(&VBUSVolt);
+    snprintf(cstring, maxLen, "VBUSVolt(V) | %.2f\r\n", VBUSVolt);
+}
+
+/***************************************************************************/
+/* Formats ChargerCurrent data into a string for CLI output.
+ * cstring: Pointer to the string buffer where data will be stored.
+ * maxLen: Maximum length of the string buffer.
+ */
+void SampleChargerCurrentToString(char *cstring, size_t maxLen) {
+    float ChargerCurrent;
+    ReadChargerCurrent(&ChargerCurrent);
+    snprintf(cstring, maxLen, "ChargerCurrent(A) | %.2f\r\n", ChargerCurrent);
+}
+
 /* Samples cell voltage data into a buffer.
  * buffer: Pointer to the buffer where voltage data will be stored.
  */
 void SampleVoltageBuf(float *buffer) {
     float voltage;
     ReadCellVoltage(&voltage);
-    voltage =50 ;
     *buffer = voltage;
 }
 
@@ -880,6 +923,45 @@ void SampleCyclesBuf(float *buffer) {
     *buffer = (float)cycles;
 }
 
+/***************************************************************************/
+/* Samples  SOC data into a buffer.
+ * buffer: Pointer to the buffer where cycles data will be stored.
+ */
+void SampleSOCBuf(float *buffer) {
+    uint8_t SOC;
+    ReadCellStateOfCharge(&SOC);
+    *buffer = (float)SOC;
+}
+
+/***************************************************************************/
+/* Samples  StatusCharging data into a buffer.
+ * buffer: Pointer to the buffer where cycles data will be stored.
+ */
+void SampleStatusChargingBuf(float *buffer) {
+	ChargingStatus StatusCharging;
+    CheckChargingStatus(&StatusCharging);
+    *buffer = (float)StatusCharging;
+}
+
+/***************************************************************************/
+/* Samples  ChargerCurrent data into a buffer.
+ * buffer: Pointer to the buffer where cycles data will be stored.
+ */
+void SampleChargerCurrentBuf(float *buffer) {
+	float ChargerCurrent;
+	ReadChargerCurrent(&ChargerCurrent);
+    *buffer = (float)ChargerCurrent;
+}
+
+/***************************************************************************/
+/* Samples  VBUSVolt data into a buffer.
+ * buffer: Pointer to the buffer where cycles data will be stored.
+ */
+void SampleVBUSVoltBuf(float *buffer) {
+	float VBUSVolt;
+    ReadVBUSVoltage(&VBUSVolt);
+    *buffer = (float)VBUSVolt;
+}
 /***************************************************************************/
 /* Streams sensor data to a buffer.
  * buffer: Pointer to the buffer where data will be stored.
@@ -1611,11 +1693,15 @@ Module_Status ReadVBUSVoltage(float *VBUSVolt) {
 Module_Status Enable3_3Output(LDOOutputState PinState) {
 	Module_Status Status = H05R0_OK;
 
+	taskENTER_CRITICAL();
+
 	if (PinState == ENABLE_OUT)
 		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_SET);
 	else
 		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_RESET);
 
+	taskEXIT_CRITICAL();
+	vTaskDelay(100);
 	return Status;
 }
 
@@ -1628,11 +1714,15 @@ Module_Status Enable3_3Output(LDOOutputState PinState) {
 Module_Status EnableVBusOutput(LDOOutputState PinState) {
 	Module_Status Status = H05R0_OK;
 
+	taskENTER_CRITICAL();
+
 	if (PinState == ENABLE_OUT)
 		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_RESET);
 	else
 		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_SET);
 
+	taskEXIT_CRITICAL();
+	vTaskDelay(100);
 	return Status;
 }
 
@@ -1667,102 +1757,128 @@ Module_Status CheckChargingStatus(ChargingStatus *StatusCharging) {
  * dataFunction: Function to sample data (e.g., VOLTAGE, CURRENT, POWER, TEMPERATURE, CAPACITY, AGE, CYCLES).
  */
 Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
-//    Module_Status Status = H05R0_OK; /* Initialize operation status as success */
-//    int8_t *PcOutputString = NULL; /* Pointer to CLI output buffer */
-//    char CString[100] = {0}; /* Buffer for formatted output string */
-//    float value = 0.0f; /* Variable for float-based sensor data */
-//    uint8_t age = 0; /* Variable for age data */
-//    uint16_t cycles = 0; /* Variable for cycles data */
-//
-//    /* Get the CLI output buffer for writing */
-//    PcOutputString = FreeRTOS_CLIGetOutputBuffer();
-//
-//    /* Process data based on the requested sensor function */
-//    switch (dataFunction) {
-//        case BATTERY_VOLTAGE:
-//            /* Sample voltage data in volts */
-//            if (ReadCellVoltage(&value) != H05R0_OK) {
-//                return H05R0_ERROR; /* Return error if sampling fails */
-//            }
-//
-//
-//            /* Format voltage data into a string */
-//            snprintf(CString, 50, "Voltage(V) | %.2f\r\n", value);
-//            break;
-//
-//        case BATTERY_CURRENT:
-//            /* Sample current data in amps */
-//            if (ReadCellCurrent(&value) != H05R0_OK) {
-//                return H05R0_ERROR; /* Return error if sampling fails */
-//            }
-//            /* Format current data into a string */
-//            snprintf(CString, 50, "Current(A) | %.2f\r\n", value);
-//            break;
-//
-//        case BATTERY_POWER:
-//            /* Sample power data in watts */
-//            if (ReadCellPower(&value) != H05R0_OK) {
-//                return H05R0_ERROR; /* Return error if sampling fails */
-//            }
-//            /* Format power data into a string */
-//            snprintf(CString, 50, "Power(W) | %.2f\r\n", value);
-//            break;
-//
-//        case BATTERY_TEMP:
-//            /* Sample temperature data in Celsius */
-//            if (ReadTemperature(&value) != H05R0_OK) {
-//                return H05R0_ERROR; /* Return error if sampling fails */
-//            }
-//            /* Format temperature data into a string */
-//            snprintf(CString, 50, "Temp(Celsius) | %.2f\r\n", value);
-//            break;
-//
-//        case BATTERY_CAPACITY:
-//            /* Sample capacity data in mAh */
-//            if (ReadCellCapacity(&value) != H05R0_OK) {
-//                return H05R0_ERROR; /* Return error if sampling fails */
-//            }
-//            /* Format capacity data into a string */
-//            snprintf(CString, 50, "Capacity(mAh) | %.2f\r\n", value);
-//            break;
-//
-//        case BATTERY_SOC:
-//
-//            if (ReadCellStateOfCharge(&value) != H05R0_OK) {
-//                return H05R0_ERROR; /* Return error if sampling fails */
-//            }
-//            /* Format capacity data into a string */
-//            snprintf(CString, 50, "SOC | %u\r\n", value);
-//            break;
-//
-//        case BATTERY_AGE:
-//            /* Sample age data in percentage */
-//            if (ReadCellAge(&age) != H05R0_OK) {
-//                return H05R0_ERROR; /* Return error if sampling fails */
-//            }
-//            /* Format age data into a string */
-//            snprintf(CString, 50, "Age(%%) | %u\r\n", age);
-//            break;
-//
-//        case BATTERY_CYCLES:
-//            /* Sample cycles data as a number */
-//            if (ReadCellCycles(&cycles) != H05R0_OK) {
-//                return H05R0_ERROR; /* Return error if sampling fails */
-//            }
-//            /* Format cycles data into a string */
-//            snprintf(CString, 50, "Cycles | %u\r\n", cycles);
-//            break;
-//
-//        default:
-//            /* Return error for invalid sensor function */
-//            return H05R0_ERR_WRONGPARAMS;
-//    }
-//
-//    /* Send the formatted string to the specified port */
-//    writePxMutex(dstPort, (char*)CString, strlen((char*)CString), cmd500ms, HAL_MAX_DELAY);
-//
-//    /* Return final status indicating success or prior error */
-//    return Status;
+    Module_Status Status = H05R0_OK; /* Initialize operation status as success */
+    int8_t *PcOutputString = NULL; /* Pointer to CLI output buffer */
+    char CString[100] = {0}; /* Buffer for formatted output string */
+    float value = 0.0f; /* Variable for float-based sensor data */
+    uint8_t age = 0; /* Variable for age data */
+    uint16_t cycles = 0; /* Variable for cycles data */
+    uint8_t soc=0; /* Variable for soc data */
+    ChargingStatus StatusCharging;
+
+    /* Get the CLI output buffer for writing */
+    PcOutputString = FreeRTOS_CLIGetOutputBuffer();
+
+    /* Process data based on the requested sensor function */
+    switch (dataFunction) {
+        case BATTERY_VOLTAGE:
+            /* Sample voltage data in volts */
+            if (ReadCellVoltage(&value) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format voltage data into a string */
+            snprintf(CString, 50, "Voltage(V) | %.2f\r\n", value);
+            break;
+
+        case BATTERY_CURRENT:
+            /* Sample current data in amps */
+            if (ReadCellCurrent(&value) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format current data into a string */
+            snprintf(CString, 50, "Current(A) | %.2f\r\n", value);
+            break;
+
+        case BATTERY_POWER:
+            /* Sample power data in watts */
+            if (ReadCellPower(&value) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format power data into a string */
+            snprintf(CString, 50, "Power(W) | %.2f\r\n", value);
+            break;
+
+        case BATTERY_TEMP:
+            /* Sample temperature data in Celsius */
+            if (ReadTemperature(&value) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format temperature data into a string */
+            snprintf(CString, 50, "Temp(Celsius) | %.2f\r\n", value);
+            break;
+
+        case BATTERY_CAPACITY:
+            /* Sample capacity data in mAh */
+            if (ReadCellCapacity(&value) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format capacity data into a string */
+            snprintf(CString, 50, "Capacity(mAh) | %.2f\r\n", value);
+            break;
+
+        case BATTERY_SOC:
+
+            if (ReadCellStateOfCharge(&soc) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format capacity data into a string */
+            snprintf(CString, 50, "SOC(%%) | %u\r\n", soc);
+            break;
+
+        case BATTERY_AGE:
+            /* Sample age data in percentage */
+            if (ReadCellAge(&age) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format age data into a string */
+            snprintf(CString, 50, "Age(%%) | %u\r\n", age);
+            break;
+
+        case BATTERY_CYCLES:
+            /* Sample cycles data as a number */
+            if (ReadCellCycles(&cycles) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format cycles data into a string */
+            snprintf(CString, 50, "Cycles | %u\r\n", cycles);
+            break;
+
+        case CHARGING_STATUS:
+            /* Sample StatusCharging data as a number */
+            if (CheckChargingStatus(&StatusCharging) != H05R0_OK) {
+                return H05R0_ERROR; /* Return error if sampling fails */
+            }
+            /* Format cycles data into a string */
+            snprintf(CString, 50, "StatusCharging | %u\r\n", StatusCharging);
+            break;
+
+        case VBUS_VOLTAGE:
+			/* Sample VBUSVolt data in volts */
+			if (ReadVBUSVoltage(&value) != H05R0_OK) {
+				return H05R0_ERROR; /* Return error if sampling fails */
+			}
+			/* Format voltage data into a string */
+			snprintf(CString, 50, "VBUSVolt(V) | %.2f\r\n", value);
+			break;
+
+		case CHARGER_CURRENT:
+			/* Sample ChargerCurrent data in amps */
+			if (ReadChargerCurrent(&value) != H05R0_OK) {
+				return H05R0_ERROR; /* Return error if sampling fails */
+			}
+			/* Format current data into a string */
+			snprintf(CString, 50, "ChargerCurrent(A) | %.2f\r\n", value);
+			break;
+        default:
+            /* Return error for invalid sensor function */
+            return H05R0_ERR_WRONGPARAMS;
+    }
+
+    /* Send the formatted string to the specified port */
+    writePxMutex(dstPort, (char*)CString, strlen((char*)CString), cmd500ms, HAL_MAX_DELAY);
+
+    /* Return final status indicating success or prior error */
+    return Status;
 }
 
 /***************************************************************************/
@@ -1796,7 +1912,7 @@ static Module_Status PollingSleepCLISafe(uint32_t period, long Numofsamples) {
  * brief: Samples data and exports it to a specified port.
  * param dstModule: The module number to export data from.
  * param dstPort: The port number to export data to.
- * param dataFunction: Function to sample data (BATTERY_VOLTAGE, BATTERY_CURRENT,  BATTERY_SOC, BATTERY_CAPACITY).
+ * param dataFunction: Function to sample data (e.g.,BATTERY_VOLTAGE, BATTERY_CURRENT,  BATTERY_SOC, BATTERY_CAPACITY).
  * retval: of type Module_Status indicating the success or failure of the operation.
  */
 Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction) {
@@ -2042,7 +2158,7 @@ Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
                 MessageParams[5] = (uint8_t)(StatusCharging);                           /* StatusCharging byte 0 */
 
 
-                SendMessageToModule(dstModule, CODE_READ_RESPONSE, (sizeof(uint16_t) * 1) + 4);
+                SendMessageToModule(dstModule, CODE_READ_RESPONSE, (sizeof(uint8_t) * 1) + 5);
             }
             break;
 
@@ -2202,7 +2318,7 @@ Module_Status StreamtoPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunc
 /*
  * brief: Streams data to the specified terminal port with a given number of samples.
  * param targetPort: The port number on the terminal.
- * param dataFunction: Function to sample data (BATTERY_VOLTAGE, BATTERY_CURRENT,  BATTERY_SOC, BATTERY_CAPACITY).
+ * param dataFunction: Function to sample data (BATTERY_VOLTAGE, BATTERY_CURRENT,BATTERY_SOC, BATTERY_CAPACITY).
  * param numOfSamples: The number of samples to stream.
  * param streamTimeout: The interval (in milliseconds) between successive data transmissions.
  * retval: of type Module_Status indicating the success or failure of the operation.
@@ -2272,6 +2388,18 @@ Module_Status StreamToBuffer(float *buffer, All_Data function, uint32_t Numofsam
         case BATTERY_CYCLES:
             return StreamToBuf(buffer, Numofsamples, timeout, SampleCyclesBuf);
             break;
+        case BATTERY_SOC:
+            return StreamToBuf(buffer, Numofsamples, timeout, SampleSOCBuf);
+            break;
+        case CHARGING_STATUS:
+            return StreamToBuf(buffer, Numofsamples, timeout, SampleStatusChargingBuf);
+            break;
+        case CHARGER_CURRENT:
+            return StreamToBuf(buffer, Numofsamples, timeout, SampleChargerCurrentBuf);
+            break;
+        case VBUS_VOLTAGE:
+            return StreamToBuf(buffer, Numofsamples, timeout, SampleVBUSVoltBuf);
+            break;
         default:
             return H05R0_ERR_WRONGPARAMS;
     }
@@ -2290,6 +2418,9 @@ static portBASE_TYPE SampleSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
     const char *const AgeCmdName = "age";
     const char *const CyclesCmdName = "cycles";
     const char *const SOCCmdName = "soc";
+    const char *const ChargingCmdName = "statuscharging";
+    const char *const chargercurrCmdName = "chargercurrent";
+    const char *const VBUSCmdName = "vbusvolt";
 
     const char *pSensName = NULL;
     portBASE_TYPE sensNameLen = 0;
@@ -2326,9 +2457,18 @@ static portBASE_TYPE SampleSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
         else if (!strncmp(pSensName, CyclesCmdName, strlen(CyclesCmdName))) {
             SampleToTerminal(pcPort, BATTERY_CYCLES);
         }
-        else if (!strncmp(pSensName, SOCCmdName, strlen(CyclesCmdName))) {
+        else if (!strncmp(pSensName, SOCCmdName, strlen(SOCCmdName))) {
             SampleToTerminal(pcPort, BATTERY_SOC);
         }
+        else if (!strncmp(pSensName, ChargingCmdName, strlen(ChargingCmdName))) {
+                   SampleToTerminal(pcPort, CHARGING_STATUS);
+               }
+        else if (!strncmp(pSensName, chargercurrCmdName, strlen(chargercurrCmdName))) {
+                   SampleToTerminal(pcPort, CHARGER_CURRENT);
+               }
+        else if (!strncmp(pSensName, VBUSCmdName, strlen(VBUSCmdName))) {
+                   SampleToTerminal(pcPort, VBUS_VOLTAGE);
+               }
         else {
             snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Invalid Arguments\r\n");
         }
@@ -2394,7 +2534,9 @@ static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
     const char *const AgeCmdName = "age";
     const char *const CyclesCmdName = "cycles";
     const char *const SOCCmdName = "soc";
-
+    const char *const ChargingCmdName = "statuscharging";
+    const char *const chargercurrCmdName = "chargercurrent";
+    const char *const VBUSCmdName = "vbusvolt";
     uint32_t Numofsamples = 0;
     uint32_t timeout = 0;
     uint8_t port = 0;
@@ -2458,7 +2600,7 @@ static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
         }
         else if (!strncmp(pSensName, SOCCmdName, strlen(SOCCmdName))) {
              if (portOrCLI) {
-                 StreamToCLI(Numofsamples, timeout, SampleAgeToString);
+                 StreamToCLI(Numofsamples, timeout, SampleSOCToString);
              } else {
                  StreamtoPort(module, port, BATTERY_SOC, Numofsamples, timeout);
              }
@@ -2470,6 +2612,28 @@ static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
                 StreamtoPort(module, port, BATTERY_CYCLES, Numofsamples, timeout);
             }
         }
+        else if (!strncmp(pSensName, ChargingCmdName, strlen(ChargingCmdName))) {
+            if (portOrCLI) {
+                StreamToCLI(Numofsamples, timeout, SampleStatusChargingToString);
+            } else {
+                StreamtoPort(module, port, CHARGING_STATUS, Numofsamples, timeout);
+            }
+        }
+        else if (!strncmp(pSensName, VBUSCmdName, strlen(VBUSCmdName))) {
+			if (portOrCLI) {
+				StreamToCLI(Numofsamples, timeout, SampleVBUSVoltToString);
+			} else {
+				StreamtoPort(module, port, VBUS_VOLTAGE, Numofsamples, timeout);
+			}
+		}
+		else if (!strncmp(pSensName, chargercurrCmdName, strlen(chargercurrCmdName))) {
+			if (portOrCLI) {
+				StreamToCLI(Numofsamples, timeout, SampleChargerCurrentToString);
+			} else {
+				StreamtoPort(module, port, CHARGER_CURRENT, Numofsamples, timeout);
+			}
+		}
+
         else {
             snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Invalid Arguments\r\n");
         }

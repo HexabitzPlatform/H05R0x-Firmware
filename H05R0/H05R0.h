@@ -261,13 +261,9 @@ Module_Status CheckChargingStatus(ChargingStatus *StatusCharging);
 Module_Status ReadChargerCurrent(float *ChargerCurrent);
 Module_Status ReadVBUSVoltage(float *VBUSVolt);
 
-
 Module_Status ReadAllMeasurements(AllMeasType *batMeasurements);
-
 Module_Status EnableVBusOutput(LDOOutputState PinState);
 Module_Status Enable3_3Output(LDOOutputState PinState);
-
-
 
 Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction);
 Module_Status StreamToTerminal(uint8_t dstPort, All_Data dataFunction, uint32_t numOfSamples, uint32_t streamTimeout);

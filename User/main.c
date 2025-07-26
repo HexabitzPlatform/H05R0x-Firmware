@@ -22,6 +22,7 @@ float ChargerCurrent=0;
 ChargingStatus StatusCharging;
 float VBUSVolt =0;
 AllMeasType batMeasurements;
+int x=0;
 /* Private Function Prototypes *********************************************/
 
 /* Main Function ***********************************************************/
@@ -38,31 +39,11 @@ int main(void){
 /***************************************************************************/
 /* User Task */
 void UserTask(void *argument){
-//	Enable3_3Output(1);
-//	EnableVBusOutput(1);
+	Enable3_3Output(1);
+	EnableVBusOutput(1);
 	/* put your code here, to run repeatedly. */
 	while(1){
-//		ReadCellVoltage(&batVolt);
-//		ReadCellCurrent(&batCurrent);
-//		ReadCellPower(&batPower);
-//		ReadTemperature(&batTemp);
-//		ReadCellCapacity(& batCapacity);
-//		ReadCellStateOfCharge(& batSOC);
-//		ReadCellAge(&batAge);
-//		ReadCellCycles(&batCycles);
-//		CheckChargingStatus(&StatusCharging);
-//		ReadChargerCurrent(&ChargerCurrent);
-//		ReadVBUSVoltage(&VBUSVolt);
-//		EnableVBusOutput(ENABLE_OUT);
-//		Enable3_3Output(ENABLE_OUT);
-//		ReadAllMeasurements(&batMeasurements);
-//		Delay_ms(500);
 
-		/*******************************************************************/
-//		SendDataRequestToModule(disModuleID, code, pDataReceived, timeout)
-//		SampleToPort (1,1,BATTERY_VOLTAGE);
-//		StreamToTerminal (1, BATTERY_VOLTAGE,3,1000);
-//		StreamToBuffer (&buffer, BATTERY_VOLTAGE ,3,1000);
 
 }
 }
