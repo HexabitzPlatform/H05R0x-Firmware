@@ -3,7 +3,9 @@
  All rights reserved
 
  File Name     : H05R0_eeprom.c
- Description   : EEPROM emulator library (Source file).
+Description: Implements EEPROM emulation using flash memory.
+ EEPROM: Manages 1000 8-byte elements across 4 flash pages with backup group.
+ Operations: Initialize, read/write variables, format, and erase sectors.
 
  */
 

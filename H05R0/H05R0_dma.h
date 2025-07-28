@@ -3,7 +3,9 @@
  All rights reserved
  
  File Name     : H05R0_dma.h
- Description   : Header file contains Peripheral DMA setup.
+Description: Declares functions for DMA and CRC8 operations for UART (P1-P5).
+ DMA: Setup, start/stop, mode switching for UART RX (Channels 1-6).
+ CRC8: Initialization and computation for message validation.
 
  */
 

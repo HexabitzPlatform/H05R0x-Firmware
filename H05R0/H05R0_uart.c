@@ -3,7 +3,9 @@
  All rights reserved
 
  File Name     : H05R0_uart.c
- Description   : Source Code provides configuration for USART instances.
+Description: Implements UART configuration for USART1-6.
+ UART: Initializes ports (P1-P6) with DMA, supports baudrate updates, pin swapping (normal/reversed).
+ Features: Polling/interrupt-based read/write with mutex protection, port direction management.
 
  */
 

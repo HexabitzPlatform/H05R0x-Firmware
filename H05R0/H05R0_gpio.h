@@ -3,9 +3,8 @@
  All rights reserved
 
  File Name     : H05R0_gpio.h
- Description   : Header file contains all the functions prototypes for
- the GPIO .
-
+Description: Declares functions for GPIO configuration.
+ GPIO: Configures pins for UART, indicator LED, seven-segment display, and factory reset detection.
  */
 
 

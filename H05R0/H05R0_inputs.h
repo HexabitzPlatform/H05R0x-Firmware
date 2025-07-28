@@ -3,8 +3,10 @@
  All rights reserved
 
  File Name     : H05R0_inputs.h
- Description   : header file for Bitz digital and analog inputs.
- 
+ Description: Declares functions for digital and analog inputs.
+ ADC: Configures channels for analog input, voltage on ports P2, P3.
+ GPIO: Defines pin mappings for ADC channels.
+
 */
 
 /* Includes ****************************************************************/
@@ -13,7 +15,7 @@
 #include "stm32g0xx_hal_adc_ex.h"
 #include "string.h"
 
-/*This module includes an ADC on ports P2 and P1.*/
+/*This module includes an ADC on ports P2 and P3.*/
 /* ADC Macro Definitions ***************************************************/
 /* Port-ADC Definitions */
 #define ADC_CH1_PIN   		GPIO_PIN_2

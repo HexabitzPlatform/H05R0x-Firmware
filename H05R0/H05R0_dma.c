@@ -3,8 +3,9 @@
  All rights reserved
 
  File Name     : H05R0_dma.c
- Description   : source file Contains Peripheral DMA setup .
-
+ Description: Initialize and manage DMA for UART (P1-P5).
+ DMA: Setup, start/stop, mode switching for UART RX (Channels 1-6).
+ CRC8: Compute CRC8 for message validation.
  */
 
 /* Includes ****************************************************************/

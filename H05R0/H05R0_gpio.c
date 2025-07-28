@@ -3,7 +3,8 @@
  All rights reserved
 
  File Name     : H2BR0_gpio.c
- Description   : Source code provides code for the configuration of all used GPIO pins .
+Description: Implements GPIO configuration for module operation.
+GPIO: Initializes pins for UART, indicator LED
 
  */
 
