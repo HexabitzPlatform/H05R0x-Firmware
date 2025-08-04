@@ -55,6 +55,11 @@ float H05R0_Temp = 0.0f;
 float H05R0_batCapacity = 0.0f;
 uint8_t H05R0_soc = 0.0f;
 uint8_t H05R0_batAge = 0;
+
+ChargingStatus StatusCharging=DISCHARGING;
+uint8_t StateOfCharger = 0;
+
+
 uint16_t H05R0_batCycles = 0;/* Module exported parameters ------------------------------------------------*/
 /* Exported Typedef */
 ModuleParam_t ModuleParam[NUM_MODULE_PARAMS] = {
@@ -103,6 +108,8 @@ static Module_Status StreamToCLI(uint32_t Numofsamples, uint32_t timeout, Sample
 /* Create CLI commands *****************************************************/
 static portBASE_TYPE SampleSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString);
 static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString);
+static portBASE_TYPE EnableCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString);
+static portBASE_TYPE DisableCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString);
 
 /* CLI command structure ***************************************************/
 /* CLI command structure : sample */
@@ -122,6 +129,23 @@ const CLI_Command_Definition_t StreamCommandDefinition = {
     -1
 };
 
+
+/***************************************************************************/
+/* CLI command structure : Enable */
+const CLI_Command_Definition_t EnableCommandDefinition = {
+    (const int8_t*)"enable",
+    (const int8_t*)"enable:\r\n Syntax: enable [3.3]/[vbus](1st par).\r\n\r\n",
+	EnableCommand,
+    1
+};
+/***************************************************************************/
+/* CLI command structure : Disable */
+const CLI_Command_Definition_t DisableCommandDefinition = {
+    (const int8_t*)"disable",
+    (const int8_t*)"disable:\r\n Syntax: disable [3.3]/[vbus](1st par).\r\n\r\n",
+	DisableCommand,
+    1
+};
 /***************************************************************************/
 /************************ Private function Definitions *********************/
 /***************************************************************************/
@@ -531,15 +555,15 @@ void Module_Peripheral_Init(void) {
 	MX_USART3_UART_Init();
 	MX_USART4_UART_Init();
 	MX_USART6_UART_Init();
-
 	LipoGPIOInit();
 	MX_I2C_Init();
 	MX_ADC_Init();
 	Init_MAX17330();
 
 	MCULDOEnable(ENABLE_OUT);
+	Enable3_3Output(DISABLE_OUT);
+	EnableVBusOutput(DISABLE_OUT);
 
-//	Enable3_3Output(ENABLE_OUT);
 	/* Circulating DMA Channels ON All Module */
 	for (int i = 1; i <= NUM_OF_PORTS; i++) {
 		if (GetUart(i) == &huart1) {
@@ -656,6 +680,9 @@ uint8_t GetPort(UART_HandleTypeDef *huart) {
 void RegisterModuleCLICommands(void) {
 	FreeRTOS_CLIRegisterCommand(&SampleCommandDefinition);
 	FreeRTOS_CLIRegisterCommand(&StreamCommandDefinition);
+	FreeRTOS_CLIRegisterCommand(&EnableCommandDefinition);
+	FreeRTOS_CLIRegisterCommand(&DisableCommandDefinition);
+
 }
 
 /***************************************************************************/
@@ -1002,8 +1029,7 @@ static Module_Status StreamToBuf(float *buffer, uint32_t Numofsamples, uint32_t 
 /* Module special task function (if needed) */
 void LipoChargerTask(void *argument) {
 
-	ChargingStatus StatusCharging;
-	uint8_t StateOfCharger = 0;
+
 /* Infinite loop */
 	for (;;) {
 
@@ -1692,16 +1718,13 @@ Module_Status ReadVBUSVoltage(float *VBUSVolt) {
 */
 Module_Status Enable3_3Output(LDOOutputState PinState) {
 	Module_Status Status = H05R0_OK;
+	UBaseType_t TaskPriority;
 
-	taskENTER_CRITICAL();
+	if (PinState == ENABLE_OUT){
+		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_SET);}
+	else{
+		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_RESET);}
 
-	if (PinState == ENABLE_OUT)
-		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_SET);
-	else
-		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_RESET);
-
-	taskEXIT_CRITICAL();
-	vTaskDelay(100);
 	return Status;
 }
 
@@ -1714,15 +1737,15 @@ Module_Status Enable3_3Output(LDOOutputState PinState) {
 Module_Status EnableVBusOutput(LDOOutputState PinState) {
 	Module_Status Status = H05R0_OK;
 
-	taskENTER_CRITICAL();
+//	taskENTER_CRITICAL();
 
-	if (PinState == ENABLE_OUT)
-		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_RESET);
-	else
-		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_SET);
+	if (PinState == ENABLE_OUT){
+		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_RESET);}
+	else{
+		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_SET);}
 
-	taskEXIT_CRITICAL();
-	vTaskDelay(100);
+//	taskEXIT_CRITICAL();
+//	vTaskDelay(100);
 	return Status;
 }
 
@@ -2645,6 +2668,63 @@ static portBASE_TYPE StreamSensorCommand(int8_t *pcWriteBuffer, size_t xWriteBuf
     snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Error reading Sensor\r\n");
     return pdFALSE;
 }
+/***************************************************************************/
+static portBASE_TYPE EnableCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
 
+	Module_Status status = H05R0_OK;
+
+    int8_t *pcParameterString1;
+	portBASE_TYPE xParameterStringLength1 = 0;
+
+	(void) xWriteBufferLen;
+	configASSERT(pcWriteBuffer);
+
+	/* Obtain the 1st parameter string. */
+		pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1,&xParameterStringLength1);
+		/*Read the Motor value*/
+		if (!strncmp((char*) pcParameterString1, "3.3",strlen("3.3"))) {
+			status=Enable3_3Output(ENABLE_OUT);
+			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Output :3.3 Volt is Enable");
+			return pdFALSE;
+		} else if (!strncmp((char*) pcParameterString1,"vbus",strlen("vbus"))) {
+			status=EnableVBusOutput(ENABLE_OUT);
+			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Output :VBUS Volt is Enable");
+			return pdFALSE;
+		}
+		else {
+			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Error TypeOutput\r\n");
+			return pdFALSE;
+		}
+
+}
+/***************************************************************************/
+static portBASE_TYPE DisableCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString) {
+
+	Module_Status status = H05R0_OK;
+
+    int8_t *pcParameterString1;
+	portBASE_TYPE xParameterStringLength1 = 0;
+
+	(void) xWriteBufferLen;
+	configASSERT(pcWriteBuffer);
+
+	/* Obtain the 1st parameter string. */
+		pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1,&xParameterStringLength1);
+		/*Read the Motor value*/
+		if (!strncmp((char*) pcParameterString1, "3.3",strlen("3.3"))) {
+			status=Enable3_3Output(DISABLE_OUT);
+			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Output :3.3 Volt is Disable");
+			return pdFALSE;
+		} else if (!strncmp((char*) pcParameterString1,"vbus",strlen("vbus"))) {
+			status=EnableVBusOutput(DISABLE_OUT);
+			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Output :VBUS Volt is Disable");
+			return pdFALSE;
+		}
+		else {
+			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Error TypeOutput\r\n");
+			return pdFALSE;
+		}
+
+}
 /***************************************************************************/
 /***************** (C) COPYRIGHT HEXABITZ ***** END OF FILE ****************/

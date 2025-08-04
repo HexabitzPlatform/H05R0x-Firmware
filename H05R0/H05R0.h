@@ -94,9 +94,6 @@
 #define	USART6_AF			GPIO_AF8_USART6
 
 /* GPIO Pin Definition */
-#define BAT_ALRT_PIN              GPIO_PIN_0
-#define BAT_ALRT_GPIO_PORT        GPIOB
-#define BAT_ALRT_EXTI_IRQN        EXTI0_1_IRQn
 #define STATUS_LED_PIN            GPIO_PIN_8
 #define STATUS_LED_GPIO_PORT      GPIOA
 #define VBUS_OUT_EN_PIN           GPIO_PIN_4
@@ -105,9 +102,6 @@
 #define MCU_LDO_EN_GPIO_PORT      GPIOB
 #define OUT_EN_3V3_PIN            GPIO_PIN_12
 #define OUT_EN_3V3_GPIO_PORT      GPIOB
-#define INPUT_3V3OUT_PG_PIN       GPIO_PIN_13
-#define INPUT_3V3OUT_PG_GPIO_PORT GPIOB
-#define INPUT_3V3OUT_PG_EXTI_IRQN EXTI4_15_IRQn
 
 /* ADC Pin Definition */
 #define CURRENT_SENSE_PIN         GPIO_PIN_0
@@ -212,6 +206,10 @@ typedef enum {
 typedef enum {
 	DISABLE_OUT = 0u, ENABLE_OUT
 } LDOOutputState;
+
+typedef enum {
+	OUT3_3= 0u, OUT_VBUS
+} TypeOutputState;
 
 /* Export Module typedef structure */
 typedef struct {

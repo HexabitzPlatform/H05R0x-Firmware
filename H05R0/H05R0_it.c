@@ -75,30 +75,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t Size){
 }
 
 /***************************************************************************/
-/* This function handles EXTI line 0 and line 1 interrupts */
-void EXTI0_1_IRQHandler(void) {
-
-}
-
-/***************************************************************************/
-/* This function handles EXTI line 4 to 15 interrupts */
-void EXTI4_15_IRQHandler(void) {
-	HAL_GPIO_EXTI_IRQHandler(INPUT_3V3OUT_PG_PIN);
-}
-
-/***************************************************************************/
-/* EXTI line detection callback */
-void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
-	uint8_t INPUT = 0;
-
-	INPUT = HAL_GPIO_ReadPin(INPUT_3V3OUT_PG_GPIO_PORT, INPUT_3V3OUT_PG_PIN);
-
-	if (GPIO_Pin == INPUT_3V3OUT_PG_PIN && INPUT == 0)
-		Enable3_3Output(DISABLE_OUT);
-
-}
-
-/***************************************************************************/
 /* This function handles USART1 global interrupt */
 void USART1_IRQHandler(void){
 	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;

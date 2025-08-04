@@ -58,12 +58,6 @@ void LipoGPIOInit(void) {
 	HAL_GPIO_WritePin(GPIOB, MCU_LDO_EN_PIN | OUT_EN_3V3_PIN, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin : PtPin */
-	GPIO_InitStruct.Pin = BAT_ALRT_PIN;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(BAT_ALRT_GPIO_PORT, &GPIO_InitStruct);
-
-	/*Configure GPIO pin : PtPin */
 	GPIO_InitStruct.Pin = STATUS_LED_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -84,19 +78,6 @@ void LipoGPIOInit(void) {
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/*Configure GPIO pin : PtPin */
-	GPIO_InitStruct.Pin = INPUT_3V3OUT_PG_PIN;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(INPUT_3V3OUT_PG_GPIO_PORT, &GPIO_InitStruct);
-
-	/* EXTI interrupt init*/
-	HAL_NVIC_SetPriority(BAT_ALRT_EXTI_IRQN, 0, 0);
-	HAL_NVIC_EnableIRQ(BAT_ALRT_EXTI_IRQN);
-
-	/* EXTI interrupt init*/
-	HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 }
 
 /***************************************************************************/

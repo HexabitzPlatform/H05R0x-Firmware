@@ -10,19 +10,7 @@
 #include "BOS.h"
 
 /* Private variables *******************************************************/
-float batVolt=0;
-float batCurrent=0;
-float batPower=0;
-float batTemp=0;
-float batCapacity=0;
-uint8_t batSOC=0;
-uint8_t batAge=0;
-uint16_t batCycles=0;
-float ChargerCurrent=0;
-ChargingStatus StatusCharging;
-float VBUSVolt =0;
-AllMeasType batMeasurements;
-int x=0;
+
 /* Private Function Prototypes *********************************************/
 
 /* Main Function ***********************************************************/
@@ -39,11 +27,9 @@ int main(void){
 /***************************************************************************/
 /* User Task */
 void UserTask(void *argument){
-	Enable3_3Output(1);
-	EnableVBusOutput(1);
+
 	/* put your code here, to run repeatedly. */
 	while(1){
-
 
 }
 }
