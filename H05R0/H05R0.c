@@ -56,8 +56,6 @@ float H05R0_batCapacity = 0.0f;
 uint8_t H05R0_soc = 0.0f;
 uint8_t H05R0_batAge = 0;
 
-ChargingStatus StatusCharging=DISCHARGING;
-uint8_t StateOfCharger = 0;
 
 
 uint16_t H05R0_batCycles = 0;/* Module exported parameters ------------------------------------------------*/
@@ -561,8 +559,8 @@ void Module_Peripheral_Init(void) {
 	Init_MAX17330();
 
 	MCULDOEnable(ENABLE_OUT);
-	Enable3_3Output(DISABLE_OUT);
-	EnableVBusOutput(DISABLE_OUT);
+	// Enable3_3Output(ENABLE_OUT);
+	// EnableVBusOutput(ENABLE_OUT);
 
 	/* Circulating DMA Channels ON All Module */
 	for (int i = 1; i <= NUM_OF_PORTS; i++) {
@@ -1028,16 +1026,19 @@ static Module_Status StreamToBuf(float *buffer, uint32_t Numofsamples, uint32_t 
 }
 /* Module special task function (if needed) */
 void LipoChargerTask(void *argument) {
-
+	ChargingStatus StatusCharging=DISCHARGING;
+	uint8_t StateOfCharger = 0;
+	float ChargingCurrent = 0.0f;
 
 /* Infinite loop */
 	for (;;) {
 
 		/* Read Charging Status */
 		CheckChargingStatus(&StatusCharging);
+		ReadCellCurrent(&ChargingCurrent);
 
 		/* Check if the battery is charging */
-		if (StatusCharging == 0) {
+		if (StatusCharging == 0&&ChargingCurrent>-0.01) {
 			/* Read current, voltage, and state of charge */
 			ReadCellStateOfCharge(&StateOfCharger);
 
