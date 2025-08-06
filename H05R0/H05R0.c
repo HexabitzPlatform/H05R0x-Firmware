@@ -559,8 +559,7 @@ void Module_Peripheral_Init(void) {
 	Init_MAX17330();
 
 	MCULDOEnable(ENABLE_OUT);
-	// Enable3_3Output(ENABLE_OUT);
-	// EnableVBusOutput(ENABLE_OUT);
+
 
 	/* Circulating DMA Channels ON All Module */
 	for (int i = 1; i <= NUM_OF_PORTS; i++) {
@@ -638,11 +637,19 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 		break;
 
 	case CODE_H05R0_ENABLE_VBUS:
-		EnableVBusOutput(cMessage [port - 1] [shift]);
+		EnableVBusOutput();
 		break;
 
 	case CODE_H05R0_ENABLE_3V3:
-		Enable3_3Output(cMessage [port - 1] [shift]);
+		Enable3_3Output();
+		break;
+
+	case CODE_H05R0_DISABLE_VBUS:
+		DisableVBusOutput();
+		break;
+
+	case CODE_H05R0_DISABLE_3V3:
+		Disable3_3Output();
 		break;
 
 	default:
@@ -1714,17 +1721,23 @@ Module_Status ReadVBUSVoltage(float *VBUSVolt) {
 }
 
 /***************************************************************************/
-/* MCU Out Volt Enable To secure 3.3V for other Modules
- * LDOOutputState:{ ENABLE_OUT=0, DISABLE_OUT=1}
-*/
-Module_Status Enable3_3Output(LDOOutputState PinState) {
-	Module_Status Status = H05R0_OK;
-	UBaseType_t TaskPriority;
+/* MCU Out Volt Enable To secure 3.3V for other Modules */
+Module_Status Enable3_3Output(void) {
+	Module_Status Status = H05R0_ERROR;
 
-	if (PinState == ENABLE_OUT){
-		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_SET);}
-	else{
-		HAL_GPIO_WritePin(OUT_EN_3V3_GPIO_PORT, OUT_EN_3V3_PIN, GPIO_PIN_RESET);}
+		HAL_GPIO_WritePin(OUT_3V3_GPIO_PORT, OUT_3V3_PIN, GPIO_PIN_SET);
+		Status = H05R0_OK;
+
+	return Status;
+}
+
+/***************************************************************************/
+/* MCU Out Volt Disable Nutrition chapter 3.3V for other Modules */
+Module_Status Disable3_3Output(void) {
+	Module_Status Status = H05R0_ERROR;
+
+		HAL_GPIO_WritePin(OUT_3V3_GPIO_PORT, OUT_3V3_PIN, GPIO_PIN_RESET);
+		Status = H05R0_OK;
 
 	return Status;
 }
@@ -1733,20 +1746,25 @@ Module_Status Enable3_3Output(LDOOutputState PinState) {
 /* VBUS Output Switch Enable
  * When this is enabled, the battery voltage becomes available
    through the external connector.
-* LDOOutputState:{ ENABLE_OUT=0, DISABLE_OUT=1}
  */
-Module_Status EnableVBusOutput(LDOOutputState PinState) {
-	Module_Status Status = H05R0_OK;
+Module_Status EnableVBusOutput(void) {
+	Module_Status Status = H05R0_ERROR;
 
-//	taskENTER_CRITICAL();
+	HAL_GPIO_WritePin(VBUS_OUT_GPIO_PORT, VBUS_OUT_PIN, GPIO_PIN_RESET);
+		Status = H05R0_OK;
 
-	if (PinState == ENABLE_OUT){
-		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_RESET);}
-	else{
-		HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_SET);}
+	return Status;
+}
 
-//	taskEXIT_CRITICAL();
-//	vTaskDelay(100);
+/***************************************************************************/
+/* VBUS Output Switch Disable */
+
+Module_Status DisableVBusOutput(void) {
+	Module_Status Status = H05R0_ERROR;
+
+	HAL_GPIO_WritePin(VBUS_OUT_GPIO_PORT, VBUS_OUT_PIN, GPIO_PIN_SET);
+		Status = H05R0_OK;
+
 	return Status;
 }
 
@@ -2684,11 +2702,11 @@ static portBASE_TYPE EnableCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen
 		pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1,&xParameterStringLength1);
 		/*Read the Motor value*/
 		if (!strncmp((char*) pcParameterString1, "3.3",strlen("3.3"))) {
-			status=Enable3_3Output(ENABLE_OUT);
+			status=Enable3_3Output();
 			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Output :3.3 Volt is Enable");
 			return pdFALSE;
 		} else if (!strncmp((char*) pcParameterString1,"vbus",strlen("vbus"))) {
-			status=EnableVBusOutput(ENABLE_OUT);
+			status=EnableVBusOutput();
 			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Output :VBUS Volt is Enable");
 			return pdFALSE;
 		}
@@ -2713,11 +2731,11 @@ static portBASE_TYPE DisableCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLe
 		pcParameterString1 = (int8_t*) FreeRTOS_CLIGetParameter(pcCommandString, 1,&xParameterStringLength1);
 		/*Read the Motor value*/
 		if (!strncmp((char*) pcParameterString1, "3.3",strlen("3.3"))) {
-			status=Enable3_3Output(DISABLE_OUT);
+			status=Disable3_3Output();
 			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Output :3.3 Volt is Disable");
 			return pdFALSE;
 		} else if (!strncmp((char*) pcParameterString1,"vbus",strlen("vbus"))) {
-			status=EnableVBusOutput(DISABLE_OUT);
+			status=DisableVBusOutput();
 			snprintf((char*)pcWriteBuffer, xWriteBufferLen, "Output :VBUS Volt is Disable");
 			return pdFALSE;
 		}

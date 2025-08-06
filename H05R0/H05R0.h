@@ -96,12 +96,12 @@
 /* GPIO Pin Definition */
 #define STATUS_LED_PIN            GPIO_PIN_8
 #define STATUS_LED_GPIO_PORT      GPIOA
-#define VBUS_OUT_EN_PIN           GPIO_PIN_4
-#define VBUS_OUT_EN_GPIO_PORT     GPIOA
+#define VBUS_OUT_PIN        	  GPIO_PIN_4
+#define VBUS_OUT_GPIO_PORT        GPIOA
 #define MCU_LDO_EN_PIN            GPIO_PIN_2
 #define MCU_LDO_EN_GPIO_PORT      GPIOB
-#define OUT_EN_3V3_PIN            GPIO_PIN_12
-#define OUT_EN_3V3_GPIO_PORT      GPIOB
+#define OUT_3V3_PIN               GPIO_PIN_12
+#define OUT_3V3_GPIO_PORT         GPIOB
 
 /* ADC Pin Definition */
 #define CURRENT_SENSE_PIN         GPIO_PIN_0
@@ -207,10 +207,6 @@ typedef enum {
 	DISABLE_OUT = 0u, ENABLE_OUT
 } LDOOutputState;
 
-typedef enum {
-	OUT3_3= 0u, OUT_VBUS
-} TypeOutputState;
-
 /* Export Module typedef structure */
 typedef struct {
 	ChargingStatus ChargingStatus;
@@ -260,8 +256,10 @@ Module_Status ReadChargerCurrent(float *ChargerCurrent);
 Module_Status ReadVBUSVoltage(float *VBUSVolt);
 
 Module_Status ReadAllMeasurements(AllMeasType *batMeasurements);
-Module_Status EnableVBusOutput(LDOOutputState PinState);
-Module_Status Enable3_3Output(LDOOutputState PinState);
+Module_Status EnableVBusOutput(void);
+Module_Status Enable3_3Output(void);
+Module_Status DisableVBusOutput(void);
+Module_Status Disable3_3Output(void);
 
 Module_Status SampleToPort(uint8_t dstModule, uint8_t dstPort, All_Data dataFunction);
 Module_Status StreamtoPort(uint8_t dstModule,uint8_t dstPort,All_Data dataFunction,uint32_t numOfSamples,uint32_t streamTimeout);

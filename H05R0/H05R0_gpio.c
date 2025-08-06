@@ -52,10 +52,10 @@ void LipoGPIOInit(void) {
 	HAL_GPIO_WritePin(STATUS_LED_GPIO_PORT, STATUS_LED_PIN, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(VBUS_OUT_EN_GPIO_PORT, VBUS_OUT_EN_PIN, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(VBUS_OUT_GPIO_PORT, VBUS_OUT_PIN, GPIO_PIN_SET);
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOB, MCU_LDO_EN_PIN | OUT_EN_3V3_PIN, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, MCU_LDO_EN_PIN | OUT_3V3_PIN, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin : PtPin */
 	GPIO_InitStruct.Pin = STATUS_LED_PIN;
@@ -65,14 +65,14 @@ void LipoGPIOInit(void) {
 	HAL_GPIO_Init(STATUS_LED_GPIO_PORT, &GPIO_InitStruct);
 
 	/*Configure GPIO pin : PtPin */
-	GPIO_InitStruct.Pin = VBUS_OUT_EN_PIN;
+	GPIO_InitStruct.Pin = VBUS_OUT_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(VBUS_OUT_EN_GPIO_PORT, &GPIO_InitStruct);
+	HAL_GPIO_Init(VBUS_OUT_GPIO_PORT, &GPIO_InitStruct);
 
 	/*Configure GPIO pins : PBPin PBPin */
-	GPIO_InitStruct.Pin = MCU_LDO_EN_PIN | OUT_EN_3V3_PIN;
+	GPIO_InitStruct.Pin = MCU_LDO_EN_PIN | OUT_3V3_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
