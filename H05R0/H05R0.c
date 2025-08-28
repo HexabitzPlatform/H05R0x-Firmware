@@ -56,7 +56,9 @@ float H05R0_batCapacity = 0.0f;
 uint8_t H05R0_soc = 0.0f;
 uint8_t H05R0_batAge = 0;
 
-
+ChargingStatus StatusCharging=DISCHARGING;
+uint8_t StateOfCharger = 0;
+float ChargingCurrent = 0.0f;
 
 uint16_t H05R0_batCycles = 0;/* Module exported parameters ------------------------------------------------*/
 /* Exported Typedef */
@@ -774,7 +776,7 @@ Module_Status GetModuleParameter(uint8_t paramIndex, float *value) {
 void SampleVoltageToString(char *cstring, size_t maxLen) {
     float voltage;
     ReadCellVoltage(&voltage);
-    snprintf(cstring, maxLen, "Voltage(V) | %.2f\r\n", voltage);
+    snprintf(cstring, maxLen, "BatteryVoltage(V) | %.2f\r\n", voltage);
 }
 
 /***************************************************************************/
@@ -785,7 +787,7 @@ void SampleVoltageToString(char *cstring, size_t maxLen) {
 void SampleCurrentToString(char *cstring, size_t maxLen) {
     float current;
     ReadCellCurrent(&current);
-    snprintf(cstring, maxLen, "Current(A) | %.2f\r\n", current);
+    snprintf(cstring, maxLen, "BatteryCurrent(A) | %.2f\r\n", current);
 }
 
 /***************************************************************************/
@@ -796,7 +798,7 @@ void SampleCurrentToString(char *cstring, size_t maxLen) {
 void SamplePowerToString(char *cstring, size_t maxLen) {
     float power;
     ReadCellPower(&power);
-    snprintf(cstring, maxLen, "Power(W) | %.2f\r\n", power);
+    snprintf(cstring, maxLen, "BatteryPower(W) | %.2f\r\n", power);
 }
 
 /***************************************************************************/
@@ -807,7 +809,7 @@ void SamplePowerToString(char *cstring, size_t maxLen) {
 void SampleTemperatureToString(char *cstring, size_t maxLen) {
     float temperature;
     ReadTemperature(&temperature);
-    snprintf(cstring, maxLen, "Temp(Celsius) | %.2f\r\n", temperature);
+    snprintf(cstring, maxLen, "BatteryTemp(Celsius) | %.2f\r\n", temperature);
 }
 
 /***************************************************************************/
@@ -818,7 +820,7 @@ void SampleTemperatureToString(char *cstring, size_t maxLen) {
 void SampleCapacityToString(char *cstring, size_t maxLen) {
     float capacity;
     ReadCellCapacity(&capacity);
-    snprintf(cstring, maxLen, "Capacity(mAh) | %.2f\r\n", capacity);
+    snprintf(cstring, maxLen, "BatteryCapacity(mAh) | %.2f\r\n", capacity);
 }
 
 /***************************************************************************/
@@ -829,7 +831,7 @@ void SampleCapacityToString(char *cstring, size_t maxLen) {
 void SampleAgeToString(char *cstring, size_t maxLen) {
     uint8_t age;
     ReadCellAge(&age);
-    snprintf(cstring, maxLen, "Age(%%) | %u\r\n", age);
+    snprintf(cstring, maxLen, "BatteryAge(%%) | %u\r\n", age);
 }
 
 /***************************************************************************/
@@ -840,7 +842,7 @@ void SampleAgeToString(char *cstring, size_t maxLen) {
 void SampleCyclesToString(char *cstring, size_t maxLen) {
     uint16_t cycles;
     ReadCellCycles(&cycles);
-    snprintf(cstring, maxLen, "Cycles | %u\r\n", cycles);
+    snprintf(cstring, maxLen, "BatteryCycles | %u\r\n", cycles);
 }
 
 /***************************************************************************/
@@ -851,7 +853,7 @@ void SampleCyclesToString(char *cstring, size_t maxLen) {
 void SampleSOCToString(char *cstring, size_t maxLen) {
     uint8_t batSOC;
     ReadCellStateOfCharge(&batSOC);
-    snprintf(cstring, maxLen, "SOC(%%) | %u\r\n", batSOC);
+    snprintf(cstring, maxLen, "BatterySOC(%%) | %u\r\n", batSOC);
 }
 
 /***************************************************************************/
@@ -862,7 +864,12 @@ void SampleSOCToString(char *cstring, size_t maxLen) {
 void SampleStatusChargingToString(char *cstring, size_t maxLen) {
 	ChargingStatus  StatusCharging;
     CheckChargingStatus(&StatusCharging);
-    snprintf(cstring, maxLen, "StatusCharging | %u\r\n", StatusCharging);
+    if (StatusCharging==CHARGING) {
+        snprintf(cstring, maxLen, "StatusCharging | %s\r\n", "CHARGING");
+	}
+    if (StatusCharging==DISCHARGING) {
+        snprintf(cstring, maxLen, "StatusCharging | %s\r\n", "DISCHARGING");
+	}
 }
 
 /* Formats VBUSVolt data into a string for CLI output.
@@ -1033,9 +1040,7 @@ static Module_Status StreamToBuf(float *buffer, uint32_t Numofsamples, uint32_t 
 }
 /* Module special task function (if needed) */
 void LipoChargerTask(void *argument) {
-	ChargingStatus StatusCharging=DISCHARGING;
-	uint8_t StateOfCharger = 0;
-	float ChargingCurrent = 0.0f;
+
 
 /* Infinite loop */
 	for (;;) {
@@ -1819,7 +1824,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format voltage data into a string */
-            snprintf(CString, 50, "Voltage(V) | %.2f\r\n", value);
+            snprintf(CString, 50, "BatteryVoltage(V) | %.2f\r\n", value);
             break;
 
         case BATTERY_CURRENT:
@@ -1828,7 +1833,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format current data into a string */
-            snprintf(CString, 50, "Current(A) | %.2f\r\n", value);
+            snprintf(CString, 50, "BatteryCurrent(A) | %.2f\r\n", value);
             break;
 
         case BATTERY_POWER:
@@ -1837,7 +1842,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format power data into a string */
-            snprintf(CString, 50, "Power(W) | %.2f\r\n", value);
+            snprintf(CString, 50, "BatteryPower(W) | %.2f\r\n", value);
             break;
 
         case BATTERY_TEMP:
@@ -1846,7 +1851,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format temperature data into a string */
-            snprintf(CString, 50, "Temp(Celsius) | %.2f\r\n", value);
+            snprintf(CString, 50, "BatteryTemp(Celsius) | %.2f\r\n", value);
             break;
 
         case BATTERY_CAPACITY:
@@ -1855,7 +1860,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format capacity data into a string */
-            snprintf(CString, 50, "Capacity(mAh) | %.2f\r\n", value);
+            snprintf(CString, 50, "BatteryCapacity(mAh) | %.2f\r\n", value);
             break;
 
         case BATTERY_SOC:
@@ -1864,7 +1869,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format capacity data into a string */
-            snprintf(CString, 50, "SOC(%%) | %u\r\n", soc);
+            snprintf(CString, 50, "BatterySOC(%%) | %u\r\n", soc);
             break;
 
         case BATTERY_AGE:
@@ -1873,7 +1878,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format age data into a string */
-            snprintf(CString, 50, "Age(%%) | %u\r\n", age);
+            snprintf(CString, 50, "BatteryAge(%%) | %u\r\n", age);
             break;
 
         case BATTERY_CYCLES:
@@ -1882,7 +1887,7 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format cycles data into a string */
-            snprintf(CString, 50, "Cycles | %u\r\n", cycles);
+            snprintf(CString, 50, "BatteryCycles | %u\r\n", cycles);
             break;
 
         case CHARGING_STATUS:
@@ -1891,7 +1896,12 @@ Module_Status SampleToTerminal(uint8_t dstPort, All_Data dataFunction) {
                 return H05R0_ERROR; /* Return error if sampling fails */
             }
             /* Format cycles data into a string */
-            snprintf(CString, 50, "StatusCharging | %u\r\n", StatusCharging);
+            if (StatusCharging==CHARGING) {
+            snprintf(CString, 50, "StatusCharging | %s\r\n", "CHARGING");
+        	}
+            if (StatusCharging==DISCHARGING) {
+            snprintf(CString, 50, "StatusCharging | %s\r\n", "DISCHARGING");
+        	}
             break;
 
         case VBUS_VOLTAGE:
